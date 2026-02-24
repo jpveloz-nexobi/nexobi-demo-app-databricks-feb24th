@@ -416,13 +416,19 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 .ai-presets [data-testid="stButton"]:nth-last-child(2) button{background:#F1F5F9!important;color:#1E293B!important;border:1px solid #CBD5E1!important;border-radius:999px!important;font-weight:600!important;}
 .ai-row-spacer{height:.6rem;}
 
-/* AI input */
-.stTextInput>div>div>input{background:#FFFFFF!important;color:#0F172A!important;border:1.5px solid #E2E8F0!important;border-radius:12px!important;padding:.72rem .9rem!important;font-size:.92rem!important;}
-.stTextInput>div>div>input:focus{border-color:#00C06B!important;box-shadow:0 0 0 3px rgba(0,192,107,.10)!important;}
+/* AI input — remove black baseweb accent */
+.stTextInput>div>[data-baseweb="base-input"]{border:1.5px solid #E2E8F0!important;border-radius:12px!important;background:#FFFFFF!important;box-shadow:none!important;}
+.stTextInput>div>[data-baseweb="base-input"]:focus-within{border-color:#00C06B!important;box-shadow:0 0 0 3px rgba(0,192,107,.10)!important;outline:none!important;}
+.stTextInput>div>div>input{background:transparent!important;color:#0F172A!important;border:none!important;padding:.72rem .9rem!important;font-size:.92rem!important;box-shadow:none!important;outline:none!important;}
 
 /* Reset button */
 .reset-wrap .stButton>button{background:#F5F7FA!important;color:#64748B!important;border:1px solid #E2E8F0!important;font-weight:500!important;}
 .reset-wrap .stButton>button:hover{background:#F1F5F9!important;}
+
+/* Export icon buttons */
+.export-icons{display:flex;gap:6px;margin:.4rem 0 .6rem;}
+.export-icons [data-testid="stDownloadButton"]>button{background:transparent!important;border:1px solid #E2E8F0!important;border-radius:8px!important;color:#64748B!important;font-size:.75rem!important;font-weight:500!important;padding:4px 10px!important;min-height:0!important;height:28px!important;line-height:1!important;}
+.export-icons [data-testid="stDownloadButton"]>button:hover{border-color:#00C06B!important;color:#00C06B!important;background:transparent!important;}
 
 /* AI answer cards — minimal genie style */
 .ai-answer{background:#FAFBFC;border:1px solid #EEF2F7;border-radius:14px;padding:16px 18px;margin:.5rem 0;box-shadow:none;}
@@ -601,10 +607,15 @@ with st.sidebar:
         _alerts_slot = st.empty()
 
     # --------------------------------------------------
-    # Export (dropdown)
+    # Export — two small icon buttons (CSV + PDF)
     # --------------------------------------------------
-    with st.expander("Export", expanded=False):
-        _export_slot = st.empty()
+    st.markdown('<div class="export-icons">', unsafe_allow_html=True)
+    _ecol_csv, _ecol_pdf, _ = st.columns([1, 1, 3])
+    with _ecol_csv:
+        _export_csv_slot = st.empty()
+    with _ecol_pdf:
+        _export_pdf_slot = st.empty()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # --------------------------------------------------
     # Refresh button — bottom of sidebar (Databricks only)
@@ -944,20 +955,23 @@ try:
     )
 
     try:
-        with _export_slot.container():
-            st.download_button("⬇ Download CSV", data=csv_bytes,
-                               file_name=f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv",
-                               mime="text/csv", use_container_width=True)
-            st.download_button("⬇ Download PDF", data=pdf_bytes,
-                               file_name=f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf",
-                               mime="application/pdf", use_container_width=True)
+        _export_csv_slot.download_button(
+            "↓ CSV", data=csv_bytes,
+            file_name=f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv",
+            mime="text/csv", use_container_width=True, key="dl_csv"
+        )
+        _export_pdf_slot.download_button(
+            "↓ PDF", data=pdf_bytes,
+            file_name=f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf",
+            mime="application/pdf", use_container_width=True, key="dl_pdf"
+        )
     except Exception:
-        st.sidebar.download_button("⬇ Download CSV", data=csv_bytes,
+        st.sidebar.download_button("↓ CSV", data=csv_bytes,
                                    file_name=f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv",
-                                   mime="text/csv", use_container_width=True)
-        st.sidebar.download_button("⬇ Download PDF", data=pdf_bytes,
+                                   mime="text/csv", key="dl_csv_fb")
+        st.sidebar.download_button("↓ PDF", data=pdf_bytes,
                                    file_name=f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf",
-                                   mime="application/pdf", use_container_width=True)
+                                   mime="application/pdf", key="dl_pdf_fb")
 
 except Exception:
     pass
@@ -1112,21 +1126,21 @@ def render_marketing():
     jd["ROAS"]=jd["ROAS"].apply(lambda x: f"{x:.2f}x")
     st.dataframe(df_light(jd), use_container_width=True, hide_index=True, height=df_height(len(jd)))
 
-    st.markdown('<div class="section-title">Top Campaigns</div>', unsafe_allow_html=True)
-    camps = base[base["campaign"].astype(str).str.strip().ne("")].groupby("campaign", as_index=False).agg(
-        Revenue=("total_revenue","sum"),
-        Spend=("total_cost","sum"),
-        Leads=("leads","sum"),
-    )
-    camps["ROAS"] = np.where(camps["Spend"]>0, camps["Revenue"]/camps["Spend"], 0)
-    camps = camps.sort_values("Revenue", ascending=False).head(15)
-    if len(camps) > 0:
-        out = camps.rename(columns={"campaign":"Campaign"}).copy()
-        out["Revenue"]=out["Revenue"].apply(money)
-        out["Spend"]=out["Spend"].apply(money)
-        out["Leads"]=out["Leads"].apply(fmt)
-        out["ROAS"]=out["ROAS"].apply(lambda x: f"{x:.2f}x")
-        st.dataframe(df_light(out), use_container_width=True, hide_index=True, height=df_height(len(out)))
+    with st.expander("Top Campaigns", expanded=True):
+        camps = base[base["campaign"].astype(str).str.strip().ne("")].groupby("campaign", as_index=False).agg(
+            Revenue=("total_revenue","sum"),
+            Spend=("total_cost","sum"),
+            Leads=("leads","sum"),
+        )
+        camps["ROAS"] = np.where(camps["Spend"]>0, camps["Revenue"]/camps["Spend"], 0)
+        camps = camps.sort_values("Revenue", ascending=False).head(15)
+        if len(camps) > 0:
+            out = camps.rename(columns={"campaign":"Campaign"}).copy()
+            out["Revenue"]=out["Revenue"].apply(money)
+            out["Spend"]=out["Spend"].apply(money)
+            out["Leads"]=out["Leads"].apply(fmt)
+            out["ROAS"]=out["ROAS"].apply(lambda x: f"{x:.2f}x")
+            st.dataframe(df_light(out), use_container_width=True, hide_index=True, height=df_height(len(out)))
 
 def render_practice():
     st.markdown('<div class="section-title">Practice CRM · Patient Dashboard</div>', unsafe_allow_html=True)
