@@ -29,8 +29,7 @@ DBX_TABLE   = os.getenv("NEXOBI_TABLE",   "DemoData-marketing-crm")
 DATABRICKS_HOST      = os.getenv("DATABRICKS_HOST",      "")
 DATABRICKS_HTTP_PATH = os.getenv("DATABRICKS_HTTP_PATH", "")
 
-# Databricks Genie — conversational AI over Unity Catalog
-GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "01f111cb463a1c1e8c2a03deb976f2a8")
+# Databricks AI — conversational analytics via ai_query() SQL function
 
 # ==========================================================
 # THEME TOKENS
@@ -1508,96 +1507,68 @@ def quick_recos(metric_key: str, direction: str):
 
 
 # ==========================================================
-# GENIE API CLIENT
+# AI QUERY CLIENT  (uses existing SQL connector — no extra permissions)
 # ==========================================================
-def genie_ask(question: str, conversation_id: str = None) -> dict:
+def _build_data_context() -> str:
+    """Return a compact summary of the loaded dataset for use as AI context."""
+    try:
+        df = DATA.copy()
+        parts = []
+        if "Date" in df.columns:
+            parts.append(f"Date range: {df['Date'].min()} to {df['Date'].max()}, {len(df)} rows")
+        num_cols = ["Revenue", "Ad Spend", "ROAS", "Leads", "New Patients", "Appointments"]
+        for col in num_cols:
+            if col in df.columns:
+                parts.append(f"{col}: total={df[col].sum():,.1f}, avg={df[col].mean():,.2f}")
+        if "Source" in df.columns:
+            top = df.groupby("Source")["Revenue"].sum().nlargest(4).to_dict()
+            parts.append("Revenue by source: " + ", ".join(f"{k}=${v:,.0f}" for k, v in top.items()))
+        if "Channel" in df.columns:
+            top_ch = df.groupby("Channel")["Revenue"].sum().nlargest(3).to_dict()
+            parts.append("Revenue by channel: " + ", ".join(f"{k}=${v:,.0f}" for k, v in top_ch.items()))
+        return "; ".join(parts) if parts else "Healthcare practice marketing analytics data"
+    except Exception:
+        return "Healthcare practice marketing analytics data"
+
+
+def ai_query_ask(question: str) -> dict:
     """
-    Send a question to Databricks Genie and return the response.
-    Maintains conversation context via conversation_id for follow-ups.
+    Answer a question using Databricks ai_query() SQL function.
+    Runs over the existing SQL connector — no Genie permissions needed.
     """
-    host  = DATABRICKS_HOST.strip().rstrip("/")
-    token = os.environ.get("DATABRICKS_TOKEN", "")
-    base  = f"https://{host}/api/2.0/genie/spaces/{GENIE_SPACE_ID}"
-    hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    from databricks import sql as _dbsql
+
+    context = _build_data_context()
+    prompt = (
+        "You are a concise marketing analytics assistant for a healthcare practice. "
+        f"Current dataset summary: {context}. "
+        f"Answer in 2-3 clear sentences: {question}"
+    )
+    # Escape single quotes for SQL string literal
+    prompt_sql = prompt.replace("'", "''")
+    sql = f"SELECT ai_query('databricks-dbrx-instruct', '{prompt_sql}') AS answer"
 
     try:
-        # Start new conversation or continue existing one
-        if conversation_id:
-            url = f"{base}/conversations/{conversation_id}/messages"
-        else:
-            url = f"{base}/start-conversation"
+        token = os.environ.get("DATABRICKS_TOKEN", "")
+        with _dbsql.connect(
+            server_hostname=DATABRICKS_HOST,
+            http_path=DATABRICKS_HTTP_PATH,
+            access_token=token
+        ) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+                rows = cur.fetchall()
+                answer = rows[0][0] if rows else "No response received."
 
-        resp = requests.post(url, headers=hdrs, json={"content": question}, timeout=30)
-        resp.raise_for_status()
-        data    = resp.json()
-        conv_id = data.get("conversation_id") or conversation_id
-        msg_id  = data.get("message_id") or data.get("id")
-
-        # Poll until Genie finishes generating SQL + result (up to 90s)
-        status = "EXECUTING_QUERY"
-        msg    = {}
-        for _ in range(90):
-            time.sleep(1)
-            poll = requests.get(
-                f"{base}/conversations/{conv_id}/messages/{msg_id}",
-                headers=hdrs, timeout=30
-            )
-            poll.raise_for_status()
-            msg    = poll.json()
-            status = msg.get("status", "")
-            if status in ("COMPLETED", "FAILED", "CANCELLED"):
-                break
-
-        # Extract text explanation and SQL from attachments
-        text_out = ""
-        sql_out  = ""
-        for att in msg.get("attachments", []):
-            if "text" in att:
-                text_out = att["text"].get("content", "")
-            if "query" in att:
-                sql_out  = att["query"].get("query", "")
-                if not text_out:
-                    text_out = att["query"].get("description", "")
-
-        # Fetch query result rows
-        df_result = None
-        try:
-            qr = requests.get(
-                f"{base}/conversations/{conv_id}/messages/{msg_id}/query-result",
-                headers=hdrs, timeout=30
-            )
-            if qr.status_code == 200:
-                stmt  = qr.json().get("statement_response", {})
-                cols  = [c["name"] for c in stmt.get("manifest", {}).get("schema", {}).get("columns", [])]
-                rows  = stmt.get("result", {}).get("data_typed_array", [])
-                if cols and rows:
-                    df_result = pd.DataFrame(rows, columns=cols)
-        except Exception:
-            pass
-
-        return {
-            "conversation_id": conv_id,
-            "status":          status,
-            "text":            text_out,
-            "sql":             sql_out,
-            "df":              df_result,
-            "error":           None if status == "COMPLETED" else f"Status: {status}",
-        }
+        return {"text": answer, "sql": sql, "df": None, "error": None}
 
     except Exception as exc:
-        return {
-            "conversation_id": conversation_id,
-            "status":          "ERROR",
-            "text":            "",
-            "sql":             "",
-            "df":              None,
-            "error":           str(exc),
-        }
+        return {"text": "", "sql": sql, "df": None, "error": str(exc)}
 
 
 def render_ai():
     st.markdown(f"""<p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.3rem;font-weight:700;color:{TEXT};margin:0 0 .2rem;">Ask your data anything</p>""", unsafe_allow_html=True)
-    st.markdown(f"""<p style="color:{MUTED};font-size:.88rem;margin:.0rem 0 .9rem;">Powered by Databricks Genie &mdash; live queries on your data.</p>""", unsafe_allow_html=True)
+    st.markdown(f"""<p style="color:{MUTED};font-size:.88rem;margin:.0rem 0 .9rem;">Powered by Databricks AI &mdash; live queries on your data.</p>""", unsafe_allow_html=True)
 
     if "ai_history" not in st.session_state:
         st.session_state.ai_history = []
@@ -1605,8 +1576,6 @@ def render_ai():
         st.session_state.ai_nonce = 0
     if "ai_preset" not in st.session_state:
         st.session_state.ai_preset = None
-    if "genie_conv_id" not in st.session_state:
-        st.session_state.genie_conv_id = None
 
     # 3 suggested prompts — pill style
     presets = [
@@ -1639,10 +1608,9 @@ def render_ai():
     st.markdown("<div class=\"ai-row-spacer\"></div>", unsafe_allow_html=True)
 
     if reset:
-        st.session_state.ai_history  = []
-        st.session_state.ai_nonce   += 1
-        st.session_state.ai_preset   = None
-        st.session_state.genie_conv_id = None
+        st.session_state.ai_history = []
+        st.session_state.ai_nonce  += 1
+        st.session_state.ai_preset  = None
         st.rerun()
 
     run_q = None
@@ -1652,13 +1620,10 @@ def render_ai():
     elif ask and user_q.strip():
         run_q = user_q.strip()
 
-    # ---- Call Genie and store result ----
+    # ---- Call AI and store result ----
     if run_q:
-        with st.spinner("Genie is thinking..."):
-            result = genie_ask(run_q, conversation_id=st.session_state.genie_conv_id)
-
-        if result.get("conversation_id"):
-            st.session_state.genie_conv_id = result["conversation_id"]
+        with st.spinner("Thinking..."):
+            result = ai_query_ask(run_q)
 
         st.session_state.ai_history.insert(0, {"q": run_q, **result})
         if len(st.session_state.ai_history) > 10:
@@ -1682,7 +1647,7 @@ def render_ai():
         """, unsafe_allow_html=True)
 
         if error:
-            st.error(f"Genie error: {error}")
+            st.error(f"AI error: {error}")
             continue
 
         # Natural language answer
@@ -1695,7 +1660,7 @@ def render_ai():
             </div>
             """, unsafe_allow_html=True)
 
-        # Data table from Genie query result
+        # Data table from query result
         if df is not None and not df.empty:
             st.dataframe(
                 df_light(df),
