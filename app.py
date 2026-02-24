@@ -1507,6 +1507,84 @@ def quick_recos(metric_key: str, direction: str):
 
 
 # ==========================================================
+# AI CHART GENERATOR
+# ==========================================================
+def _ai_chart(question: str) -> "go.Figure | None":
+    """Return a relevant Plotly chart for the question, or None."""
+    try:
+        df = CUR.copy()
+        if df.empty:
+            return None
+        q = question.lower()
+
+        # Detect numeric columns available
+        has = lambda c: c in df.columns and df[c].notna().any()
+
+        # ---- helpers ----
+        def _group_bar(group_col, val_col, title, fmt=","):
+            if not (has(group_col) and has(val_col)):
+                return None
+            g = df.groupby(group_col)[val_col].sum().reset_index().sort_values(val_col, ascending=False).head(8)
+            hover = "%{x}<br><b>$%{y:,.0f}</b><extra></extra>" if fmt == "$" else "%{x}<br><b>%{y:,.2f}</b><extra></extra>"
+            palette = [GREEN, BLUE, AMBER, PURPLE, "#EC4899", "#14B8A6", "#F97316", RED]
+            fig = go.Figure()
+            for i, row in g.iterrows():
+                fig.add_trace(go.Bar(
+                    x=[str(row[group_col])], y=[row[val_col]],
+                    name=str(row[group_col]),
+                    marker_color=palette[list(g.index).index(i) % len(palette)],
+                    marker_line_width=0,
+                    showlegend=False,
+                    hovertemplate=hover,
+                ))
+            fig.update_layout(**base_layout(title, 240))
+            return fig
+
+        def _line(val_col, title):
+            if not (has("date") and has(val_col)):
+                return None
+            g = df.groupby("date")[val_col].sum().reset_index().sort_values("date")
+            return plot_line(g, "date", val_col, title, height=240)
+
+        # ---- Route by question intent ----
+        if any(w in q for w in ["trend", "over time", "daily", "weekly", "by day", "by month", "timeline"]):
+            col = "revenue" if "revenue" in q else ("ad_spend" if any(w in q for w in ["spend", "cost"]) else "revenue")
+            title = "Revenue Over Time" if col == "revenue" else "Spend Over Time"
+            return _line(col, title)
+
+        if "roas" in q:
+            if has("data_source") and has("roas"):
+                g = df.groupby("data_source")["roas"].mean().reset_index().sort_values("roas", ascending=False).head(8)
+                return plot_bar_multi(g, "data_source", "roas", "ROAS by Source")
+            return None
+
+        if any(w in q for w in ["spend", "cost", "budget"]):
+            return _group_bar("data_source", "ad_spend", "Ad Spend by Source", "$")
+
+        if any(w in q for w in ["lead", "patient", "appointment"]):
+            col = "new_patients" if "patient" in q else ("appointments" if "appoint" in q else "leads")
+            col = col if has(col) else ("leads" if has("leads") else None)
+            if col:
+                return _group_bar("data_source", col, f"{col.replace('_', ' ').title()} by Source")
+
+        if any(w in q for w in ["channel"]):
+            return _group_bar("channel_group", "revenue", "Revenue by Channel", "$")
+
+        if any(w in q for w in ["compare", "vs", "versus", "google", "facebook", "meta"]):
+            if has("data_source") and has("revenue"):
+                g = df.groupby("data_source")["revenue"].sum().reset_index().sort_values("revenue", ascending=False).head(6)
+                return plot_bar_multi(g, "data_source", "revenue", "Revenue Comparison by Source")
+
+        # Default: revenue by source
+        if has("data_source") and has("revenue"):
+            return _group_bar("data_source", "revenue", "Revenue by Source", "$")
+
+    except Exception:
+        pass
+    return None
+
+
+# ==========================================================
 # AI QUERY CLIENT  (uses existing SQL connector — no extra permissions)
 # ==========================================================
 def _build_data_context() -> str:
@@ -1663,6 +1741,11 @@ def render_ai():
               {text}
             </div>
             """, unsafe_allow_html=True)
+
+        # Auto-generated chart based on question
+        chart = _ai_chart(q)
+        if chart is not None:
+            st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
 
         # Data table from query result
         if df is not None and not df.empty:
