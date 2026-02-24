@@ -1,0 +1,9 @@
+# NexoBI Demo App — Python dependencies
+# Databricks Apps pre-installs pyspark, so it is intentionally omitted here.
+
+streamlit>=1.32.0
+pandas>=2.0.0
+numpy>=1.24.0
+plotly>=5.18.0
+databricks-sql-connector>=3.0.0
+pyarrow>=14.0.0
