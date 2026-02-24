@@ -314,6 +314,10 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#0F172
 [data-testid="stSidebar"] label{font-size:.72rem!important;font-weight:600!important;text-transform:none!important;letter-spacing:0!important;color:#64748B!important;}
 [data-testid="stSidebar"] [data-baseweb="select"]>div{background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:8px!important;font-size:.82rem!important;}
 [data-testid="stSidebar"] input{background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:8px!important;font-size:.82rem!important;}
+[data-testid="stSidebar"] [data-baseweb="base-input"]{background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:8px!important;box-shadow:none!important;}
+[data-testid="stSidebar"] [data-baseweb="base-input"]:focus-within{border-color:#00C06B!important;box-shadow:none!important;}
+[data-testid="stSidebar"] [data-baseweb="input"]{background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:8px!important;box-shadow:none!important;}
+[data-testid="stSidebar"] div[data-testid="stDateInput"] input{font-size:.82rem!important;}
 [data-testid="stSidebar"] span[data-baseweb="tag"]{background:#E6F9F0!important;border:1px solid #00C06B!important;color:#009952!important;font-size:.75rem!important;}
 [data-testid="stSidebar"] .stRadio>div{gap:.2rem!important;flex-direction:column!important;}
 [data-testid="stSidebar"] .stRadio label{background:transparent!important;border:none!important;border-radius:8px!important;padding:5px 10px!important;font-size:.84rem!important;font-weight:500!important;color:#64748B!important;text-transform:none!important;letter-spacing:0!important;}
@@ -397,32 +401,37 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
     background: #FFFFFF !important;
 }
 
-/* AI preset buttons */
-.ai-presets .stButton>button{background:var(--nexo-green)!important;color:#fff!important;border:none!important;border-radius:12px!important;font-weight:900!important;padding:.45rem .75rem!important;font-size:.82rem!important;height:40px!important;line-height:1.05!important;}
-.ai-row-spacer{height:.25rem;}
+/* AI preset suggestion pills */
+.ai-presets .stButton>button{background:#F8FAFC!important;color:#475569!important;border:1px solid #E2E8F0!important;border-radius:999px!important;font-weight:500!important;padding:.35rem .75rem!important;font-size:.80rem!important;height:34px!important;line-height:1!important;transition:all .15s ease!important;}
+.ai-presets .stButton>button:hover{background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;}
+.ai-row-spacer{height:.5rem;}
 
 /* AI input */
-.stTextInput>div>div>input{background:#FFFFFF!important;color:#0F172A!important;border:1.5px solid #E2E8F0!important;border-radius:12px!important;padding:.72rem .9rem!important;}
+.stTextInput>div>div>input{background:#FFFFFF!important;color:#0F172A!important;border:1.5px solid #E2E8F0!important;border-radius:12px!important;padding:.72rem .9rem!important;font-size:.92rem!important;}
+.stTextInput>div>div>input:focus{border-color:#00C06B!important;box-shadow:0 0 0 3px rgba(0,192,107,.10)!important;}
 
-/* Reset button (secondary) */
-.reset-wrap .stButton>button{background:#F5F7FA!important;color:#0F172A!important;border:1px solid #E2E8F0!important;}
-.reset-wrap .stButton>button:hover{background:#E6F9F0!important;border-color:#00C06B!important;}
+/* Reset button */
+.reset-wrap .stButton>button{background:#F5F7FA!important;color:#64748B!important;border:1px solid #E2E8F0!important;font-weight:500!important;}
+.reset-wrap .stButton>button:hover{background:#F1F5F9!important;}
 
-/* AI answer cards */
-.ai-answer{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:14px 16px;margin:.45rem 0;box-shadow:0 2px 12px rgba(0,0,0,.04);}
-.ai-kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
-.ai-kpi{flex:1;min-width:180px;background:#F5F7FA;border:1px solid #E2E8F0;border-radius:14px;padding:10px 12px;min-height:70px;}
-.ai-kpi .k{font-size:.68rem;font-weight:900;color:#64748B;text-transform:uppercase;letter-spacing:.08em;}
-.ai-kpi .v{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.25rem;font-weight:900;color:#0F172A;margin-top:4px;}
+/* AI answer cards — genie style */
+.ai-answer{background:#FFFFFF;border:1px solid #EEF2F7;border-radius:16px;padding:18px 20px;margin:.6rem 0;box-shadow:0 1px 6px rgba(15,23,42,.05);}
 
-.ai-pill{display:inline-block;background:#E6F9F0;color:#009952;border:1px solid #00C06B;border-radius:999px;font-weight:900;font-size:.72rem;padding:4px 10px;margin-right:6px;}
-.ai-pill-muted{background:#F5F7FA;color:#0F172A;border:1px solid #E2E8F0;}
+/* KPI row — inline, no heavy boxes */
+.ai-kpi-row{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px;padding:12px 0;border-top:1px solid #F1F5F9;}
+.ai-kpi{flex:1;min-width:120px;}
+.ai-kpi .k{font-size:.70rem;font-weight:500;color:#94A3B8;letter-spacing:.04em;}
+.ai-kpi .v{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;font-weight:700;color:#0F172A;margin-top:3px;}
 
-.ai-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px;}
-@media(max-width:900px){.ai-actions{grid-template-columns:1fr;}}
-.ai-action{background:#F5F7FA;border:1px solid #FFFFFF;border-radius:14px;padding:12px 12px;}
-.ai-action .t{font-weight:900;}
-.ai-action .d{color:#64748B;font-size:.88rem;margin-top:3px;}
+/* Pills */
+.ai-pill{display:inline-block;background:#F0FDF7;color:#059669;border:1px solid #A7F3D0;border-radius:999px;font-weight:600;font-size:.70rem;padding:3px 10px;margin-right:5px;}
+.ai-pill-muted{background:#F8FAFC;color:#64748B;border:1px solid #E2E8F0;}
+
+/* Action items — clean list, no heavy boxes */
+.ai-actions{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.ai-action{background:#F8FAFC;border-left:3px solid #E2E8F0;border-radius:0 8px 8px 0;padding:8px 12px;}
+.ai-action .t{font-weight:600;font-size:.88rem;color:#0F172A;}
+.ai-action .d{color:#64748B;font-size:.82rem;margin-top:2px;line-height:1.4;}
 
 
 
@@ -1463,8 +1472,8 @@ def quick_recos(metric_key: str, direction: str):
     return actions_for(metric_key, direction)
 
 def render_ai():
-    st.markdown('<div class="section-title">AI Agent</div>', unsafe_allow_html=True)
-    st.markdown(f'<p style="color:{MUTED};font-size:.92rem;margin:.2rem 0 .6rem;">Ask simple questions now — ask the harder ones live during the demo.</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:1.3rem;font-weight:700;color:{TEXT};margin:0 0 .2rem;">Ask your data anything</p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="color:{MUTED};font-size:.88rem;margin:.0rem 0 .9rem;">Instant answers from your live marketing data.</p>', unsafe_allow_html=True)
 
     if "ai_history" not in st.session_state:
         st.session_state.ai_history = []
@@ -1473,20 +1482,16 @@ def render_ai():
     if "ai_preset" not in st.session_state:
         st.session_state.ai_preset = None
 
-    # 6 presets showcasing all query types — 2 rows of 3
+    # 3 suggested prompts — pill style
     presets = [
-        "What was revenue last 30 days?",
-        "ROAS by source MTD",
-        "Show rate this month",
-        "Which source has best ROAS?",
-        "Show rate trend last 30 days",
+        "Revenue last 30 days",
+        "ROAS by source",
         "Compare Google vs Facebook",
     ]
 
     st.markdown('<div class="ai-presets">', unsafe_allow_html=True)
     _pr1, _pr2, _pr3 = st.columns(3)
-    _pr4, _pr5, _pr6 = st.columns(3)
-    for col, p in zip([_pr1, _pr2, _pr3, _pr4, _pr5, _pr6], presets):
+    for col, p in zip([_pr1, _pr2, _pr3], presets):
         with col:
             if st.button(p, use_container_width=True, key=f"ai_p_{p}"):
                 st.session_state.ai_preset = p
@@ -1625,9 +1630,9 @@ def render_ai():
 
         st.markdown(f'''
         <div class="ai-answer">
-          <div style="font-size:.72rem;font-weight:900;color:{GREEN_DK};text-transform:uppercase;letter-spacing:.08em;">✦ Question</div>
-          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:900;font-size:1.35rem;margin-top:.15rem;color:{TEXT};">{q}</div>
-          <div style="color:{MUTED};font-size:.9rem;margin-top:.25rem;">{note}</div>
+          <div style="font-size:.72rem;font-weight:600;color:{MUTED};letter-spacing:.03em;">You asked</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1.1rem;margin-top:.1rem;color:{TEXT};">{q}</div>
+          <div style="color:{MUTED};font-size:.82rem;margin-top:.2rem;">{note}</div>
         ''', unsafe_allow_html=True)
 
         if typ == "metric":
@@ -1650,7 +1655,7 @@ def render_ai():
                 st.markdown(f'<div style="margin-top:10px;"><span class="ai-pill">Recommendations</span><span class="ai-pill ai-pill-muted">Confidence: {cmp["confidence"]}</span></div>', unsafe_allow_html=True)
                 st.markdown('<div class="ai-actions">', unsafe_allow_html=True)
                 for _t, _desc in quick_recos(mk, cmp["direction"])[:3]:
-                    st.markdown(f'<div class="ai-action"><div class="t">🎯 {_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="ai-action"><div class="t">{_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
 
         elif typ == "bar":
@@ -1690,7 +1695,7 @@ def render_ai():
                     st.markdown(f"<ul style='margin:6px 0 0 18px;color:{TEXT};'>"+"".join(lines)+"</ul>", unsafe_allow_html=True)
                     st.markdown('<div class="ai-actions">', unsafe_allow_html=True)
                     for _t, _desc in quick_recos(mk, cmp["direction"])[:3]:
-                        st.markdown(f'<div class="ai-action"><div class="t">🎯 {_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
+                        st.markdown(f'<div class="ai-action"><div class="t">{_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
                     st.markdown('</div>', unsafe_allow_html=True)
 
         elif typ == "trend":
@@ -1772,7 +1777,7 @@ def render_ai():
             st.markdown(f'<div style="margin-top:10px;"><span class="ai-pill">Recommendations</span></div>', unsafe_allow_html=True)
             st.markdown('<div class="ai-actions">', unsafe_allow_html=True)
             for _t, _desc in quick_recos(mk, "up" if val_a >= val_b else "down")[:3]:
-                st.markdown(f'<div class="ai-action"><div class="t">🎯 {_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="ai-action"><div class="t">{_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
         elif typ == "why":
@@ -1804,7 +1809,7 @@ def render_ai():
             st.markdown('<div style="margin-top:10px;"><span class="ai-pill">Actions</span></div>', unsafe_allow_html=True)
             st.markdown('<div class="ai-actions">', unsafe_allow_html=True)
             for _t, _desc in d["actions"][:4]:
-                st.markdown(f'<div class="ai-action"><div class="t">🎯 {_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="ai-action"><div class="t">{_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
