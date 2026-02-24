@@ -7,6 +7,8 @@ import re
 import difflib
 import hashlib
 import os
+import time
+import requests
 from datetime import datetime, timedelta, date
 
 # ==========================================================
@@ -26,6 +28,9 @@ DBX_TABLE   = os.getenv("NEXOBI_TABLE",   "DemoData-marketing-crm")
 # Values must be set as environment variables — never hardcoded here.
 DATABRICKS_HOST      = os.getenv("DATABRICKS_HOST",      "")
 DATABRICKS_HTTP_PATH = os.getenv("DATABRICKS_HTTP_PATH", "")
+
+# Databricks Genie — conversational AI over Unity Catalog
+GENIE_SPACE_ID = os.getenv("GENIE_SPACE_ID", "01f111cb463a1c1e8c2a03deb976f2a8")
 
 # ==========================================================
 # THEME TOKENS
@@ -1501,9 +1506,98 @@ def quick_recos(metric_key: str, direction: str):
         return actions_for("show_rate" if metric_key == "show_rate" else metric_key, direction)
     return actions_for(metric_key, direction)
 
+
+# ==========================================================
+# GENIE API CLIENT
+# ==========================================================
+def genie_ask(question: str, conversation_id: str = None) -> dict:
+    """
+    Send a question to Databricks Genie and return the response.
+    Maintains conversation context via conversation_id for follow-ups.
+    """
+    host  = DATABRICKS_HOST.strip().rstrip("/")
+    token = os.environ.get("DATABRICKS_TOKEN", "")
+    base  = f"https://{host}/api/2.0/genie/spaces/{GENIE_SPACE_ID}"
+    hdrs  = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+    try:
+        # Start new conversation or continue existing one
+        if conversation_id:
+            url = f"{base}/conversations/{conversation_id}/messages"
+        else:
+            url = f"{base}/start-conversation"
+
+        resp = requests.post(url, headers=hdrs, json={"content": question}, timeout=30)
+        resp.raise_for_status()
+        data    = resp.json()
+        conv_id = data.get("conversation_id") or conversation_id
+        msg_id  = data.get("message_id") or data.get("id")
+
+        # Poll until Genie finishes generating SQL + result (up to 90s)
+        status = "EXECUTING_QUERY"
+        msg    = {}
+        for _ in range(90):
+            time.sleep(1)
+            poll = requests.get(
+                f"{base}/conversations/{conv_id}/messages/{msg_id}",
+                headers=hdrs, timeout=30
+            )
+            poll.raise_for_status()
+            msg    = poll.json()
+            status = msg.get("status", "")
+            if status in ("COMPLETED", "FAILED", "CANCELLED"):
+                break
+
+        # Extract text explanation and SQL from attachments
+        text_out = ""
+        sql_out  = ""
+        for att in msg.get("attachments", []):
+            if "text" in att:
+                text_out = att["text"].get("content", "")
+            if "query" in att:
+                sql_out  = att["query"].get("query", "")
+                if not text_out:
+                    text_out = att["query"].get("description", "")
+
+        # Fetch query result rows
+        df_result = None
+        try:
+            qr = requests.get(
+                f"{base}/conversations/{conv_id}/messages/{msg_id}/query-result",
+                headers=hdrs, timeout=30
+            )
+            if qr.status_code == 200:
+                stmt  = qr.json().get("statement_response", {})
+                cols  = [c["name"] for c in stmt.get("manifest", {}).get("schema", {}).get("columns", [])]
+                rows  = stmt.get("result", {}).get("data_typed_array", [])
+                if cols and rows:
+                    df_result = pd.DataFrame(rows, columns=cols)
+        except Exception:
+            pass
+
+        return {
+            "conversation_id": conv_id,
+            "status":          status,
+            "text":            text_out,
+            "sql":             sql_out,
+            "df":              df_result,
+            "error":           None if status == "COMPLETED" else f"Status: {status}",
+        }
+
+    except Exception as exc:
+        return {
+            "conversation_id": conversation_id,
+            "status":          "ERROR",
+            "text":            "",
+            "sql":             "",
+            "df":              None,
+            "error":           str(exc),
+        }
+
+
 def render_ai():
     st.markdown(f"""<p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.3rem;font-weight:700;color:{TEXT};margin:0 0 .2rem;">Ask your data anything</p>""", unsafe_allow_html=True)
-    st.markdown(f"""<p style="color:{MUTED};font-size:.88rem;margin:.0rem 0 .9rem;">Instant answers from your live marketing data.</p>""", unsafe_allow_html=True)
+    st.markdown(f"""<p style="color:{MUTED};font-size:.88rem;margin:.0rem 0 .9rem;">Powered by Databricks Genie &mdash; live queries on your data.</p>""", unsafe_allow_html=True)
 
     if "ai_history" not in st.session_state:
         st.session_state.ai_history = []
@@ -1511,6 +1605,8 @@ def render_ai():
         st.session_state.ai_nonce = 0
     if "ai_preset" not in st.session_state:
         st.session_state.ai_preset = None
+    if "genie_conv_id" not in st.session_state:
+        st.session_state.genie_conv_id = None
 
     # 3 suggested prompts — pill style
     presets = [
@@ -1543,9 +1639,10 @@ def render_ai():
     st.markdown("<div class=\"ai-row-spacer\"></div>", unsafe_allow_html=True)
 
     if reset:
-        st.session_state.ai_history = []
-        st.session_state.ai_nonce += 1
-        st.session_state.ai_preset = None
+        st.session_state.ai_history  = []
+        st.session_state.ai_nonce   += 1
+        st.session_state.ai_preset   = None
+        st.session_state.genie_conv_id = None
         st.rerun()
 
     run_q = None
@@ -1555,292 +1652,62 @@ def render_ai():
     elif ask and user_q.strip():
         run_q = user_q.strip()
 
-    # Use marketing-safe base (exclude Practice CRM unless explicitly selected)
-    base_df = CUR_MKT.copy() if not include_practice_in_marketing else CUR.copy()
-
+    # ---- Call Genie and store result ----
     if run_q:
-        gmin, gmax = MIN_DATE, MAX_DATE
-        s_d, e_d, note = parse_dates(run_q, gmin, gmax)
-        if not s_d:
-            s_d, e_d, note = start, end, "Selected range"
+        with st.spinner("Genie is thinking..."):
+            result = genie_ask(run_q, conversation_id=st.session_state.genie_conv_id)
 
-        mk = fuzzy_metric(run_q)
-        ql = norm(run_q)
+        if result.get("conversation_id"):
+            st.session_state.genie_conv_id = result["conversation_id"]
 
-        # ---- Detect query intent ----
-        _by_source   = "by source" in ql
-        _by_channel  = "by channel" in ql
-        _by_campaign = "by campaign" in ql
-        _is_trend    = any(w in ql for w in ["trend","over time","daily","weekly","per day","by day","by week"])
-        _is_rank     = bool(re.search(r'\b(best|worst|top|highest|lowest)\b', ql)) and bool(re.search(r'\b(source|channel|campaign)\b', ql))
-        _compare_m   = re.search(r'\bcompare\s+(.+?)\s+(?:vs?\.?|versus|and)\s+(.+)', ql)
-        _is_why      = ql.startswith("why") or any(p in ql for p in ["why did","why is","why are","why has","why have"])
-
-        fdf = base_df[(base_df["date"] >= s_d) & (base_df["date"] <= e_d)]
-
-        def _safe_groupby(df, dim, metric_key):
-            """Pandas 2.x-compatible groupby for any metric."""
-            meta = METRICS.get(metric_key, {})
-            if meta.get("kind") == "sum" and meta.get("num") in df.columns:
-                return df.groupby(dim, as_index=False).agg(value=(meta["num"], "sum"))
-            g = df.groupby(dim).apply(lambda x: metric_value(x, metric_key))
-            return g.reset_index(name="value")
-
-        if _compare_m:
-            payload = {
-                "type": "compare_two", "q": run_q, "metric": mk, "note": note,
-                "period": f"{s_d} → {e_d}",
-                "a": _compare_m.group(1).strip(), "b": _compare_m.group(2).strip(),
-                "df": fdf, "s_d": s_d, "e_d": e_d,
-            }
-        elif _is_trend:
-            meta = METRICS.get(mk, {})
-            if meta.get("kind") == "sum" and meta.get("num") in fdf.columns:
-                ts = fdf.groupby("date", as_index=False).agg(value=(meta["num"], "sum"))
-            else:
-                ts = fdf.groupby("date").apply(lambda x: metric_value(x, mk)).reset_index(name="value")
-            ts["date"] = pd.to_datetime(ts["date"])
-            ts = ts.sort_values("date")
-            payload = {"type": "trend", "q": run_q, "metric": mk, "note": note,
-                       "period": f"{s_d} → {e_d}", "df": ts}
-
-        elif _is_rank:
-            rank_dim = "campaign" if "campaign" in ql else ("channel_group" if "channel" in ql else "data_source")
-            asc = bool(re.search(r'\b(worst|lowest|least|bottom)\b', ql))
-            g = _safe_groupby(fdf, rank_dim, mk)
-            g = g.sort_values("value", ascending=asc).head(10)
-            payload = {"type": "rank", "q": run_q, "metric": mk, "note": note,
-                       "period": f"{s_d} → {e_d}", "dim": rank_dim, "df": g, "ascending": asc}
-
-        elif _by_source:
-            fdf_s = fdf[fdf["data_source"].str.lower() != "practice crm"] if mk == "roas" else fdf
-            g = _safe_groupby(fdf_s, "data_source", mk).sort_values("value", ascending=False).head(25)
-            payload = {"type": "bar", "q": run_q, "metric": mk, "note": note,
-                       "period": f"{s_d} → {e_d}", "dim": "data_source", "df": g, "s_d": s_d, "e_d": e_d}
-
-        elif _by_channel:
-            g = _safe_groupby(fdf, "channel_group", mk).sort_values("value", ascending=False).head(20)
-            payload = {"type": "bar", "q": run_q, "metric": mk, "note": note,
-                       "period": f"{s_d} → {e_d}", "dim": "channel_group", "df": g, "s_d": s_d, "e_d": e_d}
-
-        elif _by_campaign:
-            g = _safe_groupby(fdf, "campaign", mk)
-            g = g[g["campaign"].astype(str).str.strip().ne("")]
-            g = g.sort_values("value", ascending=False).head(15)
-            payload = {"type": "bar", "q": run_q, "metric": mk, "note": note,
-                       "period": f"{s_d} → {e_d}", "dim": "campaign", "df": g, "s_d": s_d, "e_d": e_d}
-
-        elif _is_why:
-            payload = {"type": "why", "q": run_q, "metric": mk, "note": note,
-                       "data": compute_why(mk, s_d, e_d, note, base_df)}
-
-        else:
-            cmp = compute_compare(mk, s_d, e_d, base_df)
-            payload = {
-                "type": "metric", "q": run_q, "metric": mk, "note": note,
-                "period": f"{s_d} → {e_d}",
-                "value": metric_value(fdf, mk),
-                "compare": cmp,
-            }
-
-        st.session_state.ai_history.insert(0, payload)
-        # Cap history to avoid unbounded session state growth
-        if len(st.session_state.ai_history) > 20:
-            st.session_state.ai_history = st.session_state.ai_history[:20]
+        st.session_state.ai_history.insert(0, {"q": run_q, **result})
+        if len(st.session_state.ai_history) > 10:
+            st.session_state.ai_history = st.session_state.ai_history[:10]
         st.rerun()
 
-    # ---- Render history (show latest 6) ----
-    for item in st.session_state.ai_history[:6]:
-        q   = item.get("q", "")
-        mk  = item.get("metric", "revenue")
-        note = item.get("note", "")
-        typ = item.get("type", "metric")
+    # ---- Render conversation history ----
+    for item in st.session_state.ai_history:
+        q     = item.get("q", "")
+        text  = item.get("text", "")
+        sql   = item.get("sql", "")
+        df    = item.get("df")
+        error = item.get("error")
 
-        st.markdown(f'''
+        # Question header
+        st.markdown(f"""
         <div class="ai-answer">
           <div style="font-size:.72rem;font-weight:600;color:{MUTED};letter-spacing:.03em;">You asked</div>
           <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1.1rem;margin-top:.1rem;color:{TEXT};">{q}</div>
-          <div style="color:{MUTED};font-size:.82rem;margin-top:.2rem;">{note}</div>
-        ''', unsafe_allow_html=True)
+        </div>
+        """, unsafe_allow_html=True)
 
-        if typ == "metric":
-            v   = float(item.get("value", 0))
-            cmp = item.get("compare")
-            st.markdown(f'''
-              <div class="ai-kpi-row">
-                <div class="ai-kpi"><div class="k">Metric</div><div class="v">{mk.replace("_"," ").title()}</div></div>
-                <div class="ai-kpi"><div class="k">Value</div><div class="v">{metric_format(mk, v)}</div></div>
-              </div>
-            ''', unsafe_allow_html=True)
-            if cmp:
-                st.markdown(f'''
-                  <div class="ai-kpi-row" style="margin-top:10px;">
-                    <div class="ai-kpi"><div class="k">Prior</div><div class="v">{metric_format(mk, cmp["prior"])}</div></div>
-                    <div class="ai-kpi"><div class="k">Delta</div><div class="v">{metric_format(mk, cmp["delta"])} ({cmp["pct"]:+.1f}%)</div></div>
-                    <div class="ai-kpi"><div class="k">Window</div><div class="v" style="font-size:1rem;">{cmp["period"]}</div></div>
-                  </div>
-                ''', unsafe_allow_html=True)
-                st.markdown(f'<div style="margin-top:10px;"><span class="ai-pill">Recommendations</span><span class="ai-pill ai-pill-muted">Confidence: {cmp["confidence"]}</span></div>', unsafe_allow_html=True)
-                st.markdown('<div class="ai-actions">', unsafe_allow_html=True)
-                for _t, _desc in quick_recos(mk, cmp["direction"])[:3]:
-                    st.markdown(f'<div class="ai-action"><div class="t">{_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
+        if error:
+            st.error(f"Genie error: {error}")
+            continue
 
-        elif typ == "bar":
-            _dim_col   = item.get("dim", "data_source")
-            _dim_label = _dim_col.replace("_", " ").title()
-            df = item["df"].copy()
-            df["value"] = pd.to_numeric(df["value"], errors="coerce").fillna(0)
-            # Rename the dimension column to "dim" for the chart helper
-            df_chart = df.rename(columns={_dim_col: "dim"}) if _dim_col in df.columns else df.rename(columns={df.columns[0]: "dim"})
-            st.markdown('<div class="chart-card" style="margin-top:10px;">', unsafe_allow_html=True)
-            st.plotly_chart(
-                plot_bar_multi(df_chart, "dim", "value", f"{mk.replace('_',' ').title()} by {_dim_label}"),
-                use_container_width=True, config={"displayModeBar": False}
+        # Natural language answer
+        if text:
+            st.markdown(f"""
+            <div style="color:{TEXT};font-size:.92rem;line-height:1.65;margin:.35rem 0 .5rem;
+                        padding:12px 16px;background:#FAFBFC;border-radius:10px;
+                        border-left:3px solid #E2E8F0;">
+              {text}
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Data table from Genie query result
+        if df is not None and not df.empty:
+            st.dataframe(
+                df_light(df),
+                use_container_width=True,
+                hide_index=True,
+                height=df_height(len(df))
             )
-            st.markdown('</div>', unsafe_allow_html=True)
-            # Formatted display table
-            _val_col = mk.replace("_", " ").title()
-            show_df = df_chart.rename(columns={"dim": _dim_label}).copy()
-            show_df["value"] = show_df["value"].apply(lambda x: metric_format(mk, x))
-            show_df = show_df.rename(columns={"value": _val_col})
-            st.dataframe(df_light(show_df), use_container_width=True, hide_index=True, height=df_height(len(show_df)))
-            # Mover recommendations (only works for data_source dim)
-            if _dim_col == "data_source":
-                win_s = item.get("s_d", start)
-                win_e = item.get("e_d", end)
-                cmp = compute_compare(mk, win_s, win_e, base_df, dim="data_source")
-                movers = cmp.get("movers")
-                if movers is not None and len(movers) > 0:
-                    st.markdown(f'<div style="margin-top:10px;"><span class="ai-pill">Recommendations</span><span class="ai-pill ai-pill-muted">Confidence: {cmp["confidence"]}</span></div>', unsafe_allow_html=True)
-                    mm = movers.sort_values("impact", ascending=(cmp["delta"] < 0)).head(2)
-                    lines = []
-                    for _, r in mm.iterrows():
-                        _n = str(r.get("data_source", r.iloc[0]))
-                        imp = float(r["impact"])
-                        imp_s = f"{imp:+.2f}x" if mk == "roas" else (f"{imp:+.2f}%" if mk in ["cvr","show_rate"] else (money(imp) if mk in ["revenue","spend","cpa"] else f"{imp:+,.0f}"))
-                        lines.append(f"<li><b>{_n}</b>: {imp_s}</li>")
-                    st.markdown(f"<ul style='margin:6px 0 0 18px;color:{TEXT};'>"+"".join(lines)+"</ul>", unsafe_allow_html=True)
-                    st.markdown('<div class="ai-actions">', unsafe_allow_html=True)
-                    for _t, _desc in quick_recos(mk, cmp["direction"])[:3]:
-                        st.markdown(f'<div class="ai-action"><div class="t">{_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
-                    st.markdown('</div>', unsafe_allow_html=True)
 
-        elif typ == "trend":
-            df = item["df"].copy()
-            df["value"] = pd.to_numeric(df["value"], errors="coerce").fillna(0)
-            st.markdown('<div class="chart-card" style="margin-top:10px;">', unsafe_allow_html=True)
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=df["date"], y=df["value"], mode="lines",
-                line=dict(color=GREEN, width=2.5),
-                fill="tozeroy", fillcolor="rgba(0,192,107,0.08)",
-                hovertemplate="<b>%{y:,.1f}</b><extra></extra>",
-            ))
-            fig.update_layout(**base_layout(f"{mk.replace('_',' ').title()} Over Time", 280))
-            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        elif typ == "rank":
-            _dim_col   = item.get("dim", "data_source")
-            _dim_label = _dim_col.replace("_", " ").title()
-            _asc       = item.get("ascending", False)
-            df = item["df"].copy()
-            df["value"] = pd.to_numeric(df["value"], errors="coerce").fillna(0)
-            _rank_title = f"{'Lowest' if _asc else 'Best'} {_dim_label} by {mk.replace('_',' ').title()}"
-            df_chart = df.rename(columns={_dim_col: "dim"}) if _dim_col in df.columns else df.rename(columns={df.columns[0]: "dim"})
-            st.markdown('<div class="chart-card" style="margin-top:10px;">', unsafe_allow_html=True)
-            st.plotly_chart(
-                plot_bar_multi(df_chart, "dim", "value", _rank_title),
-                use_container_width=True, config={"displayModeBar": False}
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
-            _val_col = mk.replace("_", " ").title()
-            show_df = df_chart.rename(columns={"dim": _dim_label}).copy()
-            show_df["value"] = show_df["value"].apply(lambda x: metric_format(mk, x))
-            show_df = show_df.rename(columns={"value": _val_col})
-            st.dataframe(df_light(show_df), use_container_width=True, hide_index=True, height=df_height(len(show_df)))
-
-        elif typ == "compare_two":
-            df       = item.get("df", pd.DataFrame())
-            name_a   = item.get("a", "")
-            name_b   = item.get("b", "")
-            all_opts = []
-            for _c in ["data_source", "channel_group", "campaign"]:
-                if _c in df.columns:
-                    all_opts += df[_c].astype(str).unique().tolist()
-
-            def _best_match(name, options):
-                n = norm(name)
-                for o in options:
-                    if n in norm(o) or norm(o) in n:
-                        return o
-                return max(options, key=lambda o: difflib.SequenceMatcher(None, n, norm(o)).ratio()) if options else None
-
-            match_a = _best_match(name_a, all_opts)
-            match_b = _best_match(name_b, all_opts)
-
-            def _seg_val(df, name):
-                if not name:
-                    return 0.0
-                n = norm(name)
-                for _c in ["data_source", "channel_group", "campaign"]:
-                    if _c in df.columns:
-                        seg = df[df[_c].astype(str).apply(norm) == n]
-                        if len(seg):
-                            return metric_value(seg, mk)
-                return 0.0
-
-            val_a  = _seg_val(df, match_a)
-            val_b  = _seg_val(df, match_b)
-            winner = (match_a or name_a) if val_a >= val_b else (match_b or name_b)
-            diff_p = safe_div(abs(val_a - val_b), max(abs(min(val_a, val_b)), 0.01)) * 100
-            st.markdown(f'''
-              <div class="ai-kpi-row" style="margin-top:10px;">
-                <div class="ai-kpi"><div class="k">{match_a or name_a}</div><div class="v">{metric_format(mk, val_a)}</div></div>
-                <div class="ai-kpi"><div class="k">{match_b or name_b}</div><div class="v">{metric_format(mk, val_b)}</div></div>
-                <div class="ai-kpi"><div class="k">Winner</div><div class="v" style="font-size:1rem;">{winner} (+{diff_p:.0f}%)</div></div>
-              </div>
-            ''', unsafe_allow_html=True)
-            st.markdown(f'<div style="margin-top:10px;"><span class="ai-pill">Recommendations</span></div>', unsafe_allow_html=True)
-            st.markdown('<div class="ai-actions">', unsafe_allow_html=True)
-            for _t, _desc in quick_recos(mk, "up" if val_a >= val_b else "down")[:3]:
-                st.markdown(f'<div class="ai-action"><div class="t">{_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        elif typ == "why":
-            d = item["data"]
-            st.markdown(f'''
-              <div style="margin-top:10px;">
-                <span class="ai-pill">Insights</span>
-                <span class="ai-pill ai-pill-muted">Confidence: {d["confidence"]}</span>
-              </div>
-              <div class="ai-kpi-row">
-                <div class="ai-kpi"><div class="k">Current</div><div class="v">{metric_format(mk, d["current"])}</div></div>
-                <div class="ai-kpi"><div class="k">Prior</div><div class="v">{metric_format(mk, d["prior"])}</div></div>
-                <div class="ai-kpi"><div class="k">Delta</div><div class="v">{metric_format(mk, d["delta"])} ({d["pct"]:+.1f}%)</div></div>
-              </div>
-            ''', unsafe_allow_html=True)
-            st.markdown('<div style="margin-top:10px;"><span class="ai-pill">Drivers</span></div>', unsafe_allow_html=True)
-            for dim, table in d["drivers"]:
-                t = table[[dim, "impact"]].copy()
-                if mk in ["revenue","spend","cpa"]:
-                    t["impact"] = t["impact"].apply(money)
-                elif mk == "roas":
-                    t["impact"] = t["impact"].apply(lambda x: f"{float(x):+.2f}x")
-                elif mk in ["cvr","show_rate"]:
-                    t["impact"] = t["impact"].apply(lambda x: f"{float(x):+.2f}%")
-                else:
-                    t["impact"] = t["impact"].apply(lambda x: f"{float(x):+,.0f}")
-                t = t.rename(columns={dim: dim.replace("_"," ").title(), "impact": "Impact"})
-                st.dataframe(df_light(t), use_container_width=True, hide_index=True, height=df_height(len(t)))
-            st.markdown('<div style="margin-top:10px;"><span class="ai-pill">Actions</span></div>', unsafe_allow_html=True)
-            st.markdown('<div class="ai-actions">', unsafe_allow_html=True)
-            for _t, _desc in d["actions"][:4]:
-                st.markdown(f'<div class="ai-action"><div class="t">{_t}</div><div class="d">{_desc}</div></div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        st.markdown("</div>", unsafe_allow_html=True)
+        # Collapsible SQL
+        if sql:
+            with st.expander("View SQL", expanded=False):
+                st.code(sql, language="sql")
 
 # ==========================================================
 # ROUTER
