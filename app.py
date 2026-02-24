@@ -311,13 +311,14 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#0F172
 
 [data-testid="stSidebar"]{background:#FFFFFF!important;border-right:1px solid #E2E8F0!important;}
 [data-testid="stSidebar"] *{color:#0F172A!important;}
-[data-testid="stSidebar"] label{font-size:.68rem!important;font-weight:800!important;text-transform:uppercase!important;letter-spacing:.5px!important;color:#64748B!important;}
-[data-testid="stSidebar"] [data-baseweb="select"]>div{background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:10px!important;}
-[data-testid="stSidebar"] input{background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:10px!important;}
-[data-testid="stSidebar"] span[data-baseweb="tag"]{background:#E6F9F0!important;border:1px solid #00C06B!important;color:#009952!important;}
-[data-testid="stSidebar"] .stRadio>div{gap:.3rem!important;flex-direction:column!important;}
-[data-testid="stSidebar"] .stRadio label{background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:10px!important;padding:7px 14px!important;font-size:.85rem!important;font-weight:700!important;text-transform:none!important;letter-spacing:0!important;}
-[data-testid="stSidebar"] .stRadio label:has(input:checked){background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;}
+[data-testid="stSidebar"] label{font-size:.72rem!important;font-weight:600!important;text-transform:none!important;letter-spacing:0!important;color:#64748B!important;}
+[data-testid="stSidebar"] [data-baseweb="select"]>div{background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:8px!important;font-size:.82rem!important;}
+[data-testid="stSidebar"] input{background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:8px!important;font-size:.82rem!important;}
+[data-testid="stSidebar"] span[data-baseweb="tag"]{background:#E6F9F0!important;border:1px solid #00C06B!important;color:#009952!important;font-size:.75rem!important;}
+[data-testid="stSidebar"] .stRadio>div{gap:.2rem!important;flex-direction:column!important;}
+[data-testid="stSidebar"] .stRadio label{background:transparent!important;border:none!important;border-radius:8px!important;padding:5px 10px!important;font-size:.84rem!important;font-weight:500!important;color:#64748B!important;text-transform:none!important;letter-spacing:0!important;}
+[data-testid="stSidebar"] .stRadio label:has(input:checked){background:#E6F9F0!important;color:#009952!important;font-weight:600!important;}
+[data-testid="stSidebar"] .stRadio label:hover{background:#F5F7FA!important;}
 
 .nexo-header{display:flex;align-items:center;justify-content:space-between;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:12px 18px;margin-bottom:.9rem;box-shadow:0 2px 12px rgba(0,0,0,.05);}
 .nexo-brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:900;color:#0F172A;}
@@ -361,10 +362,14 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#0F172
   font-weight: 900 !important;
 }
 
-/* Buttons */
+/* Buttons — main content */
 .stButton>button{background:#00C06B!important;color:#fff!important;border:none!important;border-radius:12px!important;font-weight:900!important;padding:.62rem 1rem!important;}
 .stButton>button:hover{background:#009952!important;}
 .stButton>button:focus{outline:none!important;box-shadow:0 0 0 3px rgba(0,192,107,.22)!important;}
+
+/* Sidebar buttons — subtle ghost style */
+section[data-testid="stSidebar"] .stButton>button{background:#F5F7FA!important;color:#64748B!important;border:1px solid #E2E8F0!important;border-radius:8px!important;font-weight:500!important;font-size:.80rem!important;padding:.4rem .75rem!important;}
+section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;}
 
 /* ---- Expander Container (Closed + Open) ---- */
 [data-testid="stExpander"] {
@@ -454,28 +459,27 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#0F172
 .sb-alert-action b{font-weight:900;color:var(--nexo-text);}
 
 /* ==========================================================
-   SIDEBAR — TIGHTER TOP + TIGHTER CONTROL SPACING
-   (this overrides your global .block-container padding)
+   SIDEBAR — CLEAN, COMPACT, SUBTLE
    ========================================================== */
 
-/* Sidebar internal padding (this is the big one) */
+/* Sidebar internal padding */
 section[data-testid="stSidebar"] .block-container {
-  padding: .35rem .75rem .75rem !important;  /* top, sides, bottom */
+  padding: .5rem .85rem 1rem !important;
 }
 
-/* Remove extra top gap Streamlit sometimes adds */
+/* Remove extra top gap */
 section[data-testid="stSidebar"] > div:first-child {
   padding-top: 0 !important;
 }
 
-/* Tighten spacing between widgets */
+/* Tight widget spacing */
 section[data-testid="stSidebar"] .element-container {
-  margin: 0 0 .22rem 0 !important;
+  margin: 0 0 .18rem 0 !important;
 }
 
-/* Tighten labels a bit */
+/* Subtle labels */
 section[data-testid="stSidebar"] label {
-  margin-bottom: .15rem !important;
+  margin-bottom: .1rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -506,42 +510,9 @@ def list_unique(col: str):
 
 with st.sidebar:
 
-    # --- Environment / Mode Banner (TOP OF SIDEBAR) ---
-    _mode_label = "Databricks · Delta" if _DBX_MODE else "Demo · CSV"
-    _mode_detail = f"{DBX_CATALOG}.{DBX_SCHEMA}.{DBX_TABLE}" if _DBX_MODE else "5 Sources"
-    _border_color = BLUE if _DBX_MODE else GREEN
-    _bg_lt = "rgba(59,130,246,.07)" if _DBX_MODE else GREEN_LT
-    st.markdown(
-        f"""
-        <div style="
-            background: linear-gradient(135deg, {_bg_lt}, #ffffff);
-            border-left: 4px solid {_border_color};
-            border-radius: 14px;
-            padding: 14px;
-            margin: 0 0 18px 0;">
-            <div style="font-weight: 700; font-size: 0.95rem;">
-                Attribution Intelligence · {_mode_label}
-            </div>
-            <div style="font-size: 0.80rem; color: {MUTED}; margin-top: 4px;">
-                {_mode_detail}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    # Refresh button (Databricks mode) — clears cache and reloads from Delta
-    if _DBX_MODE:
-        if st.button("🔄 Refresh Data", use_container_width=True, key="refresh_data"):
-            load_data_databricks.clear()
-            st.rerun()
-
     # --- Navigation ---
-    st.markdown(
-        f'<p style="font-size:.68rem;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:{MUTED};margin-bottom:4px;">Navigation</p>',
-        unsafe_allow_html=True
-    )
-    page = st.radio("", ["Dashboard", "AI Agent"], key="nav")
- 
+    page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
+
     st.markdown("---")
     # --------------------------------------------------
     # State init (kept here for stability)
@@ -561,8 +532,6 @@ with st.sidebar:
     if "dismiss_quick" not in st.session_state:
         st.session_state["dismiss_quick"] = False
 
-    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-    st.markdown(f'<p style="font-size:.68rem;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:{MUTED};margin-bottom:4px;">Filters</p>', unsafe_allow_html=True)
     d1, d2 = st.columns(2)
     with d1:
         start = st.date_input("Start Date", value=st.session_state["f_start"], key="f_start")
@@ -585,69 +554,6 @@ with st.sidebar:
 
 
 
-    with st.expander("Data Health (Demo Check)", expanded=False):
-        total_rows = len(DATA)
-        src_count = int(DATA["data_source"].nunique()) if "data_source" in DATA.columns else 0
-        crm_rows = int((DATA["data_source"].astype(str) == "Practice CRM").sum()) if "data_source" in DATA.columns else 0
-
-        def _cov(col: str) -> float:
-            if col not in DATA.columns or total_rows == 0:
-                return 0.0
-            s = pd.to_numeric(DATA[col], errors="coerce").fillna(0)
-            return float((s != 0).mean())
-
-        rev_cov = _cov("total_revenue")
-        spend_cov = _cov("total_cost")
-        leads_cov = _cov("leads") if "leads" in DATA.columns else _cov("conversions")
-        sess_cov = _cov("sessions")
-
-        treat_cov = 0.0
-        if crm_rows > 0 and "treatment" in DATA.columns:
-            crm = DATA[DATA["data_source"].astype(str) == "Practice CRM"].copy()
-            if len(crm):
-                treat_cov = float((crm["treatment"].astype(str).str.strip() != "").mean())
-
-        flags = []
-        if total_rows < 100:
-            flags.append("Low row count")
-        if rev_cov < 0.30:
-            flags.append("Revenue mostly 0")
-        if spend_cov < 0.30:
-            flags.append("Spend mostly 0")
-        if leads_cov < 0.20:
-            flags.append("Leads mostly 0")
-        if sess_cov < 0.20:
-            flags.append("Sessions mostly 0")
-        if crm_rows > 0 and treat_cov < 0.30:
-            flags.append("Treatment mostly blank (CRM)")
-
-        if len(flags) >= 3:
-            status = "❌ Risk"
-        elif len(flags) >= 1:
-            status = "⚠️ Partial"
-        else:
-            status = " Healthy"
-
-        st.markdown(f"**Status:** {status}")
-        st.write(f"- Rows: **{total_rows:,}**")
-        st.write(f"- Sources: **{src_count}**")
-        st.write(f"- Practice CRM rows: **{crm_rows:,}**")
-        st.write(f"- Date range: **{MIN_DATE} → {MAX_DATE}**")
-
-        st.markdown("**Coverage (non-zero %)**")
-        st.write(f"- Revenue: **{rev_cov*100:.0f}%**")
-        st.write(f"- Spend: **{spend_cov*100:.0f}%**")
-        st.write(f"- Leads: **{leads_cov*100:.0f}%**")
-        st.write(f"- Sessions: **{sess_cov*100:.0f}%**")
-        if crm_rows > 0:
-            st.write(f"- Treatment filled (CRM): **{treat_cov*100:.0f}%**")
-
-        if flags:
-            st.markdown("**What to fix**")
-            for f in flags[:6]:
-                st.write(f"- {f}")
-
-    
     # --------------------------------------------------
     # Alerts (dropdown)
     # --------------------------------------------------
@@ -655,64 +561,20 @@ with st.sidebar:
         _alerts_slot = st.empty()
 
     # --------------------------------------------------
-    # Scenarios (dropdown)
-    # --------------------------------------------------
-    with st.expander("Scenarios", expanded=False):
-        SCENARIOS = {
-            "None": None,
-            "ROAS drop week": {
-                "start_offset_days": 14,
-                "end_offset_days": 0,
-                "sources": ["All"],
-                "channel": "All",
-                "campaign": "All",
-            },
-            "Revenue growth month": {
-                "start_offset_days": 30,
-                "end_offset_days": 0,
-                "sources": ["All"],
-                "channel": "All",
-                "campaign": "All",
-            },
-            "Show rate risk (CRM)": {
-                "start_offset_days": 21,
-                "end_offset_days": 0,
-                "sources": ["Practice CRM"],
-                "channel": "All",
-                "campaign": "All",
-            },
-        }
-
-        scenario_name = st.selectbox("Scenario", options=list(SCENARIOS.keys()), key="demo_scenario")
-
-        def _clear_demo_scenario():
-            st.session_state["demo_scenario"] = "None"
-            st.session_state["f_start"] = MIN_DATE
-            st.session_state["f_end"] = MAX_DATE
-            st.session_state["f_sources"] = ["All"]
-            st.session_state["f_channel"] = "All"
-            st.session_state["f_campaign"] = "All"
-
-        cA, cB = st.columns(2)
-        if cA.button("Apply", use_container_width=True, key="apply_scn"):
-            scn = SCENARIOS.get(scenario_name)
-            if scn and scenario_name != "None":
-                st.session_state["f_start"] = MAX_DATE - timedelta(days=int(scn["start_offset_days"]))
-                st.session_state["f_end"]   = MAX_DATE - timedelta(days=int(scn.get("end_offset_days", 0)))
-                st.session_state["f_sources"]  = scn["sources"]
-                st.session_state["f_channel"]  = scn["channel"]
-                st.session_state["f_campaign"] = scn["campaign"]
-                st.session_state["demo_scenario"] = scenario_name
-                st.rerun()
-        if cB.button("Clear", use_container_width=True, key="clear_scn"):
-            _clear_demo_scenario()
-            st.rerun()
-
-    # --------------------------------------------------
     # Export (dropdown)
     # --------------------------------------------------
     with st.expander("Export", expanded=False):
         _export_slot = st.empty()
+
+    # --------------------------------------------------
+    # Refresh button — bottom of sidebar (Databricks only)
+    # --------------------------------------------------
+    if _DBX_MODE:
+        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+        if st.button("Refresh Data", use_container_width=True, key="refresh_data"):
+            load_data_databricks.clear()
+            st.rerun()
+
 def apply_filters(df: pd.DataFrame, s: date, e: date, srcs, ch: str, camp: str) -> pd.DataFrame:
     out = df[(df["date"] >= s) & (df["date"] <= e)].copy()
     if srcs:
