@@ -375,6 +375,10 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#0F172
 section[data-testid="stSidebar"] .stButton>button{background:#F5F7FA!important;color:#64748B!important;border:1px solid #E2E8F0!important;border-radius:8px!important;font-weight:500!important;font-size:.80rem!important;padding:.4rem .75rem!important;}
 section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;}
 
+/* Reset filters — extra subtle, text-link feel */
+.sb-reset-wrap .stButton>button{background:transparent!important;color:#94A3B8!important;border:none!important;font-size:.72rem!important;font-weight:400!important;padding:.2rem .5rem!important;text-decoration:underline!important;text-underline-offset:3px!important;box-shadow:none!important;}
+.sb-reset-wrap .stButton>button:hover{color:#64748B!important;background:transparent!important;}
+
 /* ---- Expander Container (Closed + Open) ---- */
 [data-testid="stExpander"] {
     background: #FFFFFF !important;
@@ -401,10 +405,12 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
     background: #FFFFFF !important;
 }
 
-/* AI preset suggestion pills */
-.ai-presets .stButton>button{background:#F8FAFC!important;color:#475569!important;border:1px solid #E2E8F0!important;border-radius:999px!important;font-weight:500!important;padding:.35rem .75rem!important;font-size:.80rem!important;height:34px!important;line-height:1!important;transition:all .15s ease!important;}
-.ai-presets .stButton>button:hover{background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;}
-.ai-row-spacer{height:.5rem;}
+/* AI row — all buttons same subtle ghost style */
+.ai-presets .stButton>button{background:#F8FAFC!important;color:#64748B!important;border:1px solid #E9EEF4!important;border-radius:999px!important;font-weight:400!important;padding:.3rem .7rem!important;font-size:.78rem!important;height:32px!important;line-height:1!important;transition:all .15s ease!important;box-shadow:none!important;}
+.ai-presets .stButton>button:hover{background:#EEF2F7!important;border-color:#CBD5E1!important;color:#334155!important;}
+/* Ask button — slightly more visible but still subtle */
+.ai-presets [data-testid="stButton"]:nth-last-child(2) button{background:#F1F5F9!important;color:#1E293B!important;border:1px solid #CBD5E1!important;border-radius:999px!important;font-weight:600!important;}
+.ai-row-spacer{height:.6rem;}
 
 /* AI input */
 .stTextInput>div>div>input{background:#FFFFFF!important;color:#0F172A!important;border:1.5px solid #E2E8F0!important;border-radius:12px!important;padding:.72rem .9rem!important;font-size:.92rem!important;}
@@ -414,24 +420,24 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 .reset-wrap .stButton>button{background:#F5F7FA!important;color:#64748B!important;border:1px solid #E2E8F0!important;font-weight:500!important;}
 .reset-wrap .stButton>button:hover{background:#F1F5F9!important;}
 
-/* AI answer cards — genie style */
-.ai-answer{background:#FFFFFF;border:1px solid #EEF2F7;border-radius:16px;padding:18px 20px;margin:.6rem 0;box-shadow:0 1px 6px rgba(15,23,42,.05);}
+/* AI answer cards — minimal genie style */
+.ai-answer{background:#FAFBFC;border:1px solid #EEF2F7;border-radius:14px;padding:16px 18px;margin:.5rem 0;box-shadow:none;}
 
-/* KPI row — inline, no heavy boxes */
-.ai-kpi-row{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px;padding:12px 0;border-top:1px solid #F1F5F9;}
-.ai-kpi{flex:1;min-width:120px;}
-.ai-kpi .k{font-size:.70rem;font-weight:500;color:#94A3B8;letter-spacing:.04em;}
-.ai-kpi .v{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;font-weight:700;color:#0F172A;margin-top:3px;}
+/* KPI row — inline, no boxes */
+.ai-kpi-row{display:flex;gap:28px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid #F1F5F9;}
+.ai-kpi{flex:1;min-width:100px;}
+.ai-kpi .k{font-size:.68rem;font-weight:400;color:#94A3B8;letter-spacing:.03em;}
+.ai-kpi .v{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:600;color:#1E293B;margin-top:2px;}
 
-/* Pills */
-.ai-pill{display:inline-block;background:#F0FDF7;color:#059669;border:1px solid #A7F3D0;border-radius:999px;font-weight:600;font-size:.70rem;padding:3px 10px;margin-right:5px;}
-.ai-pill-muted{background:#F8FAFC;color:#64748B;border:1px solid #E2E8F0;}
+/* Pills — very subtle */
+.ai-pill{display:inline-block;background:#F1F5F9;color:#475569;border:none;border-radius:999px;font-weight:500;font-size:.68rem;padding:2px 9px;margin-right:4px;}
+.ai-pill-muted{background:#F8FAFC;color:#94A3B8;}
 
-/* Action items — clean list, no heavy boxes */
-.ai-actions{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
-.ai-action{background:#F8FAFC;border-left:3px solid #E2E8F0;border-radius:0 8px 8px 0;padding:8px 12px;}
-.ai-action .t{font-weight:600;font-size:.88rem;color:#0F172A;}
-.ai-action .d{color:#64748B;font-size:.82rem;margin-top:2px;line-height:1.4;}
+/* Action items — minimal left-border list */
+.ai-actions{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+.ai-action{background:transparent;border-left:2px solid #E2E8F0;padding:5px 10px;}
+.ai-action .t{font-weight:500;font-size:.85rem;color:#334155;}
+.ai-action .d{color:#94A3B8;font-size:.80rem;margin-top:1px;line-height:1.35;}
 
 
 
@@ -561,7 +567,21 @@ with st.sidebar:
         camp_opts = ["All"] + list_unique("campaign")
         campaign = st.selectbox("Campaign", camp_opts, index=(camp_opts.index(st.session_state["f_campaign"]) if st.session_state["f_campaign"] in camp_opts else 0), key="f_campaign")
 
+    # --------------------------------------------------
+    # Reset filters button — subtle, before Alerts
+    # --------------------------------------------------
+    def _reset_filters():
+        st.session_state["f_start"]   = MIN_DATE
+        st.session_state["f_end"]     = MAX_DATE
+        st.session_state["f_sources"] = ["All"]
+        st.session_state["f_channel"] = "All"
+        st.session_state["f_campaign"] = "All"
 
+    st.markdown('<div class="sb-reset-wrap">', unsafe_allow_html=True)
+    if st.button("Reset filters", use_container_width=True, key="reset_filters"):
+        _reset_filters()
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # --------------------------------------------------
     # Alerts (dropdown)
@@ -1418,8 +1438,11 @@ def compute_compare(metric_key: str, s_d: date, e_d: date, base_df: pd.DataFrame
 
     movers = None
     if dim:
-        g1 = cur.groupby(dim).apply(lambda x: metric_value(x, metric_key)).reset_index(name="value")
-        g2 = prev.groupby(dim).apply(lambda x: metric_value(x, metric_key)).reset_index(name="value_prev")
+        # Pandas 2.x compatible — don't use reset_index(name=) on groupby result
+        g1 = cur.groupby(dim).apply(lambda x: metric_value(x, metric_key)).reset_index()
+        g1.columns = [dim, "value"]
+        g2 = prev.groupby(dim).apply(lambda x: metric_value(x, metric_key)).reset_index()
+        g2.columns = [dim, "value_prev"]
         m = pd.merge(g1, g2, on=dim, how="outer").fillna(0)
         m["impact"] = m["value"] - m["value_prev"]
         # If overall is down, show biggest negative movers first; else biggest positive movers first
@@ -1489,30 +1512,28 @@ def render_ai():
         "Compare Google vs Facebook",
     ]
 
-    st.markdown('<div class="ai-presets">', unsafe_allow_html=True)
-    _pr1, _pr2, _pr3 = st.columns(3)
+    # Full-width input
+    user_q = st.text_input(
+        "",
+        placeholder="e.g. What was ROAS last 30 days?",
+        label_visibility="collapsed",
+        key=f"ai_input_{st.session_state.ai_nonce}"
+    )
+
+    # Presets + Ask + Clear in one row below input
+    st.markdown(‘<div class="ai-presets">’, unsafe_allow_html=True)
+    _pr1, _pr2, _pr3, _askcol, _clearcol = st.columns([2.4, 2.4, 2.4, 1.6, 1.1])
     for col, p in zip([_pr1, _pr2, _pr3], presets):
         with col:
             if st.button(p, use_container_width=True, key=f"ai_p_{p}"):
                 st.session_state.ai_preset = p
                 st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('<div class="ai-row-spacer"></div>', unsafe_allow_html=True)
-
-    # input + ask + reset aligned
-    qcol, askcol, resetcol = st.columns([6,2,1.6])
-    with qcol:
-        user_q = st.text_input(
-            "",
-            placeholder="Ask away — I’m here to help",
-            label_visibility="collapsed",
-            key=f"ai_input_{st.session_state.ai_nonce}"
-        )
-    with askcol:
-        ask = st.button("Ask AI Agent", use_container_width=True, key="ai_ask")
-    with resetcol:
-        # Secondary: visually distinct + avoids weird wrapper spacing
-        reset = st.button("Reset", use_container_width=True, key="ai_reset", type="secondary")
+    with _askcol:
+        ask = st.button("Ask", use_container_width=True, key="ai_ask")
+    with _clearcol:
+        reset = st.button("Clear", use_container_width=True, key="ai_reset", type="secondary")
+    st.markdown(‘</div>’, unsafe_allow_html=True)
+    st.markdown(‘<div class="ai-row-spacer"></div>’, unsafe_allow_html=True)
 
     if reset:
         st.session_state.ai_history = []
