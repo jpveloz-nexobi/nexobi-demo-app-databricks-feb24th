@@ -409,15 +409,24 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
     background: #FFFFFF !important;
 }
 
-/* AI suggestion chips — target the column block that directly follows the marker div */
-[data-testid="stMarkdownContainer"]:has(#ai-chips-marker) + [data-testid="stHorizontalBlock"] .stButton>button,
-[data-testid="stMarkdownContainer"]:has(#ai-chips-marker) ~ [data-testid="stHorizontalBlock"] .stButton>button{background:#F8FAFC!important;color:#475569!important;border:1px solid #E2E8F0!important;border-radius:999px!important;font-weight:400!important;padding:.22rem .78rem!important;font-size:.76rem!important;height:auto!important;min-height:0!important;line-height:1.4!important;transition:all .12s!important;box-shadow:none!important;width:auto!important;}
-[data-testid="stMarkdownContainer"]:has(#ai-chips-marker) + [data-testid="stHorizontalBlock"] .stButton>button:hover,
-[data-testid="stMarkdownContainer"]:has(#ai-chips-marker) ~ [data-testid="stHorizontalBlock"] .stButton>button:hover{background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;}
-/* AI chat bubbles */
-.ai-bubble-user{display:flex;justify-content:flex-end;margin:.6rem 0 .15rem;}
-.ai-bubble-user span{background:#00C06B;color:#fff;border-radius:16px 16px 4px 16px;padding:8px 14px;font-size:.87rem;font-weight:500;max-width:75%;line-height:1.45;display:inline-block;}
-.ai-bubble-ai{background:#FFFFFF;border:1px solid #EEF2F7;border-radius:4px 16px 16px 16px;padding:14px 16px;margin:.1rem 0 .5rem;font-size:.88rem;color:#1E293B;line-height:1.6;}
+/* === AI AGENT — hero welcome screen === */
+.ai-hero{position:relative;text-align:center;padding:2.8rem 1rem 1.6rem;overflow:hidden;}
+.ai-hero .wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);width:400px;opacity:.04;pointer-events:none;user-select:none;filter:grayscale(1);}
+.ai-greeting{font-family:'Plus Jakarta Sans',sans-serif;font-size:2.05rem;font-weight:900;color:#0F172A;line-height:1.2;margin-bottom:.45rem;}
+.ai-greeting-sub{font-size:.97rem;color:#64748B;font-weight:400;margin-bottom:0;}
+/* Preset cards — :has() sibling from marker */
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{background:#FFFFFF!important;border:1.5px solid #E2E8F0!important;border-radius:16px!important;padding:1.15rem 1.1rem!important;min-height:90px!important;height:auto!important;text-align:left!important;font-size:.87rem!important;font-weight:600!important;box-shadow:0 2px 14px rgba(0,0,0,.05)!important;transition:all .16s!important;line-height:1.45!important;white-space:normal!important;width:100%!important;}
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button:hover{box-shadow:0 8px 28px rgba(0,0,0,.11)!important;transform:translateY(-2px)!important;}
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(1) .stButton>button{border-top:3px solid #00C06B!important;background:linear-gradient(155deg,#F0FDF4 0%,#FFFFFF 42%)!important;color:#065F46!important;}
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(2) .stButton>button{border-top:3px solid #3B82F6!important;background:linear-gradient(155deg,#EFF6FF 0%,#FFFFFF 42%)!important;color:#1E40AF!important;}
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(3) .stButton>button{border-top:3px solid #8B5CF6!important;background:linear-gradient(155deg,#F5F3FF 0%,#FFFFFF 42%)!important;color:#4C1D95!important;}
+/* "New chat" button in active header — scoped by column marker */
+[data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button{background:transparent!important;border:1px solid #E2E8F0!important;border-radius:8px!important;color:#64748B!important;font-size:.74rem!important;font-weight:400!important;padding:.2rem .65rem!important;height:auto!important;min-height:0!important;box-shadow:none!important;}
+[data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button:hover{border-color:#CBD5E1!important;color:#475569!important;background:#F8FAFC!important;}
+/* Chat bubbles */
+.ai-bubble-user{display:flex;justify-content:flex-end;margin:.65rem 0 .15rem;}
+.ai-bubble-user span{background:#00C06B;color:#fff;border-radius:16px 16px 4px 16px;padding:9px 15px;font-size:.87rem;font-weight:500;max-width:75%;line-height:1.45;display:inline-block;}
+.ai-bubble-ai{background:#FFFFFF;border:1px solid #EEF2F7;border-radius:4px 16px 16px 16px;padding:14px 17px;margin:.1rem 0 .55rem;font-size:.88rem;color:#1E293B;line-height:1.65;}
 
 /* AI input — remove black baseweb accent */
 .stTextInput>div>[data-baseweb="base-input"]{border:1.5px solid #E2E8F0!important;border-radius:12px!important;background:#FFFFFF!important;box-shadow:none!important;}
@@ -1177,9 +1186,9 @@ def render_practice():
 
     # --- CRM Tabs: Treatment Movers | Patient Journey ---
     if "treatment" in CUR.columns:
-        _crm_tab1, _crm_tab2 = st.tabs(["Treatment Movers", "Patient Journey"])
+        _crm_tab2, _crm_tab1 = st.tabs(["Patient Journey", "Treatment Movers"])
 
-        # ── Tab 1: Treatment Movers ──────────────────────────────
+        # ── Tab 1 (2nd tab): Treatment Movers ───────────────────
         with _crm_tab1:
             cur_t = CUR.dropna(subset=["treatment"]).copy()
             prev_t = PREV.dropna(subset=["treatment"]).copy() if len(PREV) else pd.DataFrame(columns=cur_t.columns)
@@ -1260,7 +1269,7 @@ def render_practice():
             else:
                 st.info("No treatment rows available for the selected date range.")
 
-        # ── Tab 2: Patient Journey ───────────────────────────────
+        # ── Tab 2 (1st tab): Patient Journey ────────────────────
         with _crm_tab2:
             tj = CUR.dropna(subset=["treatment"]).copy()
             if len(tj) > 0:
@@ -1648,15 +1657,7 @@ def ai_query_ask(question: str) -> dict:
 
 
 def render_ai():
-    # Header
-    st.markdown(
-        f'<p style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:1.25rem;'
-        f'font-weight:700;color:{TEXT};margin:0 0 .15rem;">Ask your data</p>'
-        f'<p style="color:{MUTED};font-size:.82rem;margin:0 0 1rem;">'
-        f'Powered by Databricks AI · Llama 3.3</p>',
-        unsafe_allow_html=True
-    )
-
+    # ── Session state init ───────────────────────────────────
     if "ai_history" not in st.session_state:
         st.session_state.ai_history = []
     if "ai_nonce" not in st.session_state:
@@ -1664,19 +1665,59 @@ def render_ai():
     if "ai_preset" not in st.session_state:
         st.session_state.ai_preset = None
 
-    # Suggestion chips
-    presets = ["Revenue last 30 days", "ROAS by source", "Compare Google vs Facebook"]
-    st.markdown('<div id="ai-chips-marker"></div>', unsafe_allow_html=True)
-    _pc = st.columns([1.7, 1.4, 2.1, 1.8])  # 3 chip cols + spacer
-    for col, p in zip(_pc[:3], presets):
-        with col:
-            if st.button(p, key=f"ai_p_{p}"):
-                st.session_state.ai_preset = p
-                st.rerun()
-    st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+    has_history = len(st.session_state.ai_history) > 0
 
-    # Input row: text box + Send + Clear
-    _icol, _scol, _ccol = st.columns([8, 1.1, 1])
+    # ── EMPTY STATE: hero + preset cards ────────────────────
+    if not has_history:
+        hr = datetime.now().hour
+        greet = "Good morning" if hr < 12 else "Good afternoon" if hr < 17 else "Good evening"
+
+        st.markdown(f'''
+<div class="ai-hero">
+  <img class="wm"
+       src="https://images.squarespace-cdn.com/content/v1/68daa6f79c8c695a65a1d1bd/1759160060457-MMX5Q30RNSVGDEWNRL0S/nexobi_logo_transparent_background.png?format=1500w"
+       alt="">
+  <div class="ai-greeting">{greet} 👋</div>
+  <div class="ai-greeting-sub">What would you like to know about your data today?</div>
+</div>
+''', unsafe_allow_html=True)
+
+        # ── Preset cards ─────────────────────────────────────
+        card_labels = [
+            ("💰  Revenue · last 30 days",     "Revenue last 30 days"),
+            ("📊  ROAS · by source",            "ROAS by source"),
+            ("⚡  Google vs Facebook",          "Compare Google vs Facebook"),
+        ]
+        st.markdown('<div id="ai-cards-marker"></div>', unsafe_allow_html=True)
+        _pc = st.columns(3, gap="medium")
+        for col, (label, val) in zip(_pc, card_labels):
+            with col:
+                if st.button(label, key=f"ai_p_{val}", use_container_width=True):
+                    st.session_state.ai_preset = val
+                    st.rerun()
+
+        st.markdown('<div style="height:1.4rem"></div>', unsafe_allow_html=True)
+
+    # ── ACTIVE STATE: compact header ─────────────────────────
+    else:
+        _hcol, _ncol = st.columns([10, 1.8])
+        with _hcol:
+            st.markdown(
+                f'<p style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:.94rem;'
+                f'font-weight:700;color:{TEXT};margin:0 0 .5rem;">'
+                f'<span style="color:#00C06B;margin-right:6px;">◆</span>NexoBI AI · Ask your data</p>',
+                unsafe_allow_html=True
+            )
+        with _ncol:
+            st.markdown('<div id="ai-newchat-marker"></div>', unsafe_allow_html=True)
+            if st.button("New chat", key="ai_reset_compact", use_container_width=True):
+                st.session_state.ai_history = []
+                st.session_state.ai_nonce  += 1
+                st.session_state.ai_preset  = None
+                st.rerun()
+
+    # ── Chat input (always rendered) ─────────────────────────
+    _icol, _scol = st.columns([9, 1.3])
     with _icol:
         user_q = st.text_input(
             "", placeholder="Ask anything about your data…",
@@ -1685,17 +1726,16 @@ def render_ai():
         )
     with _scol:
         st.markdown('<div class="ai-send">', unsafe_allow_html=True)
-        ask = st.button("Send", use_container_width=True, key="ai_ask")
+        ask = st.button("→ Send", use_container_width=True, key="ai_ask")
         st.markdown('</div>', unsafe_allow_html=True)
-    with _ccol:
-        reset = st.button("Clear", use_container_width=True, key="ai_reset")
 
-    if reset:
-        st.session_state.ai_history = []
-        st.session_state.ai_nonce  += 1
-        st.session_state.ai_preset  = None
-        st.rerun()
+    st.markdown(
+        '<p style="font-size:.70rem;color:#CBD5E1;margin:.25rem 0 .7rem;text-align:right;">'
+        'Powered by Databricks AI · Llama 3.3 70B</p>',
+        unsafe_allow_html=True
+    )
 
+    # ── Resolve question ─────────────────────────────────────
     run_q = None
     if st.session_state.ai_preset:
         run_q = st.session_state.ai_preset
@@ -1703,7 +1743,6 @@ def render_ai():
     elif ask and user_q.strip():
         run_q = user_q.strip()
 
-    # ---- Call AI ----
     if run_q:
         with st.spinner("Thinking…"):
             result = ai_query_ask(run_q)
@@ -1712,9 +1751,7 @@ def render_ai():
             st.session_state.ai_history = st.session_state.ai_history[:10]
         st.rerun()
 
-    st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
-
-    # ---- Chat history ----
+    # ── Chat history ─────────────────────────────────────────
     for item in st.session_state.ai_history:
         q     = item.get("q", "")
         text  = item.get("text", "")
@@ -1722,23 +1759,23 @@ def render_ai():
         df    = item.get("df")
         error = item.get("error")
 
-        # User bubble (right-aligned green)
+        # User bubble
         st.markdown(f'<div class="ai-bubble-user"><span>{q}</span></div>', unsafe_allow_html=True)
 
         if error:
             st.error(f"AI error: {error}")
             continue
 
-        # AI response bubble
+        # AI response
         if text:
             st.markdown(f'<div class="ai-bubble-ai">{text}</div>', unsafe_allow_html=True)
 
-        # Auto-generated chart based on question
+        # Auto chart
         chart = _ai_chart(q)
         if chart is not None:
             st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
 
-        # Data table from query result
+        # Data table
         if df is not None and not df.empty:
             st.dataframe(
                 df_light(df),
@@ -1747,7 +1784,7 @@ def render_ai():
                 height=df_height(len(df))
             )
 
-        # Collapsible SQL
+        # SQL expander
         if sql:
             with st.expander("View SQL", expanded=False):
                 st.code(sql, language="sql")
