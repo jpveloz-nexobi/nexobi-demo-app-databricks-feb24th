@@ -2337,6 +2337,16 @@ def _is_visual_question(q: str) -> bool:
 
 
 def render_ai():
+    # ── NexoBI wordmark header ────────────────────────────────
+    st.markdown('''
+<div style="text-align:center;padding:2rem 0 0;">
+  <span style="font-family:\'Plus Jakarta Sans\',\'Inter\',sans-serif;font-size:1.35rem;font-weight:900;
+               color:#0F172A;letter-spacing:-.03em;">
+    Nexo<span style="color:#00C06B;">BI</span>
+  </span>
+</div>
+''', unsafe_allow_html=True)
+
     # ── Session state init ───────────────────────────────────
     if "ai_history" not in st.session_state:
         st.session_state.ai_history = []
