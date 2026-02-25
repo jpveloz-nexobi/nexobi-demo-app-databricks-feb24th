@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, date
 # ==========================================================
 CSV_PATH = "data.csv"   # used when DATA_MODE == "csv"
 
-DATA_MODE = os.getenv("NEXOBI_DATA_MODE", "databricks").lower()   # "csv" | "databricks"
+DATA_MODE = os.getenv("NEXOBI_DATA_MODE", "csv").lower()   # "csv" | "databricks"
 
 # Unity Catalog coordinates — set these as Databricks Apps env vars
 DBX_CATALOG = os.getenv("NEXOBI_CATALOG", "workspace")
@@ -229,8 +229,8 @@ def load_data_databricks(catalog: str, schema: str, table: str) -> pd.DataFrame:
 
 # ---- Load data based on mode (with automatic CSV fallback) ----
 # Respect manual override set via sidebar toggle (persists in session_state)
-_force_csv     = st.session_state.get("force_csv_mode", False)
-_ACTIVE_MODE   = "csv" if _force_csv else DATA_MODE
+_force_live    = st.session_state.get("force_live_mode", False)
+_ACTIVE_MODE   = "databricks" if _force_live else DATA_MODE
 _FALLBACK_WARN = None               # banner message shown in sidebar
 
 try:
@@ -647,39 +647,38 @@ def list_unique(col: str):
 with st.sidebar:
 
     # --- Data mode badge + one-click switch ---
-    if DATA_MODE == "databricks":
-        _is_offline = st.session_state.get("force_csv_mode", False) or bool(_FALLBACK_WARN)
-        if _FALLBACK_WARN and not st.session_state.get("force_csv_mode", False):
-            _badge_label  = "⚠ Auto-switched to CSV"
-            _badge_detail = "Databricks unreachable"
-            _badge_bg, _badge_bd, _badge_fc = "#FFF7ED", "#FED7AA", "#C2410C"
-        elif _is_offline:
-            _badge_label  = "📁 Local CSV"
-            _badge_detail = "AI Agent unavailable"
-            _badge_bg, _badge_bd, _badge_fc = "#FFF7ED", "#FED7AA", "#C2410C"
-        else:
-            _badge_label  = "🌐 Live · Databricks"
-            _badge_detail = "AI Agent active"
-            _badge_bg, _badge_bd, _badge_fc = "#F0FDF4", "#BBF7D0", "#15803D"
+    _is_live = st.session_state.get("force_live_mode", False) and not bool(_FALLBACK_WARN)
+    if _FALLBACK_WARN:
+        _badge_label  = "⚠ Live unavailable"
+        _badge_detail = "Fell back to local CSV"
+        _badge_bg, _badge_bd, _badge_fc = "#FFF7ED", "#FED7AA", "#C2410C"
+    elif _is_live:
+        _badge_label  = "🌐 Live · Databricks"
+        _badge_detail = "AI Agent active"
+        _badge_bg, _badge_bd, _badge_fc = "#F0FDF4", "#BBF7D0", "#15803D"
+    else:
+        _badge_label  = "📁 Local CSV"
+        _badge_detail = "AI Agent unavailable"
+        _badge_bg, _badge_bd, _badge_fc = "#F8FAFC", "#E2E8F0", "#475569"
 
-        st.markdown(
-            f'<div style="background:{_badge_bg};border:1px solid {_badge_bd};border-radius:8px;'
-            f'padding:7px 10px;margin-bottom:5px;">'
-            f'<div style="font-size:.71rem;font-weight:700;color:{_badge_fc};">{_badge_label}</div>'
-            f'<div style="font-size:.63rem;color:#94A3B8;margin-top:1px;">{_badge_detail}</div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-        st.markdown('<div class="sb-reset-wrap">', unsafe_allow_html=True)
-        _switch_lbl = "Switch to Live →" if _is_offline else "Switch to Local CSV →"
-        if st.button(_switch_lbl, key="mode_switch_btn", use_container_width=True):
-            st.session_state["force_csv_mode"] = not _is_offline
-            try:
-                load_data_databricks.clear()
-            except Exception:
-                pass
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="background:{_badge_bg};border:1px solid {_badge_bd};border-radius:8px;'
+        f'padding:7px 10px;margin-bottom:5px;">'
+        f'<div style="font-size:.71rem;font-weight:700;color:{_badge_fc};">{_badge_label}</div>'
+        f'<div style="font-size:.63rem;color:#94A3B8;margin-top:1px;">{_badge_detail}</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+    st.markdown('<div class="sb-reset-wrap">', unsafe_allow_html=True)
+    _switch_lbl = "Switch to Local CSV →" if _is_live else "Switch to Live →"
+    if st.button(_switch_lbl, key="mode_switch_btn", use_container_width=True):
+        st.session_state["force_live_mode"] = not _is_live
+        try:
+            load_data_databricks.clear()
+        except Exception:
+            pass
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Navigation ---
     page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
