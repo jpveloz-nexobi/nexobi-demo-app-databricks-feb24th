@@ -454,24 +454,19 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 
 
 
-/* Floating alert popup — top-right corner */
-.nexo-popup{position:fixed;top:72px;right:20px;width:308px;z-index:9999;background:#FFFFFF;border-radius:16px;box-shadow:0 8px 32px rgba(15,23,42,.12),0 2px 8px rgba(15,23,42,.06);border:1px solid #E2E8F0;padding:14px 14px 10px;font-family:'DM Sans',sans-serif;}
-.nexo-popup-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.nexo-popup-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.1em;}
-.nexo-popup-close{font-size:.9rem;color:#94A3B8;cursor:pointer;line-height:1;padding:2px 4px;border-radius:4px;}
-.nexo-popup-close:hover{color:#0F172A;background:#F1F5F9;}
-.nexo-alert{border-radius:10px;padding:10px 12px;margin:6px 0;border-left:4px solid #E2E8F0;background:#FAFBFC;}
+/* Sidebar alert cards */
+.nexo-alert{border-radius:10px;padding:9px 11px;margin:5px 0;border-left:4px solid #E2E8F0;background:#FAFBFC;}
 .nexo-alert.sev-green{border-left-color:#00C06B;background:rgba(0,192,107,.05);}
 .nexo-alert.sev-amber{border-left-color:#F59E0B;background:rgba(245,158,11,.06);}
 .nexo-alert.sev-red{border-left-color:#EF4444;background:rgba(239,68,68,.06);}
-.nexo-alert-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;}
-.nexo-alert-title{font-size:.82rem;font-weight:700;color:#0F172A;}
-.nexo-alert-pill{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;}
+.nexo-alert-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px;}
+.nexo-alert-title{font-size:.8rem;font-weight:700;color:#0F172A;}
+.nexo-alert-pill{font-size:.64rem;font-weight:700;padding:1px 7px;border-radius:999px;white-space:nowrap;}
 .sb-pill-red{background:rgba(239,68,68,.10);color:#EF4444;}
 .sb-pill-amber{background:rgba(245,158,11,.12);color:#D97706;}
 .sb-pill-green{background:rgba(0,192,107,.10);color:#009952;}
-.nexo-alert-detail{font-size:.78rem;color:#64748B;line-height:1.4;}
-.nexo-alert-action{font-size:.75rem;color:#0F172A;margin-top:5px;padding-top:5px;border-top:1px solid rgba(0,0,0,.06);line-height:1.4;}
+.nexo-alert-detail{font-size:.76rem;color:#64748B;line-height:1.35;}
+.nexo-alert-action{font-size:.73rem;color:#0F172A;margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,.06);line-height:1.35;}
 .nexo-alert-action b{font-weight:700;}
 
 /* ==========================================================
@@ -497,6 +492,12 @@ section[data-testid="stSidebar"] .element-container {
 section[data-testid="stSidebar"] label {
   margin-bottom: .1rem !important;
 }
+
+/* Tab text — always legible, green when active */
+.stTabs [data-baseweb="tab"]{color:#0F172A!important;font-weight:500!important;font-size:.88rem!important;}
+.stTabs [data-baseweb="tab"][aria-selected="true"]{color:#00C06B!important;font-weight:700!important;}
+.stTabs [data-baseweb="tab-highlight"]{background:#00C06B!important;}
+.stTabs [data-baseweb="tab-border"]{background:#E2E8F0!important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -915,35 +916,42 @@ try:
         doc.build(elems)
         return buf.getvalue()
 
-    # CSV is always cheap — generate immediately
+    # CSV — always generated (no extra dependencies)
     csv_bytes = CUR.to_csv(index=False).encode("utf-8")
-    # PDF is cached per filter state — only rebuilds when filters change
-    _src_str = ",".join(sorted([str(x) for x in sources_selected])) if sources_selected else "All"
-    pdf_bytes = _build_pdf_cached(
-        csv_bytes, str(start), str(end), _src_str, channel, campaign, practice_mode, str(page)
-    )
 
+    # PDF — optional; falls back to empty if reportlab/matplotlib missing
     try:
-        with _export_slot.container():
-            _dc1, _dc2, _ = st.columns([1, 1, 3])
-            with _dc1:
-                st.download_button("↓ CSV", data=csv_bytes,
-                                   file_name=f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv",
-                                   mime="text/csv", use_container_width=True, key="dl_csv")
-            with _dc2:
-                st.download_button("↓ PDF", data=pdf_bytes,
-                                   file_name=f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf",
-                                   mime="application/pdf", use_container_width=True, key="dl_pdf")
+        _src_str = ",".join(sorted([str(x) for x in sources_selected])) if sources_selected else "All"
+        pdf_bytes = _build_pdf_cached(
+            csv_bytes, str(start), str(end), _src_str, channel, campaign, practice_mode, str(page)
+        )
     except Exception:
-        st.sidebar.download_button("↓ CSV", data=csv_bytes,
-                                   file_name=f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv",
-                                   mime="text/csv", key="dl_csv_fb")
-        st.sidebar.download_button("↓ PDF", data=pdf_bytes,
-                                   file_name=f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf",
-                                   mime="application/pdf", key="dl_pdf_fb")
+        pdf_bytes = b""
 
 except Exception:
-    pass
+    csv_bytes = CUR.to_csv(index=False).encode("utf-8")
+    pdf_bytes = b""
+
+# Download links — always rendered (HTML data-URI, no Streamlit widget needed)
+import base64 as _b64
+_btn = ("display:inline-block;padding:3px 12px;font-size:.76rem;font-weight:500;"
+        "color:#64748B;border:1px solid #E2E8F0;border-radius:8px;"
+        "text-decoration:none;background:transparent;font-family:'DM Sans',sans-serif;"
+        "margin-right:6px;")
+_fname_csv = f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv"
+_pdf_link = ""
+if pdf_bytes:
+    _pdf_b64 = _b64.b64encode(pdf_bytes).decode()
+    _fname_pdf = f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf"
+    _pdf_link = f'<a href="data:application/pdf;base64,{_pdf_b64}" download="{_fname_pdf}" style="{_btn}">↓ PDF</a>'
+_csv_b64 = _b64.b64encode(csv_bytes).decode()
+_export_slot.markdown(
+    f'<div style="margin:.3rem 0 .5rem;">'
+    f'<a href="data:text/csv;base64,{_csv_b64}" download="{_fname_csv}" style="{_btn}">↓ CSV</a>'
+    f'{_pdf_link}'
+    f'</div>',
+    unsafe_allow_html=True
+)
 
 def df_light(df: pd.DataFrame):
     """Force a light theme for st.dataframe across Streamlit versions."""
