@@ -1107,7 +1107,46 @@ def render_story_cards():
                 if st.button("Start demo", key=f"sc_start_{s['key']}", use_container_width=True, type="primary"):
                     st.session_state["demo_scenario"] = s["key"]
                     st.rerun()
-    st.markdown('<div style="height:.4rem"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:.35rem"></div>', unsafe_allow_html=True)
+
+    # ── Story mode banner — shown directly under the cards ──
+    _scn = st.session_state.get("demo_scenario", "None")
+    if _scn and _scn != "None":
+        _story_map = {
+            "ROAS drop week": {
+                "title": "Story Mode: ROAS Drop",
+                "look": ["Command Center (ROAS benchmark)", "Patient Journey by Source (find the drag)", "Top Campaigns (identify the culprit)"],
+                "qs": ["Why did ROAS change last 30 days?", "ROAS by source MTD", "Why did leads drop last month?"],
+            },
+            "Revenue growth month": {
+                "title": "Story Mode: Revenue Growth",
+                "look": ["Revenue Forecast (upward trend)", "Patient Journey by Source (what scaled)", "Top Campaigns (budget winners)"],
+                "qs": ["Why did revenue change MTD?", "Revenue by source last 30 days", "Why did ROAS change last 30 days?"],
+            },
+            "Show rate risk (CRM)": {
+                "title": "Story Mode: Show Rate Risk",
+                "look": ["Command Center (Show Rate benchmark)", "Attendance Trend (Booked vs Attended)", "Treatment Movers (show-rate movers)"],
+                "qs": ["Why did show rate change last 30 days?", "Why did booked change last 30 days?", "Why did revenue change last month?"],
+            },
+        }
+        _meta = _story_map.get(_scn)
+        if _meta:
+            st.markdown(
+                f"""<div style="background:{GREEN_LT};border:1px solid rgba(0,192,107,.2);border-left:5px solid {GREEN};
+border-radius:14px;padding:12px 16px;margin:4px 0 8px;">
+  <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;font-weight:800;color:#52796F;
+letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">{_meta['title']}</div>
+  <div style="font-size:.79rem;color:#64748B;margin-bottom:4px;line-height:1.5;">
+    <span style="font-weight:700;color:#52796F;">What to look at:</span>&nbsp;
+    {' &middot; '.join(_meta['look'])}
+  </div>
+  <div style="font-size:.79rem;color:#64748B;line-height:1.5;">
+    <span style="font-weight:700;color:#52796F;">AI questions to try:</span>&nbsp;
+    {' &middot; '.join(_meta['qs'])}
+  </div>
+</div>""",
+                unsafe_allow_html=True
+            )
 
 
 # ==========================================================
@@ -1272,7 +1311,7 @@ def render_command_center():
     st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
     # ── Forecast + Signals ─────────────────────────────────
-    _fc, _sc = st.columns([1.65, 1], gap="medium")
+    _fc, _sc = st.columns([1.45, 1], gap="medium")
 
     with _fc:
         st.markdown('<div class="section-title" style="margin-top:.2rem;">Revenue Forecast</div>', unsafe_allow_html=True)
@@ -1297,9 +1336,9 @@ def render_command_center():
             "sb-pill-amber": ("sig-amber", "sig-sev-amber"),
             "sb-pill-green": ("sig-green", "sig-sev-green"),
         }
-        for sev, pill_cls, title, detail, action in _alerts[:4]:
+        for sev, pill_cls, title, detail, action in _alerts[:3]:
             sig_cls, sev_cls = _cls_map.get(pill_cls, ("sig-green", "sig-sev-green"))
-            st.markdown(f'''<div class="sig-card {sig_cls}" style="margin-bottom:.4rem;">
+            st.markdown(f'''<div class="sig-card {sig_cls}" style="margin-bottom:.45rem;">
   <div class="sig-head"><div class="sig-title">{title}</div><div class="sig-sev {sev_cls}">{sev}</div></div>
   <div class="sig-detail">{detail}</div>
   <div class="sig-action"><b>Action:</b> {action}</div>
@@ -1956,6 +1995,19 @@ def ai_query_ask(question: str) -> dict:
         return {"text": "", "sql": sql, "df": None, "error": str(exc)}
 
 
+def _is_visual_question(q: str) -> bool:
+    """Returns True only when the question explicitly asks for a chart/visual or a breakdown."""
+    ql = q.lower()
+    return any(w in ql for w in [
+        "chart", "graph", "plot", "show me", "visuali",
+        "trend", "over time", "daily", "weekly", "monthly", "timeline",
+        "by source", "by channel", "by campaign",
+        "compare", " vs ", "versus",
+        "breakdown", "roas by", "spend by", "revenue by", "leads by",
+        "last 30", "mtd", "traffic",
+    ])
+
+
 def render_ai():
     # ── Session state init ───────────────────────────────────
     if "ai_history" not in st.session_state:
@@ -1965,10 +2017,11 @@ def render_ai():
     if "ai_preset" not in st.session_state:
         st.session_state.ai_preset = None
 
-    has_history = len(st.session_state.ai_history) > 0
+    has_history  = len(st.session_state.ai_history) > 0
+    has_pending  = bool(st.session_state.get("ai_preset"))   # preset queued → skip hero
 
     # ── EMPTY STATE: hero + preset cards ────────────────────
-    if not has_history:
+    if not has_history and not has_pending:
         st.markdown('''
 <div class="ai-hero">
   <div class="ai-catch">Ask anything.<br><span class="ai-catch-hi">Clarity on Demand.</span></div>
@@ -2063,10 +2116,13 @@ def render_ai():
         if text:
             st.markdown(f'<div class="ai-bubble-ai">{text}</div>', unsafe_allow_html=True)
 
-        # Auto chart
-        chart = _ai_chart(q)
-        if chart is not None:
-            st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
+        # Auto chart — only for explicitly visual questions
+        if _is_visual_question(q):
+            chart = _ai_chart(q)
+            if chart is not None:
+                st.markdown('<div class="chart-card" style="margin-top:.4rem;">', unsafe_allow_html=True)
+                st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
+                st.markdown('</div>', unsafe_allow_html=True)
 
         # Data table
         if df is not None and not df.empty:
@@ -2086,50 +2142,11 @@ def render_ai():
 # ROUTER
 # ==========================================================
 
-# ==========================================================
-# STORY MODE — Scenario banner (only when applied)
-# ==========================================================
-scn_active = st.session_state.get("demo_scenario", "None")
-if scn_active and scn_active != "None":
-    story_map = {
-        "ROAS drop week": {
-            "title": "Story Mode: ROAS Drop",
-            "look": ["Performance Overview (ROAS + Spend)", "Performance by Source (find the drag)", "Top Campaigns (identify the culprit)"],
-            "qs": ["Why did ROAS change last 30 days?", "ROAS by source MTD", "Why did leads drop last month?"],
-        },
-        "Revenue growth month": {
-            "title": "Story Mode: Revenue Growth",
-            "look": ["Revenue KPI (delta vs prior)", "Trends (revenue lift timing)", "Top Campaigns (what scaled)"],
-            "qs": ["Why did revenue change MTD?", "Revenue by source last 30 days", "Why did ROAS change last 30 days?"],
-        },
-        "Show rate risk (CRM)": {
-            "title": "Story Mode: Show Rate Risk",
-            "look": ["Practice KPIs (Booked vs Attended)", "Booked vs Attended trend", "Treatment Movers (show-rate movers)"],
-            "qs": ["Why did show rate change last 30 days?", "Why did booked change last 30 days?", "Why did revenue change last month?"],
-        },
-    }
-    meta = story_map.get(scn_active, None)
-    if meta:
-        st.markdown(
-            f"""
-            <div style="background:{GREEN_LT};border:1px solid rgba(0,192,107,.2);border-left:5px solid {GREEN};border-radius:14px;padding:12px 16px;margin:6px 0 12px;">
-              <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:800;color:#52796F;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">{meta['title']}</div>
-              <div style="font-size:.82rem;color:#64748B;margin-bottom:5px;line-height:1.5;">
-                <span style="font-weight:700;color:#52796F;">What to look at:</span>&nbsp; {' &middot; '.join(meta['look'])}
-              </div>
-              <div style="font-size:.82rem;color:#64748B;line-height:1.5;">
-                <span style="font-weight:700;color:#52796F;">AI questions:</span>&nbsp; {' &middot; '.join(meta['qs'])}
-              </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
 if page == "Dashboard":
     render_command_center()
     if practice_mode:
         render_practice()
     else:
         render_marketing()
-else:
+elif page == "AI Agent":
     render_ai()
