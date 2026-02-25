@@ -413,10 +413,12 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 }
 
 /* === AI AGENT — hero welcome screen === */
-.ai-hero{position:relative;text-align:center;padding:3rem 0 1.8rem;overflow:hidden;}
-.ai-hero::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-56%);width:640px;height:300px;background:radial-gradient(ellipse at center,rgba(0,192,107,.09) 0%,rgba(59,130,246,.04) 50%,transparent 72%);pointer-events:none;border-radius:50%;}
-.ai-greeting{font-family:'Plus Jakarta Sans',sans-serif;font-size:2.15rem;font-weight:900;color:#0F172A;line-height:1.15;margin-bottom:.5rem;position:relative;}
-.ai-greeting-sub{font-size:.98rem;color:#64748B;font-weight:400;position:relative;margin-bottom:0;}
+.ai-hero{position:relative;text-align:center;padding:3.2rem 0 2rem;overflow:hidden;}
+.ai-hero::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-56%);width:560px;height:260px;background:radial-gradient(ellipse at center,rgba(0,192,107,.08) 0%,rgba(59,130,246,.04) 55%,transparent 75%);pointer-events:none;border-radius:50%;}
+/* Catchphrase main text */
+.ai-catch{font-family:'Plus Jakarta Sans',sans-serif;font-size:2.4rem;font-weight:900;color:#0F172A;line-height:1.1;margin-bottom:.55rem;position:relative;}
+.ai-catch-hi{background:linear-gradient(120deg,#00C06B 0%,#3B82F6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.ai-catch-sub{font-size:.78rem;color:#94A3B8;font-weight:500;letter-spacing:.1em;text-transform:uppercase;position:relative;}
 /* Preset cards — :has() sibling from marker */
 [data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{background:#FFFFFF!important;border:1.5px solid #E2E8F0!important;border-radius:16px!important;padding:1.15rem 1.1rem!important;min-height:90px!important;height:auto!important;text-align:left!important;font-size:.87rem!important;font-weight:600!important;box-shadow:0 2px 14px rgba(0,0,0,.05)!important;transition:all .16s!important;line-height:1.45!important;white-space:normal!important;width:100%!important;}
 [data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button:hover{box-shadow:0 8px 28px rgba(0,0,0,.11)!important;transform:translateY(-2px)!important;}
@@ -428,13 +430,21 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 [data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button:hover{border-color:#CBD5E1!important;color:#475569!important;background:#F8FAFC!important;}
 /* Chat bubbles */
 .ai-bubble-user{display:flex;justify-content:flex-end;margin:.65rem 0 .15rem;}
-.ai-bubble-user span{background:#00C06B;color:#fff;border-radius:16px 16px 4px 16px;padding:9px 15px;font-size:.87rem;font-weight:500;max-width:75%;line-height:1.45;display:inline-block;}
-.ai-bubble-ai{background:#FFFFFF;border:1px solid #EEF2F7;border-radius:4px 16px 16px 16px;padding:14px 17px;margin:.1rem 0 .55rem;font-size:.88rem;color:#1E293B;line-height:1.65;}
+.ai-bubble-user span{background:#1E293B;color:#F1F5F9;border-radius:16px 16px 4px 16px;padding:9px 15px;font-size:.86rem;font-weight:500;max-width:75%;line-height:1.45;display:inline-block;}
+.ai-bubble-ai{background:#FFFFFF;border:1px solid #F1F5F9;border-radius:4px 16px 16px 16px;padding:14px 17px;margin:.1rem 0 .55rem;font-size:.88rem;color:#1E293B;line-height:1.65;box-shadow:0 1px 6px rgba(0,0,0,.04);}
 
-/* AI input — remove black baseweb accent */
-.stTextInput>div>[data-baseweb="base-input"]{border:1.5px solid #E2E8F0!important;border-radius:12px!important;background:#FFFFFF!important;box-shadow:none!important;}
-.stTextInput>div>[data-baseweb="base-input"]:focus-within{border-color:#00C06B!important;box-shadow:0 0 0 3px rgba(0,192,107,.10)!important;outline:none!important;}
-.stTextInput>div>div>input{background:transparent!important;color:#0F172A!important;border:none!important;padding:.72rem .9rem!important;font-size:.92rem!important;box-shadow:none!important;outline:none!important;}
+/* AI input — fully override baseweb (aggressive selectors to kill black border) */
+.stTextInput [data-baseweb="base-input"],
+.stTextInput [data-baseweb="input"],
+div[data-baseweb="base-input"],
+div[data-baseweb="input"]{border:1px solid #E8EEF4!important;border-radius:14px!important;background:#FAFBFC!important;box-shadow:none!important;outline:none!important;transition:border-color .15s!important;}
+.stTextInput [data-baseweb="base-input"]:focus-within,
+div[data-baseweb="base-input"]:focus-within{border-color:#00C06B!important;box-shadow:0 0 0 3px rgba(0,192,107,.07)!important;background:#FFFFFF!important;}
+.stTextInput input,.stTextInput textarea{background:transparent!important;color:#0F172A!important;border:none!important;outline:none!important;box-shadow:none!important;padding:.72rem .9rem!important;font-size:.92rem!important;}
+/* Align send button column to bottom of input row */
+[data-testid="stColumn"]:has([data-testid="baseButton-primary"]){display:flex!important;flex-direction:column!important;justify-content:flex-end!important;}
+/* Primary button height matches input */
+[data-testid="baseButton-primary"]{height:44px!important;min-height:44px!important;font-size:.88rem!important;font-weight:700!important;border-radius:12px!important;letter-spacing:.01em!important;padding:0 1rem!important;}
 
 /* Reset button */
 .reset-wrap .stButton>button{background:#F5F7FA!important;color:#64748B!important;border:1px solid #E2E8F0!important;font-weight:500!important;}
@@ -448,9 +458,6 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 .refresh-wrap .stButton>button{background:transparent!important;border:1px solid #00C06B!important;border-radius:8px!important;color:#00C06B!important;font-size:.75rem!important;font-weight:500!important;padding:3px 10px!important;min-height:0!important;height:26px!important;width:auto!important;}
 .refresh-wrap .stButton>button:hover{background:#E6F9F0!important;}
 
-/* AI send button */
-.ai-send .stButton>button{background:#00C06B!important;color:#fff!important;border:none!important;border-radius:10px!important;font-weight:600!important;padding:.45rem 1.2rem!important;font-size:.88rem!important;}
-.ai-send .stButton>button:hover{background:#009952!important;}
 
 /* KPI row — inline, no boxes */
 .ai-kpi-row{display:flex;gap:28px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid #F1F5F9;}
@@ -824,143 +831,10 @@ try:
 except Exception:
     st.sidebar.markdown(_alert_items, unsafe_allow_html=True)
 
-# ---- Export: CSV immediately, PDF cached on filter state ----
-try:
-    import io as _io
+# ---- Export: CSV only ----
+csv_bytes = CUR.to_csv(index=False).encode("utf-8")
 
-    @st.cache_data(show_spinner=False)
-    def _build_pdf_cached(_df_bytes: bytes, _start, _end, _sources, _channel, _campaign,
-                          _practice: bool, _page: str):
-        """PDF generation — cached per filter combination, never reruns on same filters."""
-        import io
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.units import inch
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-        from reportlab.lib.styles import getSampleStyleSheet
-        from reportlab.lib import colors
-        import matplotlib
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-        import pandas as pd
-
-        export_df = pd.read_csv(io.StringIO(_df_bytes.decode("utf-8")))
-        if "date" in export_df.columns:
-            export_df["date"] = pd.to_datetime(export_df["date"], errors="coerce").dt.date
-
-        view_title = "Practice CRM View" if _practice else ("AI Agent View" if _page.lower().startswith("ai") else "Dashboard View")
-
-        def _fig_to_image(fig, width=7.2, height=2.2):
-            buf_img = io.BytesIO()
-            fig.set_size_inches(width, height)
-            fig.tight_layout()
-            fig.savefig(buf_img, format="png", dpi=180, bbox_inches="tight")
-            plt.close(fig)
-            buf_img.seek(0)
-            return Image(buf_img, width=width*inch, height=height*inch)
-
-        buf = io.BytesIO()
-        doc = SimpleDocTemplate(buf, pagesize=letter, title="NexoBI Demo Export")
-        styles = getSampleStyleSheet()
-        elems = []
-        elems.append(Paragraph(f"NexoBI — {view_title}", styles["Title"]))
-        elems.append(Paragraph(f"Date range: {_start} → {_end}", styles["Normal"]))
-        elems.append(Paragraph(f"Sources: {_sources or 'All'}", styles["Normal"]))
-        elems.append(Paragraph(f"Channel: {_channel} | Campaign: {_campaign}", styles["Normal"]))
-        elems.append(Spacer(1, 12))
-
-        rev    = float(export_df["total_revenue"].sum()) if "total_revenue" in export_df.columns else 0.0
-        spend  = float(export_df["total_cost"].sum())    if "total_cost"    in export_df.columns else 0.0
-        leads  = float(export_df["leads"].sum())         if "leads"         in export_df.columns else 0.0
-        booked = float(export_df["booked"].sum())        if "booked"        in export_df.columns else 0.0
-        att    = float(export_df["attended"].sum())      if "attended"      in export_df.columns else 0.0
-        roas   = (rev / spend) if spend > 0 else 0.0
-        show   = (att / booked) if booked > 0 else 0.0
-
-        elems.append(Paragraph("Performance Overview", styles["Heading2"]))
-        kpi_data = [
-            ["Metric", "Value"],
-            ["Revenue", f"${rev:,.0f}"], ["Spend", f"${spend:,.0f}"],
-            ["ROAS", f"{roas:.2f}x"],    ["Leads", f"{leads:,.0f}"],
-            ["Booked", f"{booked:,.0f}"],["Attended", f"{att:,.0f}"],
-            ["Show Rate", f"{show*100:.1f}%"],
-        ]
-        t = Table(kpi_data, hAlign="LEFT")
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0,0),(-1,0), colors.whitesmoke),
-            ("GRID",       (0,0),(-1,-1), 0.5, colors.lightgrey),
-            ("FONTNAME",   (0,0),(-1,0), "Helvetica-Bold"),
-            ("FONTNAME",   (0,0),(0,-1), "Helvetica-Bold"),
-            ("FONTSIZE",   (0,0),(-1,-1), 9),
-            ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white, colors.Color(0.97,0.97,0.97)]),
-        ]))
-        elems.append(t)
-        elems.append(Spacer(1, 14))
-
-        if "date" in export_df.columns:
-            agg = export_df.groupby("date", as_index=False).agg(
-                Revenue=("total_revenue","sum"), Leads=("leads","sum") if "leads" in export_df.columns else ("date","size"), Spend=("total_cost","sum")
-            ).sort_values("date")
-            if "total_revenue" in export_df.columns and len(agg) >= 2:
-                fig = plt.figure(); plt.plot(agg["date"], agg["Revenue"]); plt.title("Revenue over time"); plt.xticks(rotation=25, ha="right"); elems.append(_fig_to_image(fig)); elems.append(Spacer(1,10))
-            if len(agg) >= 2:
-                fig = plt.figure(); plt.plot(agg["date"], agg["Leads"]); plt.title("Leads over time"); plt.xticks(rotation=25, ha="right"); elems.append(_fig_to_image(fig)); elems.append(Spacer(1,10))
-            if "data_source" in export_df.columns and "total_cost" in export_df.columns:
-                bys = export_df.groupby("data_source", as_index=False)["total_cost"].sum().sort_values("total_cost", ascending=False).head(10)
-                if len(bys) >= 1:
-                    fig = plt.figure(); plt.bar(bys["data_source"].astype(str), bys["total_cost"]); plt.title("Spend by Source"); plt.xticks(rotation=25, ha="right"); elems.append(_fig_to_image(fig, height=2.5)); elems.append(Spacer(1,14))
-
-        if all(c in export_df.columns for c in ["data_source","sessions","leads","booked","attended","total_revenue","total_cost"]):
-            elems.append(Paragraph("Patient Journey by Source", styles["Heading2"]))
-            j = export_df.groupby("data_source", as_index=False).agg(Sessions=("sessions","sum"),Leads=("leads","sum"),Booked=("booked","sum"),Attended=("attended","sum"),Revenue=("total_revenue","sum"),Spend=("total_cost","sum"))
-            j["Lead Rate"] = (j["Leads"]/j["Sessions"]).replace([float("inf")],0).fillna(0)*100
-            j["Book Rate"] = (j["Booked"]/j["Leads"]).replace([float("inf")],0).fillna(0)*100
-            j["Show Rate"] = (j["Attended"]/j["Booked"]).replace([float("inf")],0).fillna(0)*100
-            j["ROAS"]      = (j["Revenue"]/j["Spend"]).replace([float("inf")],0).fillna(0)
-            j = j.sort_values("Revenue", ascending=False).head(12)
-            hdr = list(j.columns)
-            rows = [[str(r["data_source"]),f"{r['Sessions']:.0f}",f"{r['Leads']:.0f}",f"{r['Booked']:.0f}",f"{r['Attended']:.0f}",f"${r['Revenue']:,.0f}",f"${r['Spend']:,.0f}",f"{r['Lead Rate']:.1f}%",f"{r['Book Rate']:.1f}%",f"{r['Show Rate']:.1f}%",f"{r['ROAS']:.2f}x"] for _,r in j.iterrows()]
-            tbl = Table([hdr]+rows, hAlign="LEFT"); tbl.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,0),colors.whitesmoke),("GRID",(0,0),(-1,-1),0.4,colors.lightgrey),("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,-1),7.5)])); elems.append(tbl); elems.append(Spacer(1,14))
-
-        if all(c in export_df.columns for c in ["campaign","total_revenue","total_cost","leads"]):
-            elems.append(Paragraph("Top Campaigns", styles["Heading2"]))
-            tc = export_df.groupby("campaign", as_index=False).agg(Revenue=("total_revenue","sum"),Spend=("total_cost","sum"),Leads=("leads","sum"))
-            tc["ROAS"] = (tc["Revenue"]/tc["Spend"]).replace([float("inf")],0).fillna(0)
-            tc = tc.sort_values("Revenue", ascending=False).head(12)
-            rows2 = [["Campaign","Revenue","Spend","Leads","ROAS"]] + [[str(r["campaign"]),f"${r['Revenue']:,.0f}",f"${r['Spend']:,.0f}",f"{r['Leads']:,.0f}",f"{r['ROAS']:.2f}x"] for _,r in tc.iterrows()]
-            tbl2 = Table(rows2, hAlign="LEFT"); tbl2.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,0),colors.whitesmoke),("GRID",(0,0),(-1,-1),0.4,colors.lightgrey),("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,-1),8)])); elems.append(tbl2)
-
-        doc.build(elems)
-        return buf.getvalue()
-
-    # CSV — always generated (no extra dependencies)
-    csv_bytes = CUR.to_csv(index=False).encode("utf-8")
-
-    # PDF — optional; falls back to empty if reportlab/matplotlib missing
-    try:
-        _src_str = ",".join(sorted([str(x) for x in sources_selected])) if sources_selected else "All"
-        pdf_bytes = _build_pdf_cached(
-            csv_bytes, str(start), str(end), _src_str, channel, campaign, practice_mode, str(page)
-        )
-    except Exception:
-        pdf_bytes = b""
-
-except Exception:
-    csv_bytes = CUR.to_csv(index=False).encode("utf-8")
-    pdf_bytes = b""
-
-# Download links — always rendered (HTML data-URI, no Streamlit widget needed)
 import base64 as _b64
-_btn = ("display:inline-block;padding:3px 12px;font-size:.76rem;font-weight:500;"
-        "color:#64748B;border:1px solid #E2E8F0;border-radius:8px;"
-        "text-decoration:none;background:transparent;font-family:'DM Sans',sans-serif;"
-        "margin-right:6px;")
-_fname_csv = f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv"
-_pdf_link = ""
-if pdf_bytes:
-    _pdf_b64 = _b64.b64encode(pdf_bytes).decode()
-    _fname_pdf = f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf"
-    _pdf_link = f'<a href="data:application/pdf;base64,{_pdf_b64}" download="{_fname_pdf}" style="{_btn}">↓ PDF</a>'
-_csv_b64  = _b64.b64encode(csv_bytes).decode()
 _ico_down = ('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
              'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;">'
              '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>'
@@ -969,26 +843,15 @@ _ico_down = ('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke
 _btn_style = ("display:inline-flex;align-items:center;padding:3px 10px;font-size:.73rem;font-weight:500;"
               "color:#64748B;border:1px solid #E2E8F0;border-radius:7px;"
               "text-decoration:none;background:#F8FAFC;font-family:'DM Sans',sans-serif;"
-              "margin-right:5px;transition:border-color .15s,color .15s;")
-_csv_link = (f'<a href="data:text/csv;base64,{_csv_b64}" download="{_fname_csv}" style="{_btn_style}">'
-             f'{_ico_down}CSV</a>')
-if pdf_bytes:
-    _pdf_b64  = _b64.b64encode(pdf_bytes).decode()
-    _fname_pdf = f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf"
-    _ico_pdf  = ('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
-                 'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;">'
-                 '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>'
-                 '<polyline points="14 2 14 8 20 8"/>'
-                 '<line x1="12" y1="18" x2="12" y2="12"/>'
-                 '<polyline points="9 15 12 18 15 15"/></svg>')
-    _pdf_link = (f'<a href="data:application/pdf;base64,{_pdf_b64}" download="{_fname_pdf}" style="{_btn_style}">'
-                 f'{_ico_pdf}PDF</a>')
-else:
-    _pdf_link = ""
+              "transition:border-color .15s,color .15s;")
+_fname_csv = f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv"
+_csv_b64   = _b64.b64encode(csv_bytes).decode()
+_csv_link  = (f'<a href="data:text/csv;base64,{_csv_b64}" download="{_fname_csv}" style="{_btn_style}">'
+              f'{_ico_down}CSV</a>')
 _export_slot.markdown(
     f'<div style="display:flex;justify-content:flex-start;align-items:center;'
     f'padding:4px 0 6px;border-bottom:1px solid #F1F5F9;margin-bottom:4px;">'
-    f'{_csv_link}{_pdf_link}'
+    f'{_csv_link}'
     f'</div>',
     unsafe_allow_html=True
 )
@@ -1528,67 +1391,87 @@ def _ai_chart(question: str) -> "go.Figure | None":
             return None
         q = question.lower()
 
-        # Detect numeric columns available
-        has = lambda c: c in df.columns and df[c].notna().any()
+        # Column aliases — map logical names to actual schema columns
+        REV  = "total_revenue"
+        COST = "total_cost"
+        has  = lambda c: c in df.columns and df[c].notna().any()
 
         # ---- helpers ----
-        def _group_bar(group_col, val_col, title, fmt=","):
+        def _group_bar(group_col, val_col, title, fmt="$"):
             if not (has(group_col) and has(val_col)):
                 return None
-            g = df.groupby(group_col)[val_col].sum().reset_index().sort_values(val_col, ascending=False).head(8)
+            g = (df.groupby(group_col)[val_col].sum()
+                   .reset_index()
+                   .sort_values(val_col, ascending=False)
+                   .head(8))
             hover = "%{x}<br><b>$%{y:,.0f}</b><extra></extra>" if fmt == "$" else "%{x}<br><b>%{y:,.2f}</b><extra></extra>"
             palette = [GREEN, BLUE, AMBER, PURPLE, "#EC4899", "#14B8A6", "#F97316", RED]
             fig = go.Figure()
-            for i, row in g.iterrows():
+            for idx, (_, row) in enumerate(g.iterrows()):
                 fig.add_trace(go.Bar(
                     x=[str(row[group_col])], y=[row[val_col]],
                     name=str(row[group_col]),
-                    marker_color=palette[list(g.index).index(i) % len(palette)],
-                    marker_line_width=0,
-                    showlegend=False,
+                    marker_color=palette[idx % len(palette)],
+                    marker_line_width=0, showlegend=False,
                     hovertemplate=hover,
                 ))
-            fig.update_layout(**base_layout(title, 240))
+            fig.update_layout(**base_layout(title, 260))
             return fig
 
         def _line(val_col, title):
             if not (has("date") and has(val_col)):
                 return None
-            g = df.groupby("date")[val_col].sum().reset_index().sort_values("date")
-            return plot_line(g, "date", val_col, title, height=240)
+            g = (df.groupby("date")[val_col].sum()
+                   .reset_index()
+                   .sort_values("date"))
+            return plot_line(g, "date", val_col, title, height=260)
 
         # ---- Route by question intent ----
-        if any(w in q for w in ["trend", "over time", "daily", "weekly", "by day", "by month", "timeline"]):
-            col = "revenue" if "revenue" in q else ("ad_spend" if any(w in q for w in ["spend", "cost"]) else "revenue")
-            title = "Revenue Over Time" if col == "revenue" else "Spend Over Time"
-            return _line(col, title)
+        # Trend / over time
+        if any(w in q for w in ["trend", "over time", "daily", "weekly", "by day", "by month", "timeline", "last 30", "mtd", "30 days"]):
+            if any(w in q for w in ["spend", "cost"]):
+                return _line(COST, "Spend Over Time")
+            return _line(REV, "Revenue Over Time")
 
+        # ROAS — computed per source (no roas column in schema)
         if "roas" in q:
-            if has("data_source") and has("roas"):
-                g = df.groupby("data_source")["roas"].mean().reset_index().sort_values("roas", ascending=False).head(8)
-                return plot_bar_multi(g, "data_source", "roas", "ROAS by Source")
+            if has("data_source") and has(REV) and has(COST):
+                g = df.groupby("data_source", as_index=False).agg(
+                    Revenue=(REV, "sum"), Cost=(COST, "sum")
+                )
+                g["ROAS"] = g.apply(lambda r: safe_div(r["Revenue"], r["Cost"]), axis=1)
+                g = g.sort_values("ROAS", ascending=False).head(8)
+                return plot_bar_multi(g, "data_source", "ROAS", "ROAS by Source")
             return None
 
+        # Spend / cost
         if any(w in q for w in ["spend", "cost", "budget"]):
-            return _group_bar("data_source", "ad_spend", "Ad Spend by Source", "$")
+            return _group_bar("data_source", COST, "Ad Spend by Source", "$")
 
-        if any(w in q for w in ["lead", "patient", "appointment"]):
-            col = "new_patients" if "patient" in q else ("appointments" if "appoint" in q else "leads")
+        # Leads / patients / appointments
+        if any(w in q for w in ["lead", "patient", "appointment", "booked", "booking"]):
+            col = ("booked" if any(w in q for w in ["appointment", "booked", "booking"])
+                   else ("conversions" if has("conversions") else "leads"))
             col = col if has(col) else ("leads" if has("leads") else None)
             if col:
-                return _group_bar("data_source", col, f"{col.replace('_', ' ').title()} by Source")
+                return _group_bar("data_source", col, f"{col.replace('_',' ').title()} by Source", ",")
 
+        # Channel breakdown
         if any(w in q for w in ["channel"]):
-            return _group_bar("channel_group", "revenue", "Revenue by Channel", "$")
+            return _group_bar("channel_group", REV, "Revenue by Channel", "$")
 
-        if any(w in q for w in ["compare", "vs", "versus", "google", "facebook", "meta"]):
-            if has("data_source") and has("revenue"):
-                g = df.groupby("data_source")["revenue"].sum().reset_index().sort_values("revenue", ascending=False).head(6)
-                return plot_bar_multi(g, "data_source", "revenue", "Revenue Comparison by Source")
+        # Compare sources / platform comparison
+        if any(w in q for w in ["compare", "vs", "versus", "google", "facebook", "meta", "source"]):
+            return _group_bar("data_source", REV, "Revenue by Source", "$")
 
-        # Default: revenue by source
-        if has("data_source") and has("revenue"):
-            return _group_bar("data_source", "revenue", "Revenue by Source", "$")
+        # Bar chart catch-all
+        if any(w in q for w in ["bar", "chart", "breakdown"]):
+            return _group_bar("data_source", REV, "Revenue by Source", "$")
+
+        # Default: revenue over time if date available, else by source
+        if has("date"):
+            return _line(REV, "Revenue Over Time")
+        return _group_bar("data_source", REV, "Revenue by Source", "$")
 
     except Exception:
         pass
@@ -1672,24 +1555,18 @@ def render_ai():
 
     # ── EMPTY STATE: hero + preset cards ────────────────────
     if not has_history:
-        hr = datetime.now().hour
-        greet = "Good morning" if hr < 12 else "Good afternoon" if hr < 17 else "Good evening"
-
-        st.markdown(f'''
+        st.markdown('''
 <div class="ai-hero">
-  <img class="wm"
-       src="https://images.squarespace-cdn.com/content/v1/68daa6f79c8c695a65a1d1bd/1759160060457-MMX5Q30RNSVGDEWNRL0S/nexobi_logo_transparent_background.png?format=1500w"
-       alt="">
-  <div class="ai-greeting">{greet} 👋</div>
-  <div class="ai-greeting-sub">What would you like to know about your data today?</div>
+  <div class="ai-catch">Ask anything.<br><span class="ai-catch-hi">Know everything.</span></div>
+  <div class="ai-catch-sub">Your live data &middot; Answered in plain English</div>
 </div>
 ''', unsafe_allow_html=True)
 
         # ── Preset cards ─────────────────────────────────────
         card_labels = [
-            ("💰  Revenue · last 30 days",     "Revenue last 30 days"),
-            ("📊  ROAS · by source",            "ROAS by source"),
-            ("⚡  Google vs Facebook",          "Compare Google vs Facebook"),
+            ("Revenue · last 30 days",  "Revenue last 30 days"),
+            ("ROAS · by source",        "ROAS by source"),
+            ("Google vs Facebook",      "Compare Google vs Facebook"),
         ]
         st.markdown('<div id="ai-cards-marker"></div>', unsafe_allow_html=True)
         _pc = st.columns(3, gap="medium")
@@ -1720,7 +1597,7 @@ def render_ai():
                 st.rerun()
 
     # ── Chat input (always rendered) ─────────────────────────
-    _icol, _scol = st.columns([9, 1.3])
+    _icol, _scol = st.columns([8.5, 1.5])
     with _icol:
         user_q = st.text_input(
             "", placeholder="Ask anything about your data…",
@@ -1728,9 +1605,7 @@ def render_ai():
             key=f"ai_input_{st.session_state.ai_nonce}"
         )
     with _scol:
-        st.markdown('<div class="ai-send">', unsafe_allow_html=True)
-        ask = st.button("→ Send", use_container_width=True, key="ai_ask")
-        st.markdown('</div>', unsafe_allow_html=True)
+        ask = st.button("Send", use_container_width=True, key="ai_ask", type="primary")
 
     st.markdown(
         '<p style="font-size:.70rem;color:#CBD5E1;margin:.25rem 0 .7rem;text-align:right;">'
