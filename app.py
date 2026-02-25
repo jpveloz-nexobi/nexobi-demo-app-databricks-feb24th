@@ -409,12 +409,13 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
     background: #FFFFFF !important;
 }
 
-/* AI row — all buttons same subtle ghost style */
-.ai-presets .stButton>button{background:#F8FAFC!important;color:#64748B!important;border:1px solid #E9EEF4!important;border-radius:999px!important;font-weight:400!important;padding:.3rem .7rem!important;font-size:.78rem!important;height:32px!important;line-height:1!important;transition:all .15s ease!important;box-shadow:none!important;}
-.ai-presets .stButton>button:hover{background:#EEF2F7!important;border-color:#CBD5E1!important;color:#334155!important;}
-/* Ask button — slightly more visible but still subtle */
-.ai-presets [data-testid="stButton"]:nth-last-child(2) button{background:#F1F5F9!important;color:#1E293B!important;border:1px solid #CBD5E1!important;border-radius:999px!important;font-weight:600!important;}
-.ai-row-spacer{height:.6rem;}
+/* AI suggestion chips */
+.ai-chips .stButton>button{background:#F8FAFC!important;color:#475569!important;border:1px solid #E2E8F0!important;border-radius:999px!important;font-weight:400!important;padding:.28rem .85rem!important;font-size:.77rem!important;height:28px!important;line-height:1!important;transition:all .12s!important;box-shadow:none!important;}
+.ai-chips .stButton>button:hover{background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;}
+/* AI chat bubbles */
+.ai-bubble-user{display:flex;justify-content:flex-end;margin:.6rem 0 .15rem;}
+.ai-bubble-user span{background:#00C06B;color:#fff;border-radius:16px 16px 4px 16px;padding:8px 14px;font-size:.87rem;font-weight:500;max-width:75%;line-height:1.45;display:inline-block;}
+.ai-bubble-ai{background:#FFFFFF;border:1px solid #EEF2F7;border-radius:4px 16px 16px 16px;padding:14px 16px;margin:.1rem 0 .5rem;font-size:.88rem;color:#1E293B;line-height:1.6;}
 
 /* AI input — remove black baseweb accent */
 .stTextInput>div>[data-baseweb="base-input"]{border:1.5px solid #E2E8F0!important;border-radius:12px!important;background:#FFFFFF!important;box-shadow:none!important;}
@@ -519,6 +520,9 @@ st.markdown(f'''
 </div>
 ''', unsafe_allow_html=True)
 
+# Export slot — top of main area, filled after data is ready
+_export_slot = st.empty()
+
 # ==========================================================
 # SIDEBAR + FILTERS
 # ==========================================================
@@ -529,9 +533,6 @@ with st.sidebar:
 
     # --- Navigation ---
     page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
-
-    # --- Export icons (top of sidebar, single slot filled after data loads) ---
-    _export_slot = st.empty()
 
     st.markdown("---")
     # --------------------------------------------------
@@ -944,11 +945,34 @@ if pdf_bytes:
     _pdf_b64 = _b64.b64encode(pdf_bytes).decode()
     _fname_pdf = f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf"
     _pdf_link = f'<a href="data:application/pdf;base64,{_pdf_b64}" download="{_fname_pdf}" style="{_btn}">↓ PDF</a>'
-_csv_b64 = _b64.b64encode(csv_bytes).decode()
+_csv_b64  = _b64.b64encode(csv_bytes).decode()
+_ico_down = ('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+             'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;">'
+             '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>'
+             '<polyline points="7 10 12 15 17 10"/>'
+             '<line x1="12" y1="15" x2="12" y2="3"/></svg>')
+_btn_style = ("display:inline-flex;align-items:center;padding:5px 13px;font-size:.76rem;font-weight:500;"
+              "color:#475569;border:1px solid #E2E8F0;border-radius:8px;"
+              "text-decoration:none;background:#FFFFFF;font-family:'DM Sans',sans-serif;"
+              "margin-left:8px;transition:border-color .15s,color .15s;")
+_csv_link = (f'<a href="data:text/csv;base64,{_csv_b64}" download="{_fname_csv}" style="{_btn_style}">'
+             f'{_ico_down}CSV</a>')
+if pdf_bytes:
+    _pdf_b64  = _b64.b64encode(pdf_bytes).decode()
+    _fname_pdf = f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf"
+    _ico_pdf  = ('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+                 'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;">'
+                 '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>'
+                 '<polyline points="14 2 14 8 20 8"/>'
+                 '<line x1="12" y1="18" x2="12" y2="12"/>'
+                 '<polyline points="9 15 12 18 15 15"/></svg>')
+    _pdf_link = (f'<a href="data:application/pdf;base64,{_pdf_b64}" download="{_fname_pdf}" style="{_btn_style}">'
+                 f'{_ico_pdf}PDF</a>')
+else:
+    _pdf_link = ""
 _export_slot.markdown(
-    f'<div style="margin:.3rem 0 .5rem;">'
-    f'<a href="data:text/csv;base64,{_csv_b64}" download="{_fname_csv}" style="{_btn}">↓ CSV</a>'
-    f'{_pdf_link}'
+    f'<div style="display:flex;justify-content:flex-end;align-items:center;margin:-.4rem 0 .6rem;">'
+    f'{_csv_link}{_pdf_link}'
     f'</div>',
     unsafe_allow_html=True
 )
