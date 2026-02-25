@@ -601,18 +601,13 @@ section[data-testid="stSidebar"] label {
 /* KPI benchmark row */
 .metric-bench{font-size:.70rem;color:#94A3B8;margin-top:5px;padding-top:4px;border-top:1px solid rgba(0,0,0,.05);}
 
-/* Benchmark metric view toggle — compact horizontal radio */
-div[data-testid="stRadio"][aria-label="Metrics view"] > div {
-  flex-direction:row!important;gap:4px!important;justify-content:flex-end!important;flex-wrap:nowrap!important;
-}
-div[data-testid="stRadio"][aria-label="Metrics view"] label {
-  background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:8px!important;
-  padding:3px 9px!important;font-size:.70rem!important;font-weight:600!important;
-  color:#64748B!important;white-space:nowrap!important;min-width:0!important;
-}
-div[data-testid="stRadio"][aria-label="Metrics view"] label:has(input:checked){
-  background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;
-}
+/* ===== SEGMENTED CONTROL — metric view pills ===== */
+[data-testid="stSegmentedControl"]{justify-content:flex-end!important;}
+[data-testid="stSegmentedControl"] button{font-size:.72rem!important;font-weight:600!important;padding:3px 10px!important;min-height:0!important;height:28px!important;}
+
+/* ===== MODE SWITCH BUTTON — subtle link-style ===== */
+.sb-reset-wrap .stButton>button[kind="secondary"][data-testid="mode_switch_btn"],
+.sb-reset-wrap .stButton>button{font-size:.72rem!important;text-align:left!important;}
 
 /* Integration strip */
 .integ-strip{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:.55rem;}
@@ -651,43 +646,40 @@ def list_unique(col: str):
 
 with st.sidebar:
 
-    # --- Data source mode indicator ---
-    if _FALLBACK_WARN:
-        st.markdown(
-            '<div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;'
-            'padding:7px 10px;margin-bottom:6px;">'
-            '<div style="font-size:.70rem;font-weight:700;color:#C2410C;">⚠ CSV Mode (offline)</div>'
-            '<div style="font-size:.66rem;color:#92400E;margin-top:1px;line-height:1.35;">'
-            'Databricks unreachable · using local data.csv · AI Agent unavailable</div>'
-            '</div>',
-            unsafe_allow_html=True
-        )
-    elif _DBX_MODE:
-        st.markdown(
-            '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;'
-            'padding:5px 10px;margin-bottom:4px;display:flex;align-items:center;gap:6px;">'
-            '<div style="width:6px;height:6px;border-radius:50%;background:#16A34A;flex-shrink:0;"></div>'
-            '<div style="font-size:.70rem;font-weight:600;color:#15803D;">Live · Databricks</div>'
-            '</div>',
-            unsafe_allow_html=True
-        )
+    # --- Data mode badge + one-click switch ---
+    if DATA_MODE == "databricks":
+        _is_offline = st.session_state.get("force_csv_mode", False) or bool(_FALLBACK_WARN)
+        if _FALLBACK_WARN and not st.session_state.get("force_csv_mode", False):
+            _badge_label  = "⚠ Auto-switched to CSV"
+            _badge_detail = "Databricks unreachable"
+            _badge_bg, _badge_bd, _badge_fc = "#FFF7ED", "#FED7AA", "#C2410C"
+        elif _is_offline:
+            _badge_label  = "📁 Local CSV"
+            _badge_detail = "AI Agent unavailable"
+            _badge_bg, _badge_bd, _badge_fc = "#FFF7ED", "#FED7AA", "#C2410C"
+        else:
+            _badge_label  = "🌐 Live · Databricks"
+            _badge_detail = "AI Agent active"
+            _badge_bg, _badge_bd, _badge_fc = "#F0FDF4", "#BBF7D0", "#15803D"
 
-    # --- Online / Offline toggle ---
-    if DATA_MODE == "databricks":   # only show when Databricks is configured
-        _csv_toggle = st.toggle(
-            "Use offline CSV",
-            value=st.session_state.get("force_csv_mode", False),
-            key="_csv_toggle_widget",
-            help="Switch between live Databricks data and local CSV file"
+        st.markdown(
+            f'<div style="background:{_badge_bg};border:1px solid {_badge_bd};border-radius:8px;'
+            f'padding:7px 10px;margin-bottom:5px;">'
+            f'<div style="font-size:.71rem;font-weight:700;color:{_badge_fc};">{_badge_label}</div>'
+            f'<div style="font-size:.63rem;color:#94A3B8;margin-top:1px;">{_badge_detail}</div>'
+            f'</div>',
+            unsafe_allow_html=True
         )
-        if _csv_toggle != st.session_state.get("force_csv_mode", False):
-            st.session_state["force_csv_mode"] = _csv_toggle
-            # Clear cached Databricks data so it re-fetches on switch back
+        st.markdown('<div class="sb-reset-wrap">', unsafe_allow_html=True)
+        _switch_lbl = "Switch to Live →" if _is_offline else "Switch to Local CSV →"
+        if st.button(_switch_lbl, key="mode_switch_btn", use_container_width=True):
+            st.session_state["force_csv_mode"] = not _is_offline
             try:
                 load_data_databricks.clear()
             except Exception:
                 pass
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Navigation ---
     page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
@@ -1325,14 +1317,35 @@ def render_command_center():
                 f'<div class="bench-val">{val_str}</div>'
                 f'{sub}</div>')
 
-    # metric view selector — compact, inline with section title
+    # metric view selector — native segmented pill control
+    if "cmd_metric_view" not in st.session_state:
+        st.session_state["cmd_metric_view"] = "Efficiency"
+
     _tile_col, _tog_col = st.columns([3, 1.2])
     with _tog_col:
-        _metric_view = st.radio(
-            "Metrics view", ["Efficiency", "Funnel", "Growth"],
-            horizontal=True, key="cmd_metric_view",
-            label_visibility="collapsed"
-        )
+        try:
+            # st.segmented_control available in Streamlit ≥ 1.40 — native pills, no dots
+            _seg_val = st.segmented_control(
+                "Tiles", ["Efficiency", "Funnel", "Growth"],
+                default=st.session_state.get("cmd_metric_view", "Efficiency"),
+                label_visibility="collapsed", key="cmd_seg_ctrl"
+            )
+            if _seg_val:
+                st.session_state["cmd_metric_view"] = _seg_val
+        except AttributeError:
+            # Older Streamlit fallback
+            _radio_val = st.radio(
+                "Tiles", ["Efficiency", "Funnel", "Growth"],
+                horizontal=True,
+                index=["Efficiency", "Funnel", "Growth"].index(
+                    st.session_state.get("cmd_metric_view", "Efficiency")
+                ),
+                label_visibility="collapsed", key="cmd_metric_radio"
+            )
+            if _radio_val:
+                st.session_state["cmd_metric_view"] = _radio_val
+
+    _metric_view = st.session_state.get("cmd_metric_view", "Efficiency")
 
     b1, b2, b3, b4 = st.columns(4, gap="small")
 
