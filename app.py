@@ -454,37 +454,25 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 
 
 
-/* Sidebar Alerts (better UI) */
-.sb-alerts{margin-top:10px;}
-.sb-alerts h3{margin:.4rem 0 .35rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:900;color:var(--nexo-text);}
-
-.sb-alerts-title{margin:.4rem 0 .35rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:900;color:var(--nexo-text);}
-
-.sb-alert{background:var(--nexo-panel);border:1px solid var(--nexo-border);border-radius:14px;padding:12px 12px;margin:10px 0;box-shadow:0 2px 10px rgba(0,0,0,.04);position:relative;overflow:hidden;border-left:6px solid var(--nexo-border);}
-.sb-alert:hover{transform:translateY(-1px);transition:transform .12s ease;}
-.sb-alert.sev-green{border-left-color:var(--nexo-green);background:linear-gradient(0deg,rgba(0,192,107,.07),rgba(0,192,107,.07)),var(--nexo-panel);}
-.sb-alert.sev-amber{border-left-color:var(--nexo-amber);background:linear-gradient(0deg,rgba(245,158,11,.08),rgba(245,158,11,.08)),var(--nexo-panel);}
-.sb-alert.sev-red{border-left-color:var(--nexo-red);background:linear-gradient(0deg,rgba(239,68,68,.08),rgba(239,68,68,.08)),var(--nexo-panel);}
-
-.sb-alert-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
-.sb-alert-left{display:flex;align-items:center;gap:10px;min-width:0;}
-.sb-alert-dot{width:10px;height:10px;border-radius:999px;flex:0 0 auto;box-shadow:0 0 0 4px rgba(0,0,0,.03);}
-.sb-alert-dot.dot-green{background:var(--nexo-green);box-shadow:0 0 0 4px rgba(0,192,107,.14);}
-.sb-alert-dot.dot-amber{background:var(--nexo-amber);box-shadow:0 0 0 4px rgba(245,158,11,.16);}
-.sb-alert-dot.dot-red{background:var(--nexo-red);box-shadow:0 0 0 4px rgba(239,68,68,.16);}
-
-.sb-alert-name{font-weight:900;font-size:.95rem;color:var(--nexo-text);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sb-alert-detail{font-size:.90rem;color:var(--nexo-muted);line-height:1.35;}
-.sb-alert-action{margin-top:8px;font-size:.90rem;color:var(--nexo-text);background:rgba(255,255,255,.55);border:1px dashed var(--nexo-border);border-radius:12px;padding:10px;}
-.sb-alert-action b{font-weight:900;}
-
-.sb-alert-pill{font-size:.70rem;font-weight:900;padding:2px 10px;border-radius:999px;border:1px solid var(--nexo-border);background:var(--nexo-bg);color:var(--nexo-muted);white-space:nowrap;}
-.sb-pill-red{background:rgba(239,68,68,.10);border-color:rgba(239,68,68,.35);color:var(--nexo-red);}
-.sb-pill-amber{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:var(--nexo-amber);}
-.sb-pill-green{background:rgba(0,192,107,.10);border-color:rgba(0,192,107,.35);color:var(--nexo-green-dk);}
-.sb-alert-desc{color:var(--nexo-muted);font-size:.86rem;line-height:1.25;margin:4px 0 0 0;}
-.sb-alert-action{margin-top:8px;border-top:1px dashed var(--nexo-border);padding-top:8px;font-size:.86rem;line-height:1.25;}
-.sb-alert-action b{font-weight:900;color:var(--nexo-text);}
+/* Floating alert popup — top-right corner */
+.nexo-popup{position:fixed;top:72px;right:20px;width:308px;z-index:9999;background:#FFFFFF;border-radius:16px;box-shadow:0 8px 32px rgba(15,23,42,.12),0 2px 8px rgba(15,23,42,.06);border:1px solid #E2E8F0;padding:14px 14px 10px;font-family:'DM Sans',sans-serif;}
+.nexo-popup-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.nexo-popup-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.1em;}
+.nexo-popup-close{font-size:.9rem;color:#94A3B8;cursor:pointer;line-height:1;padding:2px 4px;border-radius:4px;}
+.nexo-popup-close:hover{color:#0F172A;background:#F1F5F9;}
+.nexo-alert{border-radius:10px;padding:10px 12px;margin:6px 0;border-left:4px solid #E2E8F0;background:#FAFBFC;}
+.nexo-alert.sev-green{border-left-color:#00C06B;background:rgba(0,192,107,.05);}
+.nexo-alert.sev-amber{border-left-color:#F59E0B;background:rgba(245,158,11,.06);}
+.nexo-alert.sev-red{border-left-color:#EF4444;background:rgba(239,68,68,.06);}
+.nexo-alert-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;}
+.nexo-alert-title{font-size:.82rem;font-weight:700;color:#0F172A;}
+.nexo-alert-pill{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;}
+.sb-pill-red{background:rgba(239,68,68,.10);color:#EF4444;}
+.sb-pill-amber{background:rgba(245,158,11,.12);color:#D97706;}
+.sb-pill-green{background:rgba(0,192,107,.10);color:#009952;}
+.nexo-alert-detail{font-size:.78rem;color:#64748B;line-height:1.4;}
+.nexo-alert-action{font-size:.75rem;color:#0F172A;margin-top:5px;padding-top:5px;border-top:1px solid rgba(0,0,0,.06);line-height:1.4;}
+.nexo-alert-action b{font-weight:700;}
 
 /* ==========================================================
    SIDEBAR — CLEAN, COMPACT, SUBTLE
@@ -541,12 +529,8 @@ with st.sidebar:
     # --- Navigation ---
     page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
 
-    # --- Export icons (top of sidebar, filled after data loads) ---
-    _exp_row = st.columns([1, 1, 3])
-    with _exp_row[0]:
-        _export_csv_slot = st.empty()
-    with _exp_row[1]:
-        _export_pdf_slot = st.empty()
+    # --- Export icons (top of sidebar, single slot filled after data loads) ---
+    _export_slot = st.empty()
 
     st.markdown("---")
     # --------------------------------------------------
@@ -610,11 +594,7 @@ with st.sidebar:
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --------------------------------------------------
-    # Alerts (dropdown)
-    # --------------------------------------------------
-    with st.expander("Alerts", expanded=False):
-        _alerts_slot = st.empty()
+    # (alerts rendered as floating popup in main area)
 
     # --------------------------------------------------
     # Refresh button — bottom of sidebar (Databricks only)
@@ -804,40 +784,29 @@ try:
 except Exception:
     _alerts = [("Info", "sb-pill-green", "Healthy", "No anomalies detected.", "Keep monitoring weekly.")]
 
-# ---- Quick response banner ----
-_quick = [a for a in _alerts if str(a[0]).lower().startswith("quick")]
-if _quick and not st.session_state.get("dismiss_quick", False):
-    _qt = _quick[0][2] if len(_quick[0]) > 2 else "Quick response needed"
-    _qd = _quick[0][3] if len(_quick[0]) > 3 else ""
-    _b1, _b2 = st.sidebar.columns([12, 1])
-    with _b1:
-        st.error(f"{_qt} — {_qd}".strip())
-    with _b2:
-        if st.button("✕", key="dismiss_quick_btn"):
-            st.session_state["dismiss_quick"] = True
-            st.rerun()
-
-# ---- Alert HTML — always renders ----
-_alert_html_parts = ['<div class="sb-alerts">', '<div class="sb-alerts-title">Alerts</div>']
+# ---- Floating alert popup (top-right of main area) ----
+_alert_items = ""
 for _sev, _pill_cls, _title, _detail, _action in _alerts:
     _sev_cls = "sev-green" if _pill_cls == "sb-pill-green" else ("sev-amber" if _pill_cls == "sb-pill-amber" else "sev-red")
-    _dot_cls = "dot-green" if _pill_cls == "sb-pill-green" else ("dot-amber" if _pill_cls == "sb-pill-amber" else "dot-red")
-    _alert_html_parts.append(
-        f'<div class="sb-alert {_sev_cls}">'
-        f'  <div class="sb-alert-head">'
-        f'    <div class="sb-alert-left"><span class="sb-alert-dot {_dot_cls}"></span><div class="sb-alert-name">{_title}</div></div>'
-        f'    <div class="sb-alert-pill {_pill_cls}">{_sev}</div>'
+    _alert_items += (
+        f'<div class="nexo-alert {_sev_cls}">'
+        f'  <div class="nexo-alert-row">'
+        f'    <div class="nexo-alert-title">{_title}</div>'
+        f'    <div class="nexo-alert-pill {_pill_cls}">{_sev}</div>'
         f'  </div>'
-        f'  <div class="sb-alert-detail">{_detail}</div>'
-        f'  <div class="sb-alert-action"><b>Action:</b> {_action}</div>'
+        f'  <div class="nexo-alert-detail">{_detail}</div>'
+        f'  <div class="nexo-alert-action"><b>Action:</b> {_action}</div>'
         f'</div>'
     )
-_alert_html_parts.append("</div>")
-_alert_html_str = "".join(_alert_html_parts)
-try:
-    _alerts_slot.markdown(_alert_html_str, unsafe_allow_html=True)
-except Exception:
-    st.sidebar.markdown(_alert_html_str, unsafe_allow_html=True)
+_alert_popup_html = (
+    f'<div class="nexo-popup">'
+    f'  <div class="nexo-popup-header">'
+    f'    <div class="nexo-popup-title">Insights</div>'
+    f'  </div>'
+    f'  {_alert_items}'
+    f'</div>'
+)
+st.markdown(_alert_popup_html, unsafe_allow_html=True)
 
 # ---- Export: CSV immediately, PDF cached on filter state ----
 try:
@@ -956,16 +925,16 @@ try:
     )
 
     try:
-        _export_csv_slot.download_button(
-            "↓ CSV", data=csv_bytes,
-            file_name=f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv", use_container_width=True, key="dl_csv"
-        )
-        _export_pdf_slot.download_button(
-            "↓ PDF", data=pdf_bytes,
-            file_name=f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf",
-            mime="application/pdf", use_container_width=True, key="dl_pdf"
-        )
+        with _export_slot.container():
+            _dc1, _dc2, _ = st.columns([1, 1, 3])
+            with _dc1:
+                st.download_button("↓ CSV", data=csv_bytes,
+                                   file_name=f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv",
+                                   mime="text/csv", use_container_width=True, key="dl_csv")
+            with _dc2:
+                st.download_button("↓ PDF", data=pdf_bytes,
+                                   file_name=f"nexobi_report_{datetime.now().strftime('%Y%m%d')}.pdf",
+                                   mime="application/pdf", use_container_width=True, key="dl_pdf")
     except Exception:
         st.sidebar.download_button("↓ CSV", data=csv_bytes,
                                    file_name=f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv",
@@ -1035,99 +1004,77 @@ def render_marketing():
               </div>
             ''', unsafe_allow_html=True)
 
-    st.markdown('<div class="section-title">Trends</div>', unsafe_allow_html=True)
-    trend = base.groupby("date", as_index=False).agg(
-        revenue=("total_revenue","sum"),
-        leads=("leads","sum")
-    ).sort_values("date")
+    _tab_src, _tab_trend = st.tabs(["By Source", "Trends"])
 
-    if len(trend) > 0:
-        trend["date"] = pd.to_datetime(trend["date"])
-        c1,c2 = st.columns(2)
-        with c1:
-            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-            st.plotly_chart(plot_line(trend,"date","revenue","Revenue Over Time", color=GREEN), use_container_width=True, config={"displayModeBar":False})
-            st.markdown('</div>', unsafe_allow_html=True)
-        with c2:
-            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-            st.plotly_chart(plot_line(trend,"date","leads","Leads Over Time", color=BLUE), use_container_width=True, config={"displayModeBar":False})
-            st.markdown('</div>', unsafe_allow_html=True)
+    with _tab_src:
+        mix = base.groupby("data_source", as_index=False).agg(
+            revenue=("total_revenue","sum"),
+            spend=("total_cost","sum"),
+            leads=("leads","sum")
+        ).sort_values("revenue", ascending=False)
+        if len(mix) > 0:
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                st.plotly_chart(plot_bar(mix,"data_source","revenue","Revenue by Source",GREEN), use_container_width=True, config={"displayModeBar":False})
+                st.markdown('</div>', unsafe_allow_html=True)
+            with c2:
+                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                mix_filtered = mix[~mix["data_source"].astype(str).str.strip().str.lower().str.contains("organic")]
+                st.plotly_chart(plot_bar(mix_filtered,"data_source","spend","Spend by Source",BLUE), use_container_width=True, config={"displayModeBar":False})
+                st.markdown('</div>', unsafe_allow_html=True)
+            with c3:
+                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                st.plotly_chart(plot_bar(mix,"data_source","leads","Leads by Source",AMBER), use_container_width=True, config={"displayModeBar":False})
+                st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="section-title">Performance by Source</div>', unsafe_allow_html=True)
-    mix = base.groupby("data_source", as_index=False).agg(
-        revenue=("total_revenue","sum"),
-        spend=("total_cost","sum"),
-        leads=("leads","sum")
-    ).sort_values("revenue", ascending=False)
+    with _tab_trend:
+        trend = base.groupby("date", as_index=False).agg(
+            revenue=("total_revenue","sum"),
+            leads=("leads","sum")
+        ).sort_values("date")
+        if len(trend) > 0:
+            trend["date"] = pd.to_datetime(trend["date"])
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                st.plotly_chart(plot_line(trend,"date","revenue","Revenue Over Time",color=GREEN), use_container_width=True, config={"displayModeBar":False})
+                st.markdown('</div>', unsafe_allow_html=True)
+            with c2:
+                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                st.plotly_chart(plot_line(trend,"date","leads","Leads Over Time",color=BLUE), use_container_width=True, config={"displayModeBar":False})
+                st.markdown('</div>', unsafe_allow_html=True)
 
-    if len(mix) > 0:
-        c1,c2,c3 = st.columns(3)
-        with c1:
-            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-            st.plotly_chart(plot_bar(mix,"data_source","revenue","Revenue by Source",GREEN), use_container_width=True, config={"displayModeBar":False})
-            st.markdown('</div>', unsafe_allow_html=True)
-      
-        with c2:
-            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+    with st.expander("Patient Journey by Source", expanded=False):
+        journey = base.groupby("data_source", as_index=False).agg(
+            Sessions=("sessions","sum"),
+            Leads=("leads","sum"),
+            Booked=("booked","sum"),
+            Attended=("attended","sum"),
+            Revenue=("total_revenue","sum"),
+            Spend=("total_cost","sum"),
+        )
+        journey["Lead Rate"] = np.where(journey["Sessions"]>0, journey["Leads"]/journey["Sessions"]*100, 0)
+        journey["Book Rate"] = np.where(journey["Leads"]>0, journey["Booked"]/journey["Leads"]*100, 0)
+        journey["Show Rate"] = np.where(journey["Booked"]>0, journey["Attended"]/journey["Booked"]*100, 0)
+        journey["ROAS"] = np.where(journey["Spend"]>0, journey["Revenue"]/journey["Spend"], 0)
+        journey = journey.sort_values("Revenue", ascending=False)
 
-            # Remove Organic Search (robust version)
-            mix_filtered = mix[
-            ~mix["data_source"]
-            .astype(str)
-            .str.strip()
-            .str.lower()
-            .str.contains("organic")
-        ]
+        jd = journey.copy()
+        jd.insert(0, "Source", jd.pop("data_source"))
+        jd["Sessions"]=jd["Sessions"].apply(fmt)
+        jd["Leads"]=jd["Leads"].apply(fmt)
+        jd["Booked"]=jd["Booked"].apply(fmt)
+        jd["Attended"]=jd["Attended"].apply(fmt)
+        jd["Lead Rate"]=jd["Lead Rate"].apply(lambda x: f"{x:.1f}%")
+        jd["Book Rate"]=jd["Book Rate"].apply(lambda x: f"{x:.1f}%")
+        jd["Show Rate"]=jd["Show Rate"].apply(lambda x: f"{x:.1f}%")
+        jd["Revenue"]=jd["Revenue"].apply(money)
+        jd["Spend"]=jd["Spend"].apply(money)
+        jd["ROAS"]=jd["ROAS"].apply(lambda x: f"{x:.2f}x")
+        st.dataframe(df_light(jd), use_container_width=True, hide_index=True, height=df_height(len(jd)))
 
-            st.plotly_chart(
-                plot_bar(
-                    mix_filtered,
-                    "data_source",
-                    "spend",
-                    "Spend by Source",
-                    BLUE
-                ),
-                use_container_width=True,
-                config={"displayModeBar": False}
-    )
-
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    with c3:
-            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-            st.plotly_chart(plot_bar(mix,"data_source","leads","Leads by Source",AMBER), use_container_width=True, config={"displayModeBar":False})
-            st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="section-title">Patient Journey by Source</div>', unsafe_allow_html=True)
-    journey = base.groupby("data_source", as_index=False).agg(
-        Sessions=("sessions","sum"),
-        Leads=("leads","sum"),
-        Booked=("booked","sum"),
-        Attended=("attended","sum"),
-        Revenue=("total_revenue","sum"),
-        Spend=("total_cost","sum"),
-    )
-    journey["Lead Rate"] = np.where(journey["Sessions"]>0, journey["Leads"]/journey["Sessions"]*100, 0)
-    journey["Book Rate"] = np.where(journey["Leads"]>0, journey["Booked"]/journey["Leads"]*100, 0)
-    journey["Show Rate"] = np.where(journey["Booked"]>0, journey["Attended"]/journey["Booked"]*100, 0)
-    journey["ROAS"] = np.where(journey["Spend"]>0, journey["Revenue"]/journey["Spend"], 0)
-    journey = journey.sort_values("Revenue", ascending=False)
-
-    jd = journey.copy()
-    jd.insert(0, "Source", jd.pop("data_source"))
-    jd["Sessions"]=jd["Sessions"].apply(fmt)
-    jd["Leads"]=jd["Leads"].apply(fmt)
-    jd["Booked"]=jd["Booked"].apply(fmt)
-    jd["Attended"]=jd["Attended"].apply(fmt)
-    jd["Lead Rate"]=jd["Lead Rate"].apply(lambda x: f"{x:.1f}%")
-    jd["Book Rate"]=jd["Book Rate"].apply(lambda x: f"{x:.1f}%")
-    jd["Show Rate"]=jd["Show Rate"].apply(lambda x: f"{x:.1f}%")
-    jd["Revenue"]=jd["Revenue"].apply(money)
-    jd["Spend"]=jd["Spend"].apply(money)
-    jd["ROAS"]=jd["ROAS"].apply(lambda x: f"{x:.2f}x")
-    st.dataframe(df_light(jd), use_container_width=True, hide_index=True, height=df_height(len(jd)))
-
-    with st.expander("Top Campaigns", expanded=False):
+    with st.expander("Top Campaigns", expanded=True):
         camps = base[base["campaign"].astype(str).str.strip().ne("")].groupby("campaign", as_index=False).agg(
             Revenue=("total_revenue","sum"),
             Spend=("total_cost","sum"),
