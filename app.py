@@ -1348,81 +1348,39 @@ def render_marketing():
             ''', unsafe_allow_html=True)
 
     render_story_cards()
-    _tab_src, _tab_trend, _tab_funnel = st.tabs(["By Source", "Trends", "Patient Funnel"])
-
-    with _tab_src:
-        mix = base.groupby("data_source", as_index=False).agg(
-            revenue=("total_revenue","sum"),
-            spend=("total_cost","sum"),
-            leads=("leads","sum")
-        ).sort_values("revenue", ascending=False)
-        if len(mix) > 0:
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-                st.plotly_chart(plot_bar(mix,"data_source","revenue","Revenue by Source",GREEN), use_container_width=True, config={"displayModeBar":False})
-                st.markdown('</div>', unsafe_allow_html=True)
-            with c2:
-                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-                mix_filtered = mix[~mix["data_source"].astype(str).str.strip().str.lower().str.contains("organic")]
-                st.plotly_chart(plot_bar(mix_filtered,"data_source","spend","Spend by Source",BLUE), use_container_width=True, config={"displayModeBar":False})
-                st.markdown('</div>', unsafe_allow_html=True)
-            with c3:
-                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-                st.plotly_chart(plot_bar(mix,"data_source","leads","Leads by Source",AMBER), use_container_width=True, config={"displayModeBar":False})
-                st.markdown('</div>', unsafe_allow_html=True)
-
-    with _tab_trend:
-        trend = base.groupby("date", as_index=False).agg(
-            revenue=("total_revenue","sum"),
-            leads=("leads","sum")
-        ).sort_values("date")
-        if len(trend) > 0:
-            trend["date"] = pd.to_datetime(trend["date"])
-            c1, c2 = st.columns(2)
-            with c1:
-                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-                st.plotly_chart(plot_line(trend,"date","revenue","Revenue Over Time",color=GREEN), use_container_width=True, config={"displayModeBar":False})
-                st.markdown('</div>', unsafe_allow_html=True)
-            with c2:
-                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-                st.plotly_chart(plot_line(trend,"date","leads","Leads Over Time",color=BLUE), use_container_width=True, config={"displayModeBar":False})
-                st.markdown('</div>', unsafe_allow_html=True)
-
-    with _tab_funnel:
-        f_fig = plot_patient_funnel(base)
-        if f_fig:
-            _fc1, _fc2 = st.columns([1.6, 1], gap="medium")
-            with _fc1:
-                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-                st.plotly_chart(f_fig, use_container_width=True, config={"displayModeBar": False})
-                st.markdown('</div>', unsafe_allow_html=True)
-            with _fc2:
-                _leads = max(float(base["leads"].sum() or 0), 1)
-                _book  = float(base["booked"].sum() or 0)
-                _att   = float(base["attended"].sum() or 0)
-                _fdf   = pd.DataFrame([
-                    {"Stage": "Leads",      "Count": fmt(_leads), "Conv. Rate": "100%"},
-                    {"Stage": "→ Booked",   "Count": fmt(_book),  "Conv. Rate": f"{_book/_leads*100:.1f}%"},
-                    {"Stage": "→ Attended", "Count": fmt(_att),   "Conv. Rate": f"{_att/max(_book,1)*100:.1f}%"},
-                ])
-                st.markdown('<div class="chart-card" style="margin-top:0;">', unsafe_allow_html=True)
-                st.markdown('<div style="font-size:.78rem;font-weight:700;color:#0F172A;margin-bottom:8px;">Stage Conversion Rates</div>', unsafe_allow_html=True)
-                st.dataframe(df_light(_fdf), use_container_width=True, hide_index=True, height=df_height(3))
-                # Drop-off callout
-                total_drop = max(0.0, _leads - _att)
-                drop_pct   = total_drop / _leads * 100 if _leads > 0 else 0.0
-                st.markdown(
-                    f'<div style="margin-top:10px;padding:8px 10px;background:#FFF7ED;border-radius:8px;border-left:3px solid {AMBER};">'
-                    f'<div style="font-size:.72rem;font-weight:700;color:#92400E;">Leads never attended</div>'
-                    f'<div style="font-size:1.1rem;font-weight:900;color:#0F172A;">{pct(drop_pct)}</div>'
-                    f'<div style="font-size:.71rem;color:{MUTED};">{fmt(total_drop)} leads lost in funnel</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-                st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.info("No funnel data available for this selection.")
+    st.markdown('<div class="section-title">Patient Funnel</div>', unsafe_allow_html=True)
+    f_fig = plot_patient_funnel(base)
+    if f_fig:
+        _fc1, _fc2 = st.columns([1.6, 1], gap="medium")
+        with _fc1:
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+            st.plotly_chart(f_fig, use_container_width=True, config={"displayModeBar": False})
+            st.markdown('</div>', unsafe_allow_html=True)
+        with _fc2:
+            _leads = max(float(base["leads"].sum() or 0), 1)
+            _book  = float(base["booked"].sum() or 0)
+            _att   = float(base["attended"].sum() or 0)
+            _fdf   = pd.DataFrame([
+                {"Stage": "Leads",      "Count": fmt(_leads), "Conv. Rate": "100%"},
+                {"Stage": "→ Booked",   "Count": fmt(_book),  "Conv. Rate": f"{_book/_leads*100:.1f}%"},
+                {"Stage": "→ Attended", "Count": fmt(_att),   "Conv. Rate": f"{_att/max(_book,1)*100:.1f}%"},
+            ])
+            st.markdown('<div class="chart-card" style="margin-top:0;">', unsafe_allow_html=True)
+            st.markdown('<div style="font-size:.78rem;font-weight:700;color:#0F172A;margin-bottom:8px;">Stage Conversion Rates</div>', unsafe_allow_html=True)
+            st.dataframe(df_light(_fdf), use_container_width=True, hide_index=True, height=df_height(3))
+            total_drop = max(0.0, _leads - _att)
+            drop_pct   = total_drop / _leads * 100 if _leads > 0 else 0.0
+            st.markdown(
+                f'<div style="margin-top:10px;padding:8px 10px;background:#FFF7ED;border-radius:8px;border-left:3px solid {AMBER};">'
+                f'<div style="font-size:.72rem;font-weight:700;color:#92400E;">Leads never attended</div>'
+                f'<div style="font-size:1.1rem;font-weight:900;color:#0F172A;">{pct(drop_pct)}</div>'
+                f'<div style="font-size:.71rem;color:{MUTED};">{fmt(total_drop)} leads lost in funnel</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.info("No funnel data available for this selection.")
 
     with st.expander("Patient Journey by Source", expanded=True):
         journey = base.groupby("data_source", as_index=False).agg(
