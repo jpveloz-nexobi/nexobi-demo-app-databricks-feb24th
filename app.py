@@ -436,39 +436,135 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
     background: #FFFFFF !important;
 }
 
-/* === AI AGENT — hero welcome screen === */
-.ai-hero{position:relative;text-align:center;padding:3.2rem 0 2rem;overflow:hidden;}
-.ai-hero::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-56%);width:560px;height:260px;background:radial-gradient(ellipse at center,rgba(0,192,107,.08) 0%,rgba(59,130,246,.04) 55%,transparent 75%);pointer-events:none;border-radius:50%;}
-/* Catchphrase main text */
-.ai-catch{font-family:'Plus Jakarta Sans',sans-serif;font-size:3.5rem;font-weight:900;color:#0F172A;line-height:1.1;margin-bottom:.55rem;position:relative;}
-.ai-catch-hi{background:linear-gradient(120deg,#00C06B 0%,#3B82F6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.ai-catch-sub{font-size:.78rem;color:#94A3B8;font-weight:500;letter-spacing:.1em;text-transform:uppercase;position:relative;}
-/* Preset cards — :has() sibling from marker */
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{background:#FFFFFF!important;border:1.5px solid #E2E8F0!important;border-radius:16px!important;padding:1.15rem 1.1rem!important;min-height:90px!important;height:auto!important;text-align:left!important;font-size:.87rem!important;font-weight:600!important;box-shadow:0 2px 14px rgba(0,0,0,.05)!important;transition:all .16s!important;line-height:1.45!important;white-space:normal!important;width:100%!important;}
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button:hover{box-shadow:0 8px 28px rgba(0,0,0,.11)!important;transform:translateY(-2px)!important;}
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(1) .stButton>button{border-top:3px solid #00C06B!important;background:linear-gradient(155deg,#F0FDF4 0%,#FFFFFF 42%)!important;color:#065F46!important;}
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(2) .stButton>button{border-top:3px solid #3B82F6!important;background:linear-gradient(155deg,#EFF6FF 0%,#FFFFFF 42%)!important;color:#1E40AF!important;}
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(3) .stButton>button{border-top:3px solid #8B5CF6!important;background:linear-gradient(155deg,#F5F3FF 0%,#FFFFFF 42%)!important;color:#4C1D95!important;}
-/* "New chat" button in active header — scoped by column marker */
+/* === AI AGENT — ultra-modern redesign === */
+
+/* Keyframes */
+@keyframes aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes floatA{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(28px,-22px) scale(1.08)}}
+@keyframes floatB{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-22px,20px) scale(.94)}}
+@keyframes pulseRing{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.5)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+/* ── Hero dark card ─────────────────────────────────────── */
+.ai-hero-wrap{
+  position:relative;border-radius:22px;overflow:hidden;
+  padding:3.8rem 2.5rem 2.8rem;text-align:center;
+  background:linear-gradient(135deg,#0b1120 0%,#0d2235 35%,#081a12 68%,#0b1120 100%);
+  background-size:300% 300%;animation:aurora 12s ease infinite;
+  margin-bottom:1.4rem;
+  box-shadow:0 20px 60px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.06);
+}
+/* Noise texture overlay */
+.ai-hero-wrap::after{
+  content:'';position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;opacity:.4;
+}
+/* Floating orbs */
+.ai-orb{position:absolute;border-radius:50%;filter:blur(55px);pointer-events:none;}
+.ai-orb-1{width:320px;height:320px;background:rgba(0,192,107,.16);top:-100px;right:8%;animation:floatA 8s ease-in-out infinite;}
+.ai-orb-2{width:240px;height:240px;background:rgba(59,130,246,.12);bottom:-70px;left:12%;animation:floatB 11s ease-in-out infinite;}
+.ai-orb-3{width:180px;height:180px;background:rgba(139,92,246,.09);top:25%;left:3%;animation:floatB 7s ease-in-out infinite reverse;}
+/* Ready status pill */
+.ai-status-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(0,192,107,.12);border:1px solid rgba(0,192,107,.28);
+  border-radius:999px;padding:5px 16px;
+  font-size:.7rem;font-weight:700;color:#6EE7B7;
+  letter-spacing:.07em;text-transform:uppercase;margin-bottom:1.3rem;
+}
+.ai-pulse{width:7px;height:7px;background:#00C06B;border-radius:50%;display:inline-block;animation:pulseRing 1.8s ease-in-out infinite;}
+/* Hero headline */
+.ai-catch{font-family:'Plus Jakarta Sans',sans-serif;font-size:3.1rem;font-weight:900;color:#F1F5F9;line-height:1.1;margin-bottom:.6rem;position:relative;z-index:1;}
+.ai-catch-hi{background:linear-gradient(120deg,#00C06B 0%,#38BDF8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.ai-catch-sub{font-size:.75rem;color:rgba(148,163,184,.75);font-weight:400;letter-spacing:.1em;text-transform:uppercase;position:relative;z-index:1;}
+
+/* ── Preset cards — glassmorphism dark ──────────────────── */
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{
+  background:rgba(15,23,42,.72)!important;
+  backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  border-radius:18px!important;padding:1.2rem 1.1rem!important;
+  min-height:88px!important;height:auto!important;text-align:left!important;
+  font-size:.86rem!important;font-weight:600!important;color:#CBD5E1!important;
+  box-shadow:0 8px 32px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07)!important;
+  transition:all .2s ease!important;line-height:1.45!important;white-space:normal!important;width:100%!important;
+  margin-top:-1.4rem!important;
+}
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button:hover{
+  background:rgba(15,23,42,.9)!important;border-color:rgba(255,255,255,.18)!important;
+  box-shadow:0 12px 40px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.12)!important;
+  transform:translateY(-3px)!important;color:#F1F5F9!important;
+}
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(1) .stButton>button{border-bottom:2px solid #00C06B!important;}
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(2) .stButton>button{border-bottom:2px solid #38BDF8!important;}
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(3) .stButton>button{border-bottom:2px solid #A78BFA!important;}
+
+/* ── "New chat" button ───────────────────────────────────── */
 [data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button{background:transparent!important;border:1px solid #E2E8F0!important;border-radius:8px!important;color:#64748B!important;font-size:.74rem!important;font-weight:400!important;padding:.2rem .65rem!important;height:auto!important;min-height:0!important;box-shadow:none!important;}
 [data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button:hover{border-color:#CBD5E1!important;color:#475569!important;background:#F8FAFC!important;}
-/* Chat bubbles */
-.ai-bubble-user{display:flex;justify-content:flex-end;margin:.65rem 0 .15rem;}
-.ai-bubble-user span{background:#1E293B;color:#F1F5F9;border-radius:16px 16px 4px 16px;padding:9px 15px;font-size:.86rem;font-weight:500;max-width:75%;line-height:1.45;display:inline-block;}
-.ai-bubble-ai{background:#FFFFFF;border:1px solid #F1F5F9;border-radius:4px 16px 16px 16px;padding:14px 17px;margin:.1rem 0 .55rem;font-size:.88rem;color:#1E293B;line-height:1.65;box-shadow:0 1px 6px rgba(0,0,0,.04);}
 
-/* AI input — fully override baseweb (aggressive selectors to kill black border) */
+/* ── Chat bubbles ───────────────────────────────────────── */
+.ai-bubble-user{display:flex;justify-content:flex-end;margin:.8rem 0 .15rem;animation:slideUp .18s ease-out;}
+.ai-bubble-user span{
+  background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);
+  color:#F1F5F9;border-radius:18px 18px 4px 18px;
+  padding:11px 16px;font-size:.87rem;font-weight:500;max-width:72%;line-height:1.5;
+  display:inline-block;box-shadow:0 4px 18px rgba(0,0,0,.18);
+}
+/* AI label + bubble */
+.ai-msg-label{
+  display:flex;align-items:center;gap:6px;
+  font-size:.68rem;font-weight:700;color:#00C06B;
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;margin-top:.9rem;
+}
+.ai-msg-label::before{
+  content:'◆';font-size:.6rem;
+  background:linear-gradient(135deg,#00C06B,#38BDF8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.ai-bubble-ai{
+  background:rgba(255,255,255,.97)!important;
+  border:1px solid rgba(0,192,107,.18)!important;
+  border-left:3px solid #00C06B!important;
+  border-radius:4px 20px 20px 20px!important;
+  padding:16px 20px!important;margin:0 0 .3rem!important;
+  font-size:.88rem!important;color:#1E293B!important;line-height:1.7!important;
+  box-shadow:0 6px 28px rgba(0,0,0,.07)!important;
+  animation:slideUp .2s ease-out;
+}
+
+/* ── Input bar ──────────────────────────────────────────── */
 .stTextInput [data-baseweb="base-input"],
 .stTextInput [data-baseweb="input"],
 div[data-baseweb="base-input"],
-div[data-baseweb="input"]{border:1px solid #E8EEF4!important;border-radius:14px!important;background:#FAFBFC!important;box-shadow:none!important;outline:none!important;transition:border-color .15s!important;}
+div[data-baseweb="input"]{
+  border:1.5px solid #E2E8F0!important;border-radius:16px!important;
+  background:#FFFFFF!important;box-shadow:0 2px 12px rgba(0,0,0,.05)!important;
+  outline:none!important;transition:all .2s!important;
+}
 .stTextInput [data-baseweb="base-input"]:focus-within,
-div[data-baseweb="base-input"]:focus-within{border-color:#00C06B!important;box-shadow:0 0 0 3px rgba(0,192,107,.07)!important;background:#FFFFFF!important;}
-.stTextInput input,.stTextInput textarea{background:transparent!important;color:#0F172A!important;border:none!important;outline:none!important;box-shadow:none!important;padding:.72rem .9rem!important;font-size:.92rem!important;}
-/* Align send button column to bottom of input row — scoped to AI input row only */
+div[data-baseweb="base-input"]:focus-within{
+  border-color:#00C06B!important;
+  box-shadow:0 0 0 4px rgba(0,192,107,.1),0 2px 12px rgba(0,0,0,.06)!important;
+  background:#FFFFFF!important;
+}
+.stTextInput input,.stTextInput textarea{background:transparent!important;color:#0F172A!important;border:none!important;outline:none!important;box-shadow:none!important;padding:.78rem 1rem!important;font-size:.93rem!important;}
+/* Align send button */
 [data-testid="stMarkdownContainer"]:has(#ai-send-row)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child{display:flex!important;flex-direction:column!important;justify-content:flex-end!important;}
-/* Primary button height matches input */
-[data-testid="baseButton-primary"]{height:44px!important;min-height:44px!important;font-size:.88rem!important;font-weight:700!important;border-radius:12px!important;letter-spacing:.01em!important;padding:0 1rem!important;}
+/* Send button — glowing green */
+[data-testid="baseButton-primary"]{
+  height:46px!important;min-height:46px!important;font-size:.88rem!important;font-weight:700!important;
+  border-radius:14px!important;letter-spacing:.02em!important;padding:0 1.1rem!important;
+  background:linear-gradient(135deg,#00C06B 0%,#009952 100%)!important;
+  box-shadow:0 4px 18px rgba(0,192,107,.35)!important;
+  transition:all .2s!important;
+}
+[data-testid="baseButton-primary"]:hover{
+  box-shadow:0 6px 26px rgba(0,192,107,.5)!important;
+  transform:translateY(-1px)!important;
+}
 /* Story card primary buttons — slightly compact */
 [data-testid="stMarkdownContainer"]:has(#story-cards-row)+[data-testid="stHorizontalBlock"] [data-testid="baseButton-primary"]{height:36px!important;min-height:36px!important;font-size:.78rem!important;font-weight:600!important;}
 
@@ -2262,10 +2358,16 @@ def render_ai():
 
     # ── EMPTY STATE: hero + preset cards ────────────────────
     if not has_history and not has_pending:
-        st.markdown('''
-<div class="ai-hero">
-  <div class="ai-catch">Ask anything.<br><span class="ai-catch-hi">Clarity on Demand.</span></div>
-  <div class="ai-catch-sub">Your live data &middot; Straight Talk</div>
+        st.markdown(f'''
+<div class="ai-hero-wrap">
+  <div class="ai-orb ai-orb-1"></div>
+  <div class="ai-orb ai-orb-2"></div>
+  <div class="ai-orb ai-orb-3"></div>
+  <div style="position:relative;z-index:2;">
+    <div><span class="ai-status-pill"><span class="ai-pulse"></span>{"Local data" if _csv_mode else "Live · Databricks"}</span></div>
+    <div class="ai-catch">Ask anything.<br><span class="ai-catch-hi">Clarity on Demand.</span></div>
+    <div class="ai-catch-sub">Your data &nbsp;·&nbsp; Straight answers &nbsp;·&nbsp; No dashboards needed</div>
+  </div>
 </div>
 ''', unsafe_allow_html=True)
 
@@ -2350,10 +2452,11 @@ def render_ai():
 
         if error == "offline":
             st.markdown(
-                '<div class="ai-bubble-ai" style="border-left:3px solid #F59E0B;background:#FFFBEB;">'
+                '<div class="ai-msg-label">NexoBI AI</div>'
+                '<div class="ai-bubble-ai" style="border-left:3px solid #F59E0B!important;background:#FFFBEB!important;">'
                 '<span style="font-weight:700;color:#92400E;">AI Agent offline</span> — '
-                '<span style="color:#78716C;">Databricks is currently unreachable (free tier quota may be exhausted). '
-                'Dashboard data is still live via CSV. AI responses will resume when Databricks is available.</span>'
+                '<span style="color:#78716C;">Databricks is currently unreachable. '
+                'Dashboard data is fully available via CSV.</span>'
                 '</div>',
                 unsafe_allow_html=True
             )
@@ -2372,7 +2475,11 @@ def render_ai():
 
         # AI response
         if text:
-            st.markdown(f'<div class="ai-bubble-ai">{text}</div>', unsafe_allow_html=True)
+            st.markdown(
+                '<div class="ai-msg-label">NexoBI AI</div>'
+                f'<div class="ai-bubble-ai">{text}</div>',
+                unsafe_allow_html=True
+            )
 
         # Auto chart — only for explicitly visual questions
         if _is_visual_question(q):
