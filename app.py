@@ -228,16 +228,18 @@ def load_data_databricks(catalog: str, schema: str, table: str) -> pd.DataFrame:
 
 
 # ---- Load data based on mode (with automatic CSV fallback) ----
-_ACTIVE_MODE   = DATA_MODE          # tracks which source actually loaded
+# Respect manual override set via sidebar toggle (persists in session_state)
+_force_csv     = st.session_state.get("force_csv_mode", False)
+_ACTIVE_MODE   = "csv" if _force_csv else DATA_MODE
 _FALLBACK_WARN = None               # banner message shown in sidebar
 
 try:
-    if DATA_MODE == "databricks":
+    if _ACTIVE_MODE == "databricks":
         DATA = load_data_databricks(DBX_CATALOG, DBX_SCHEMA, DBX_TABLE)
     else:
         DATA = load_data(CSV_PATH)
 except Exception as _dbx_err:
-    if DATA_MODE == "databricks":
+    if _ACTIVE_MODE == "databricks":
         # Databricks unavailable — silently fall back to local CSV
         try:
             DATA = load_data(CSV_PATH)
@@ -599,6 +601,19 @@ section[data-testid="stSidebar"] label {
 /* KPI benchmark row */
 .metric-bench{font-size:.70rem;color:#94A3B8;margin-top:5px;padding-top:4px;border-top:1px solid rgba(0,0,0,.05);}
 
+/* Benchmark metric view toggle — compact horizontal radio */
+div[data-testid="stRadio"][aria-label="Metrics view"] > div {
+  flex-direction:row!important;gap:4px!important;justify-content:flex-end!important;flex-wrap:nowrap!important;
+}
+div[data-testid="stRadio"][aria-label="Metrics view"] label {
+  background:#F5F7FA!important;border:1px solid #E2E8F0!important;border-radius:8px!important;
+  padding:3px 9px!important;font-size:.70rem!important;font-weight:600!important;
+  color:#64748B!important;white-space:nowrap!important;min-width:0!important;
+}
+div[data-testid="stRadio"][aria-label="Metrics view"] label:has(input:checked){
+  background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;
+}
+
 /* Integration strip */
 .integ-strip{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:.55rem;}
 .integ-badge{display:inline-flex;align-items:center;gap:5px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:4px 11px;font-size:.74rem;font-weight:600;color:#475569;}
@@ -636,9 +651,6 @@ def list_unique(col: str):
 
 with st.sidebar:
 
-    # --- Export downloads — very top of left panel ---
-    _export_slot = st.empty()
-
     # --- Data source mode indicator ---
     if _FALLBACK_WARN:
         st.markdown(
@@ -653,12 +665,29 @@ with st.sidebar:
     elif _DBX_MODE:
         st.markdown(
             '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;'
-            'padding:5px 10px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">'
+            'padding:5px 10px;margin-bottom:4px;display:flex;align-items:center;gap:6px;">'
             '<div style="width:6px;height:6px;border-radius:50%;background:#16A34A;flex-shrink:0;"></div>'
             '<div style="font-size:.70rem;font-weight:600;color:#15803D;">Live · Databricks</div>'
             '</div>',
             unsafe_allow_html=True
         )
+
+    # --- Online / Offline toggle ---
+    if DATA_MODE == "databricks":   # only show when Databricks is configured
+        _csv_toggle = st.toggle(
+            "Use offline CSV",
+            value=st.session_state.get("force_csv_mode", False),
+            key="_csv_toggle_widget",
+            help="Switch between live Databricks data and local CSV file"
+        )
+        if _csv_toggle != st.session_state.get("force_csv_mode", False):
+            st.session_state["force_csv_mode"] = _csv_toggle
+            # Clear cached Databricks data so it re-fetches on switch back
+            try:
+                load_data_databricks.clear()
+            except Exception:
+                pass
+            st.rerun()
 
     # --- Navigation ---
     page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
@@ -944,46 +973,7 @@ try:
 except Exception:
     _alerts = [("Info", "sb-pill-green", "Healthy", "No anomalies detected.", "Keep monitoring weekly.")]
 
-# ---- Alert HTML → sidebar slot ----
-_alert_items = ""
-for _sev, _pill_cls, _title, _detail, _action in _alerts:
-    _sev_cls = "sev-green" if _pill_cls == "sb-pill-green" else ("sev-amber" if _pill_cls == "sb-pill-amber" else "sev-red")
-    _alert_items += (
-        f'<div class="nexo-alert {_sev_cls}">'
-        f'  <div class="nexo-alert-row">'
-        f'    <div class="nexo-alert-title">{_title}</div>'
-        f'    <div class="nexo-alert-pill {_pill_cls}">{_sev}</div>'
-        f'  </div>'
-        f'  <div class="nexo-alert-detail">{_detail}</div>'
-        f'  <div class="nexo-alert-action"><b>Action:</b> {_action}</div>'
-        f'</div>'
-    )
-# (Alerts are now shown inline on the dashboard via render_signals / render_command_center)
-
-# ---- Export: CSV only ----
-csv_bytes = CUR.to_csv(index=False).encode("utf-8")
-
-import base64 as _b64
-_ico_down = ('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
-             'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;">'
-             '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>'
-             '<polyline points="7 10 12 15 17 10"/>'
-             '<line x1="12" y1="15" x2="12" y2="3"/></svg>')
-_btn_style = ("display:inline-flex;align-items:center;padding:3px 10px;font-size:.73rem;font-weight:500;"
-              "color:#64748B;border:1px solid #E2E8F0;border-radius:7px;"
-              "text-decoration:none;background:#F8FAFC;font-family:'DM Sans',sans-serif;"
-              "transition:border-color .15s,color .15s;")
-_fname_csv = f"nexobi_export_{datetime.now().strftime('%Y%m%d')}.csv"
-_csv_b64   = _b64.b64encode(csv_bytes).decode()
-_csv_link  = (f'<a href="data:text/csv;base64,{_csv_b64}" download="{_fname_csv}" style="{_btn_style}">'
-              f'{_ico_down}CSV</a>')
-_export_slot.markdown(
-    f'<div style="display:flex;justify-content:flex-start;align-items:center;'
-    f'padding:4px 0 6px;border-bottom:1px solid #F1F5F9;margin-bottom:4px;">'
-    f'{_csv_link}'
-    f'</div>',
-    unsafe_allow_html=True
-)
+# (Alerts shown inline via render_command_center)
 
 def df_light(df: pd.DataFrame):
     """Force a light theme for st.dataframe across Streamlit versions."""
@@ -1316,30 +1306,68 @@ def render_command_center():
 </div>
 ''', unsafe_allow_html=True)
 
-    # ── Benchmark tiles ────────────────────────────────────
-    def _btile(label, val_str, bench_str, val_num, bench_num, higher_better=True):
-        beat  = (val_num >= bench_num) if higher_better else (val_num <= bench_num)
-        close = abs(val_num - bench_num) / max(bench_num, 0.01) < 0.12
-        cls   = "bt-good" if beat else ("bt-warn" if close else "bt-bad")
-        dc    = "#009952" if beat else ("#D97706" if close else "#DC2626")
-        arrow = ("▲" if beat else "▼") if higher_better else ("▼" if beat else "▲")
-        lbl   = "Above benchmark" if beat else ("Near benchmark" if close else "Below benchmark")
+    # ── Benchmark tiles — toggle between metric views ──────
+    def _btile(label, val_str, sub_str, val_num, bench_num, higher_better=True, has_bench=True):
+        if has_bench:
+            beat  = (val_num >= bench_num) if higher_better else (val_num <= bench_num)
+            close = abs(val_num - bench_num) / max(bench_num, 0.01) < 0.12
+            cls   = "bt-good" if beat else ("bt-warn" if close else "bt-bad")
+            dc    = "#009952" if beat else ("#D97706" if close else "#DC2626")
+            arrow = ("▲" if beat else "▼") if higher_better else ("▼" if beat else "▲")
+            lbl   = "Above benchmark" if beat else ("Near benchmark" if close else "Below benchmark")
+            sub   = f'<div class="bench-delta" style="color:{dc};">{arrow} {lbl}</div><div class="bench-avg">{sub_str}</div>'
+        else:
+            cls = "bt-good" if val_num >= 0 else "bt-bad"
+            dc  = "#009952" if val_num >= 0 else "#DC2626"
+            sub = f'<div class="bench-delta" style="color:{dc};">{"▲" if val_num>=0 else "▼"} vs prior period</div><div class="bench-avg">{sub_str}</div>'
         return (f'<div class="bench-tile {cls}">'
                 f'<div class="bench-label">{label}</div>'
                 f'<div class="bench-val">{val_str}</div>'
-                f'<div class="bench-delta" style="color:{dc};">{arrow} {lbl}</div>'
-                f'<div class="bench-avg">Industry avg: {bench_str}</div>'
-                f'</div>')
+                f'{sub}</div>')
+
+    # metric view selector — compact, inline with section title
+    _tile_col, _tog_col = st.columns([3, 1.2])
+    with _tog_col:
+        _metric_view = st.radio(
+            "Metrics view", ["Efficiency", "Funnel", "Growth"],
+            horizontal=True, key="cmd_metric_view",
+            label_visibility="collapsed"
+        )
 
     b1, b2, b3, b4 = st.columns(4, gap="small")
-    with b1:
-        st.markdown(_btile("ROAS", f"{roas:.2f}x", f"{BENCH_ROAS}x", roas, BENCH_ROAS), unsafe_allow_html=True)
-    with b2:
-        st.markdown(_btile("Cost per Lead", money(cpl), f"${BENCH_CPL:.0f}", cpl, BENCH_CPL, higher_better=False), unsafe_allow_html=True)
-    with b3:
-        st.markdown(_btile("Show Rate", pct(show_rate), f"{BENCH_SHOW_RATE:.0f}%", show_rate, BENCH_SHOW_RATE), unsafe_allow_html=True)
-    with b4:
-        st.markdown(_btile("Lead Growth", f"{lead_growth:+.0f}%", f"+{BENCH_LEAD_GRO:.0f}%", lead_growth, BENCH_LEAD_GRO), unsafe_allow_html=True)
+
+    book_rate  = safe_div(float(base["booked"].sum() or 0), max(float(base["leads"].sum() or 0), 0.01)) * 100
+    p_spend    = float(prev_b["total_cost"].sum() or 0)
+    p_book     = float(prev_b["booked"].sum() or 0)
+    spend_chg  = safe_div(spend - p_spend, max(abs(p_spend), 0.01)) * 100
+    book_chg   = safe_div(float(base["booked"].sum() or 0) - p_book, max(abs(p_book), 0.01)) * 100
+
+    if _metric_view == "Efficiency":
+        # ROAS / CPL / Show Rate / Lead Growth — vs industry benchmarks
+        with b1: st.markdown(_btile("ROAS", f"{roas:.2f}x", f"Industry avg: {BENCH_ROAS}x", roas, BENCH_ROAS), unsafe_allow_html=True)
+        with b2: st.markdown(_btile("Cost / Lead", money(cpl), f"Industry avg: ${BENCH_CPL:.0f}", cpl, BENCH_CPL, higher_better=False), unsafe_allow_html=True)
+        with b3: st.markdown(_btile("Show Rate", pct(show_rate), f"Industry avg: {BENCH_SHOW_RATE:.0f}%", show_rate, BENCH_SHOW_RATE), unsafe_allow_html=True)
+        with b4: st.markdown(_btile("Lead Growth", f"{lead_growth:+.0f}%", f"Industry avg: +{BENCH_LEAD_GRO:.0f}%", lead_growth, BENCH_LEAD_GRO), unsafe_allow_html=True)
+
+    elif _metric_view == "Funnel":
+        # Leads / Book Rate / Show Rate / Drop-off — funnel health
+        _tot_leads = float(base["leads"].sum() or 0)
+        _tot_book  = float(base["booked"].sum() or 0)
+        _tot_att   = float(base["attended"].sum() or 0)
+        _drop_pct  = safe_div(_tot_leads - _tot_att, max(_tot_leads, 0.01)) * 100
+        p_leads_v  = max(float(prev_b["leads"].sum() or 0), 0.01)
+        leads_chg  = safe_div(_tot_leads - p_leads_v, p_leads_v) * 100
+        with b1: st.markdown(_btile("Total Leads", fmt(_tot_leads), f"vs prior period", leads_chg, 0, has_bench=False), unsafe_allow_html=True)
+        with b2: st.markdown(_btile("Book Rate", pct(book_rate), f"Leads → Booked", book_rate, 60), unsafe_allow_html=True)
+        with b3: st.markdown(_btile("Show Rate", pct(show_rate), f"Industry avg: {BENCH_SHOW_RATE:.0f}%", show_rate, BENCH_SHOW_RATE), unsafe_allow_html=True)
+        with b4: st.markdown(_btile("Funnel Drop-off", pct(_drop_pct), "Leads never attended", 100 - _drop_pct, 40), unsafe_allow_html=True)
+
+    else:  # Growth
+        # Revenue Growth / Lead Growth / Spend Growth / Booked Growth — period-over-period
+        with b1: st.markdown(_btile("Revenue Growth", f"{rev_growth:+.1f}%", "vs prior period", rev_growth, 0, has_bench=False), unsafe_allow_html=True)
+        with b2: st.markdown(_btile("Lead Growth", f"{lead_growth:+.1f}%", f"Industry avg: +{BENCH_LEAD_GRO:.0f}%", lead_growth, BENCH_LEAD_GRO), unsafe_allow_html=True)
+        with b3: st.markdown(_btile("Booked Growth", f"{book_chg:+.1f}%", "vs prior period", book_chg, 0, has_bench=False), unsafe_allow_html=True)
+        with b4: st.markdown(_btile("Spend Growth", f"{spend_chg:+.1f}%", "vs prior period", -spend_chg, 0, has_bench=False), unsafe_allow_html=True)
 
     st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
@@ -1418,29 +1446,49 @@ def render_marketing():
             _leads = max(float(base["leads"].sum() or 0), 1)
             _book  = float(base["booked"].sum() or 0)
             _att   = float(base["attended"].sum() or 0)
-            _fdf   = pd.DataFrame([
-                {"Stage": "Leads",      "Count": fmt(_leads), "Conv. Rate": "100%"},
-                {"Stage": "→ Booked",   "Count": fmt(_book),  "Conv. Rate": f"{_book/_leads*100:.1f}%"},
-                {"Stage": "→ Attended", "Count": fmt(_att),   "Conv. Rate": f"{_att/max(_book,1)*100:.1f}%"},
-            ])
-            st.markdown('<div class="chart-card" style="margin-top:0;">', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:.78rem;font-weight:700;color:#0F172A;margin-bottom:8px;">Stage Conversion Rates</div>', unsafe_allow_html=True)
-            st.dataframe(df_light(_fdf), use_container_width=True, hide_index=True, height=df_height(3))
             total_drop = max(0.0, _leads - _att)
             drop_pct   = total_drop / _leads * 100 if _leads > 0 else 0.0
-            st.markdown(
-                f'<div style="margin-top:10px;padding:8px 10px;background:#FFF7ED;border-radius:8px;border-left:3px solid {AMBER};">'
-                f'<div style="font-size:.72rem;font-weight:700;color:#92400E;">Leads never attended</div>'
-                f'<div style="font-size:1.1rem;font-weight:900;color:#0F172A;">{pct(drop_pct)}</div>'
-                f'<div style="font-size:.71rem;color:{MUTED};">{fmt(total_drop)} leads lost in funnel</div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
+            _book_rate = _book / _leads * 100
+            _show_rate = _att / max(_book, 1) * 100
+            st.markdown(f'''
+<div class="chart-card" style="margin-top:0;">
+  <div style="font-size:.78rem;font-weight:700;color:#0F172A;margin-bottom:12px;letter-spacing:.01em;">Stage Conversion Rates</div>
+  <table style="width:100%;border-collapse:collapse;">
+    <thead>
+      <tr style="border-bottom:1.5px solid #E2E8F0;">
+        <th style="text-align:left;font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.06em;padding:0 0 6px;">Stage</th>
+        <th style="text-align:right;font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.06em;padding:0 0 6px;">Count</th>
+        <th style="text-align:right;font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.06em;padding:0 0 6px;">Rate</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid #F1F5F9;">
+        <td style="font-size:.82rem;font-weight:600;color:#0F172A;padding:8px 0;">Leads</td>
+        <td style="text-align:right;font-size:.82rem;font-weight:700;color:#0F172A;padding:8px 0;">{fmt(_leads)}</td>
+        <td style="text-align:right;font-size:.82rem;font-weight:600;color:#64748B;padding:8px 0;">100%</td>
+      </tr>
+      <tr style="border-bottom:1px solid #F1F5F9;">
+        <td style="font-size:.82rem;font-weight:600;color:#0F172A;padding:8px 0;">→ Booked</td>
+        <td style="text-align:right;font-size:.82rem;font-weight:700;color:#0F172A;padding:8px 0;">{fmt(_book)}</td>
+        <td style="text-align:right;font-size:.82rem;font-weight:700;color:#009952;padding:8px 0;">{_book_rate:.1f}%</td>
+      </tr>
+      <tr>
+        <td style="font-size:.82rem;font-weight:600;color:#0F172A;padding:8px 0;">→ Attended</td>
+        <td style="text-align:right;font-size:.82rem;font-weight:700;color:#0F172A;padding:8px 0;">{fmt(_att)}</td>
+        <td style="text-align:right;font-size:.82rem;font-weight:700;color:#009952;padding:8px 0;">{_show_rate:.1f}%</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:14px;padding:10px 12px;background:#FFF7ED;border-radius:8px;border-left:3px solid {AMBER};">
+    <div style="font-size:.70rem;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Leads never attended</div>
+    <div style="font-size:1.2rem;font-weight:900;color:#0F172A;line-height:1.1;">{pct(drop_pct)}</div>
+    <div style="font-size:.75rem;color:#78716C;margin-top:2px;">{fmt(total_drop)} leads lost in funnel</div>
+  </div>
+</div>''', unsafe_allow_html=True)
     else:
         st.info("No funnel data available for this selection.")
 
-    with st.expander("Patient Journey by Source", expanded=True):
+    with st.expander("Patient Journey by Source", expanded=False):
         journey = base.groupby("data_source", as_index=False).agg(
             Sessions=("sessions","sum"),
             Leads=("leads","sum"),
