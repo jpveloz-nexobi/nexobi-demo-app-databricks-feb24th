@@ -1592,10 +1592,10 @@ def render_marketing():
             st.dataframe(df_light(out), use_container_width=True, hide_index=True, height=df_height(len(out)))
 
 def render_practice():
-    render_story_cards()
+    # No story cards in CRM view — kept in marketing view only
     st.markdown('<div class="section-title">Practice CRM · Patient Dashboard</div>', unsafe_allow_html=True)
 
-    # --- current + prior period totals (CSV mode) ---
+    # --- current + prior period totals ---
     np_ = float(CUR["conversions"].sum() or 0)
     bk  = float(CUR["booked"].sum() or 0)
     at  = float(CUR["attended"].sum() or 0)
@@ -1603,31 +1603,49 @@ def render_practice():
 
     prev_p = float(PREV["conversions"].sum() or 0)
     prev_r = float(PREV["total_revenue"].sum() or 0)
-
+    prev_at = float(PREV["attended"].sum() or 0)
+    prev_bk = float(PREV["booked"].sum() or 0)
 
     has_prev = len(PREV) > 0
 
-    show = safe_div(at, bk) * 100
-    book = safe_div(bk, np_) * 100
+    show      = safe_div(at, bk) * 100
+    prev_show = safe_div(prev_at, prev_bk) * 100
+    show_delta = show - prev_show if has_prev else None
 
-    rc = safe_div(rev - prev_r, max(abs(prev_r), 0.01))*100
-    pc = safe_div(np_ - prev_p, max(abs(prev_p), 0.01))*100
+    rc = safe_div(rev - prev_r, max(abs(prev_r), 0.01)) * 100
+    pc = safe_div(np_ - prev_p, max(abs(prev_p), 0.01)) * 100
 
-    for col,(label,value,meta) in zip(st.columns(5),[
-        ("New Patients", fmt(np_), delta_html(pc, has_prev)),
-        ("Booked", fmt(bk), f'<span style="color:{MUTED};font-size:.8rem;">Book rate:{pct(book)}</span>'),
-        ("Attended", fmt(at), f'<span style="color:{MUTED};font-size:.8rem;">Show rate:{pct(show)}</span>'),
-        ("Revenue", money(rev), delta_html(rc, has_prev)),
-        ("Rev/Patient", money(safe_div(rev,np_)), f'<span style="color:{MUTED};font-size:.8rem;">Per patient</span>'),
-    ]):
-        with col:
-            st.markdown(f'''
-              <div class="metric-card">
-                <div class="metric-label">{label}</div>
-                <div class="metric-value">{value}</div>
-                <div class="metric-meta">{meta}</div>
-              </div>
-            ''', unsafe_allow_html=True)
+    # Show rate benchmark delta label
+    bench_diff = show - BENCH_SHOW_RATE
+    bench_clr  = GREEN_DK if bench_diff >= 0 else RED
+    bench_lbl  = (
+        f'<span style="color:{bench_clr};font-size:.8rem;font-weight:700;">'
+        f'{"▲" if bench_diff >= 0 else "▼"} {abs(bench_diff):.1f}pp vs {BENCH_SHOW_RATE:.0f}% avg</span>'
+    )
+
+    # 3 tiles only — Booked/Attended live in the funnel below
+    _t1, _t2, _t3 = st.columns(3, gap="medium")
+    with _t1:
+        st.markdown(f'''
+          <div class="metric-card">
+            <div class="metric-label">New Patients</div>
+            <div class="metric-value">{fmt(np_)}</div>
+            <div class="metric-meta">{delta_html(pc, has_prev)}</div>
+          </div>''', unsafe_allow_html=True)
+    with _t2:
+        st.markdown(f'''
+          <div class="metric-card">
+            <div class="metric-label">Show Rate</div>
+            <div class="metric-value">{pct(show)}</div>
+            <div class="metric-meta">{bench_lbl}</div>
+          </div>''', unsafe_allow_html=True)
+    with _t3:
+        st.markdown(f'''
+          <div class="metric-card">
+            <div class="metric-label">Revenue</div>
+            <div class="metric-value">{money(rev)}</div>
+            <div class="metric-meta">{delta_html(rc, has_prev)}</div>
+          </div>''', unsafe_allow_html=True)
 
     st.markdown('<div class="section-title">Attendance Trend</div>', unsafe_allow_html=True)
     trend = CUR.groupby("date", as_index=False).agg(booked=("booked","sum"), attended=("attended","sum")).sort_values("date")
