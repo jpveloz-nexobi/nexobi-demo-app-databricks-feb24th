@@ -774,6 +774,9 @@ with st.sidebar:
     st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Navigation ---
+    # Allow AI Agent's Dashboard button to navigate without a widget-key conflict
+    if st.session_state.pop("_go_dashboard", False):
+        st.session_state["nav"] = "Dashboard"
     page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
 
     st.markdown("---")
@@ -2407,19 +2410,21 @@ def render_ai():
 
     # ── Chat input (always rendered) ─────────────────────────
     st.markdown('<div id="ai-send-row"></div>', unsafe_allow_html=True)
-    _icol, _scol = st.columns([8.5, 1.5])
+    _icol, _scol = st.columns([11, 1])
     with _icol:
-        user_q = st.text_input(
+        user_q = st.text_area(
             "", placeholder="Ask anything about your data…",
             label_visibility="collapsed",
-            key=f"ai_input_{st.session_state.ai_nonce}"
+            key=f"ai_input_{st.session_state.ai_nonce}",
+            height=80
         )
     with _scol:
-        ask = st.button("Send", use_container_width=True, key="ai_ask", type="primary")
+        st.markdown('<div style="height:1.55rem"></div>', unsafe_allow_html=True)
+        ask = st.button("↑", use_container_width=True, key="ai_ask", type="primary")
 
     st.markdown(
-        '<p style="font-size:.70rem;color:#CBD5E1;margin:.25rem 0 .7rem;text-align:right;">'
-        'Powered by Databricks AI · Llama 3.3 70B</p>',
+        '<p style="font-size:.68rem;margin:.15rem 0 .6rem;text-align:right;">'
+        'Powered by NexoBI · Local CSV</p>',
         unsafe_allow_html=True
     )
 
@@ -2522,45 +2527,87 @@ elif page == "AI Agent":
 [data-testid="stToolbar"]{display:none!important;}
 header{display:none!important;}
 footer{display:none!important;}
-/* Hide the global NexoBI header card */
 .nexo-header{display:none!important;}
 section.main{margin-left:0!important;}
-/* Deep navy — full viewport */
-.stApp{background:#060D1A!important;min-height:100vh!important;}
+/* Override Streamlit theme variables for this page */
+.stApp{
+  --background-color:#060D1A!important;
+  --secondary-background-color:rgba(255,255,255,.07)!important;
+  --text-color:#CBD5E1!important;
+  background:#060D1A!important;min-height:100vh!important;
+}
 .block-container{max-width:720px!important;margin:0 auto!important;padding-top:1.2rem!important;padding-bottom:3rem!important;background:transparent!important;}
-/* Fixed full-page aurora orbs (bleed whole page) */
+/* Fixed full-page aurora orbs */
 .ai-page-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
 .ai-page-orbs .op1{position:absolute;width:520px;height:520px;background:rgba(0,192,107,.14);border-radius:50%;filter:blur(90px);top:-140px;right:-80px;animation:floatA 9s ease-in-out infinite;}
 .ai-page-orbs .op2{position:absolute;width:420px;height:420px;background:rgba(14,165,233,.11);border-radius:50%;filter:blur(90px);bottom:-100px;left:-60px;animation:floatB 13s ease-in-out infinite;}
 .ai-page-orbs .op3{position:absolute;width:300px;height:300px;background:rgba(139,92,246,.09);border-radius:50%;filter:blur(80px);top:42%;right:-50px;animation:floatA 17s ease-in-out infinite reverse;}
-/* Input bar — dark glass */
-div[data-baseweb="base-input"],div[data-baseweb="input"]{background:rgba(255,255,255,.07)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;border:1px solid rgba(255,255,255,.13)!important;box-shadow:none!important;border-radius:18px!important;}
-div[data-baseweb="base-input"]:focus-within{background:rgba(255,255,255,.11)!important;box-shadow:0 0 0 3px rgba(0,192,107,.2)!important;border-color:rgba(0,192,107,.38)!important;}
-.stTextInput input{color:#F1F5F9!important;}
-/* Preset chips — dark glass to match page */
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.13)!important;color:rgba(255,255,255,.72)!important;box-shadow:none!important;}
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button:hover{background:rgba(255,255,255,.13)!important;color:#fff!important;transform:translateY(-2px)!important;}
-/* AI bubble — semi-transparent dark */
+/* ── Text area input ───────────────────────────────────── */
+.stTextArea>div>div>textarea{
+  background:rgba(255,255,255,.06)!important;
+  border:1px solid rgba(255,255,255,.13)!important;
+  border-radius:18px!important;
+  color:#E2E8F0!important;
+  padding:14px 18px!important;
+  font-size:.93rem!important;
+  line-height:1.5!important;
+  resize:none!important;
+  box-shadow:none!important;
+  backdrop-filter:blur(10px)!important;
+}
+.stTextArea>div>div>textarea::placeholder{color:rgba(255,255,255,.3)!important;}
+.stTextArea>div>div>textarea:focus{
+  border-color:rgba(0,192,107,.38)!important;
+  box-shadow:0 0 0 3px rgba(0,192,107,.15)!important;
+  background:rgba(255,255,255,.09)!important;
+}
+.stTextArea>div>div{border:none!important;background:transparent!important;}
+/* ── Circular icon send button ─────────────────────────── */
+[data-testid="stMarkdownContainer"]:has(#ai-send-row)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton>button,
+[data-testid="baseButton-primary"]{
+  border-radius:50%!important;
+  width:46px!important;min-width:46px!important;
+  height:46px!important;min-height:46px!important;
+  padding:0!important;font-size:1.15rem!important;
+  background:linear-gradient(135deg,#00C06B,#009952)!important;
+  box-shadow:0 4px 20px rgba(0,192,107,.38)!important;
+  transition:all .18s!important;
+}
+[data-testid="baseButton-primary"]:hover{
+  box-shadow:0 6px 28px rgba(0,192,107,.55)!important;
+  transform:scale(1.08)!important;
+}
+/* ── Preset chips — dark glass ─────────────────────────── */
+section.main .stButton>button{
+  background:rgba(255,255,255,.06)!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  color:rgba(255,255,255,.65)!important;
+  box-shadow:none!important;
+}
+section.main .stButton>button:hover{
+  background:rgba(255,255,255,.11)!important;
+  color:rgba(255,255,255,.9)!important;
+}
+/* Preset chips pill shape */
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{border-radius:999px!important;}
+/* ── AI bubble ─────────────────────────────────────────── */
 .ai-bubble-ai{background:rgba(255,255,255,.05)!important;border-color:rgba(0,192,107,.22)!important;color:#CBD5E1!important;}
-/* Send button — green */
-[data-testid="baseButton-primary"]{background:linear-gradient(135deg,#00C06B,#009952)!important;box-shadow:0 4px 20px rgba(0,192,107,.38)!important;}
-[data-testid="baseButton-primary"]:hover{box-shadow:0 6px 28px rgba(0,192,107,.55)!important;transform:translateY(-1px)!important;}
-/* New-chat compact button */
-[data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button{background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.13)!important;color:rgba(255,255,255,.5)!important;}
-[data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button:hover{background:rgba(255,255,255,.11)!important;color:rgba(255,255,255,.8)!important;}
-/* Powered-by */
-.stMarkdownContainer p{color:rgba(255,255,255,.32)!important;}
-/* Dashboard button — top-left ghost pill */
+/* ── New-chat button ───────────────────────────────────── */
+[data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button{border-radius:8px!important;padding:.2rem .65rem!important;min-height:0!important;height:auto!important;}
+/* ── Powered-by text ───────────────────────────────────── */
+.stMarkdownContainer p{color:rgba(255,255,255,.28)!important;}
+/* ── Dashboard button ──────────────────────────────────── */
 [data-testid="stMarkdownContainer"]:has(#ai-dash-toggle)+div .stButton>button{
-  background:transparent!important;border:1px solid rgba(255,255,255,.18)!important;
+  background:transparent!important;
+  border:1px solid rgba(255,255,255,.16)!important;
   border-radius:999px!important;padding:5px 15px!important;
-  color:rgba(255,255,255,.52)!important;font-size:.74rem!important;font-weight:500!important;
+  color:rgba(255,255,255,.45)!important;font-size:.74rem!important;font-weight:500!important;
   min-height:0!important;height:auto!important;box-shadow:none!important;
-  transition:all .15s!important;letter-spacing:.01em!important;margin-bottom:.5rem!important;
+  letter-spacing:.01em!important;
 }
 [data-testid="stMarkdownContainer"]:has(#ai-dash-toggle)+div .stButton>button:hover{
-  background:rgba(255,255,255,.08)!important;color:rgba(255,255,255,.85)!important;
-  border-color:rgba(255,255,255,.32)!important;
+  background:rgba(255,255,255,.07)!important;color:rgba(255,255,255,.75)!important;
+  border-color:rgba(255,255,255,.28)!important;
 }
 </style>""", unsafe_allow_html=True)
 
@@ -2570,7 +2617,7 @@ div[data-baseweb="base-input"]:focus-within{background:rgba(255,255,255,.11)!imp
     # ── Dashboard button — top-left, subtle ghost ─────────────
     st.markdown('<div id="ai-dash-toggle"></div>', unsafe_allow_html=True)
     if st.button("← Dashboard", key="ai_go_dashboard"):
-        st.session_state["nav"] = "Dashboard"
+        st.session_state["_go_dashboard"] = True
         st.rerun()
 
     # Note: AI Agent uses DATA (full dataset) — sidebar filters have no effect
