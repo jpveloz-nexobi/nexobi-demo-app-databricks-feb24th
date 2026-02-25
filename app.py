@@ -446,34 +446,14 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
 
-/* ── Hero — dark navy aurora card ───────────────────────── */
+/* ── Hero — transparent, sits on full-page aurora ────────── */
 .ai-hero-wrap{
-  position:relative;overflow:hidden;text-align:center;
-  padding:5rem 1rem 3rem;
-  background:linear-gradient(135deg,#060D1A 0%,#0B1628 45%,#080E1F 100%);
-  border-radius:0 0 36px 36px;
-  margin:-1rem -1rem 2rem;
+  position:relative;text-align:center;
+  padding:3.5rem 1rem 2.5rem;
+  background:transparent;
 }
-/* Animated aurora overlay */
-.ai-hero-wrap::before{
-  content:'';position:absolute;inset:0;z-index:0;
-  background:linear-gradient(120deg,
-    rgba(0,192,107,.18) 0%,
-    rgba(14,165,233,.14) 35%,
-    rgba(139,92,246,.12) 68%,
-    rgba(0,192,107,.18) 100%);
-  background-size:300% 300%;
-  animation:aurora 12s ease-in-out infinite;
-}
-/* Floating orbs */
-.ai-orb{position:absolute;border-radius:50%;filter:blur(60px);z-index:0;pointer-events:none;}
-.ai-orb-g{width:340px;height:340px;background:rgba(0,192,107,.26);top:-90px;right:8%;animation:floatA 9s ease-in-out infinite;}
-.ai-orb-b{width:270px;height:270px;background:rgba(14,165,233,.22);bottom:-70px;left:4%;animation:floatB 12s ease-in-out infinite;}
-.ai-orb-p{width:210px;height:210px;background:rgba(139,92,246,.2);top:35%;right:3%;animation:floatA 15s ease-in-out infinite reverse;}
-/* Noise texture overlay */
-.ai-noise{position:absolute;inset:0;z-index:1;opacity:.035;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-}
+/* No card bg — aurora bleeds from page-level fixed orbs */
+.ai-orb,.ai-noise{display:none!important;}
 /* Status pill — dark glass */
 .ai-status-pill{
   display:inline-flex;align-items:center;gap:7px;
@@ -2380,19 +2360,13 @@ def render_ai():
     if not has_history and not has_pending:
         st.markdown(f'''
 <div class="ai-hero-wrap">
-  <div class="ai-orb ai-orb-g"></div>
-  <div class="ai-orb ai-orb-b"></div>
-  <div class="ai-orb ai-orb-p"></div>
-  <div class="ai-noise"></div>
-  <div style="position:relative;z-index:2;">
-    <div><span class="ai-status-pill"><span class="ai-pulse"></span>◆ NexoBI AI &nbsp;·&nbsp; {"Local data" if _csv_mode else "Live · Databricks"}</span></div>
-    <div class="ai-catch">Ask anything about<br><span class="ai-catch-hi">your practice.</span></div>
-    <div class="ai-catch-sub">Get straight answers from your data. No dashboards needed.</div>
-    <div class="ai-suggestions">
-      <span>💡 What was my revenue last 30 days?</span>
-      <span>💡 Compare Google vs Facebook ROAS...</span>
-      <span>💡 Which campaign has the best CPL?</span>
-    </div>
+  <div><span class="ai-status-pill"><span class="ai-pulse"></span>◆ NexoBI AI &nbsp;·&nbsp; {"Local data" if _csv_mode else "Live · Databricks"}</span></div>
+  <div class="ai-catch">Ask anything about<br><span class="ai-catch-hi">your practice.</span></div>
+  <div class="ai-catch-sub">Get straight answers from your data. No dashboards needed.</div>
+  <div class="ai-suggestions">
+    <span>💡 What was my revenue last 30 days?</span>
+    <span>💡 Compare Google vs Facebook ROAS...</span>
+    <span>💡 Which campaign has the best CPL?</span>
   </div>
 </div>
 ''', unsafe_allow_html=True)
@@ -2541,49 +2515,59 @@ if page == "Dashboard":
         render_marketing()
 
 elif page == "AI Agent":
-    # ── Full-bleed page: hide sidebar + header, dark navy aurora bg ──
+    # ── Full-bleed dark navy aurora — hide everything, bleed full page ──
     st.markdown("""<style>
 [data-testid="stSidebar"]{display:none!important;}
 [data-testid="stHeader"]{display:none!important;}
 [data-testid="stToolbar"]{display:none!important;}
 header{display:none!important;}
 footer{display:none!important;}
+/* Hide the global NexoBI header card */
+.nexo-header{display:none!important;}
 section.main{margin-left:0!important;}
-/* Deep navy background */
+/* Deep navy — full viewport */
 .stApp{background:#060D1A!important;min-height:100vh!important;}
-.block-container{max-width:720px!important;margin:0 auto!important;padding-top:0!important;padding-bottom:3rem!important;background:transparent!important;}
+.block-container{max-width:720px!important;margin:0 auto!important;padding-top:1.2rem!important;padding-bottom:3rem!important;background:transparent!important;}
+/* Fixed full-page aurora orbs (bleed whole page) */
+.ai-page-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.ai-page-orbs .op1{position:absolute;width:520px;height:520px;background:rgba(0,192,107,.14);border-radius:50%;filter:blur(90px);top:-140px;right:-80px;animation:floatA 9s ease-in-out infinite;}
+.ai-page-orbs .op2{position:absolute;width:420px;height:420px;background:rgba(14,165,233,.11);border-radius:50%;filter:blur(90px);bottom:-100px;left:-60px;animation:floatB 13s ease-in-out infinite;}
+.ai-page-orbs .op3{position:absolute;width:300px;height:300px;background:rgba(139,92,246,.09);border-radius:50%;filter:blur(80px);top:42%;right:-50px;animation:floatA 17s ease-in-out infinite reverse;}
 /* Input bar — dark glass */
-div[data-baseweb="base-input"],div[data-baseweb="input"]{background:rgba(255,255,255,.07)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;border:1px solid rgba(255,255,255,.14)!important;box-shadow:none!important;border-radius:18px!important;}
-div[data-baseweb="base-input"]:focus-within{background:rgba(255,255,255,.11)!important;box-shadow:0 0 0 3px rgba(0,192,107,.2)!important;border-color:rgba(0,192,107,.4)!important;}
-/* Input text white on dark */
+div[data-baseweb="base-input"],div[data-baseweb="input"]{background:rgba(255,255,255,.07)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;border:1px solid rgba(255,255,255,.13)!important;box-shadow:none!important;border-radius:18px!important;}
+div[data-baseweb="base-input"]:focus-within{background:rgba(255,255,255,.11)!important;box-shadow:0 0 0 3px rgba(0,192,107,.2)!important;border-color:rgba(0,192,107,.38)!important;}
 .stTextInput input{color:#F1F5F9!important;}
-/* AI bubble on dark bg — crisp white card */
-.ai-bubble-ai{background:rgba(255,255,255,.06)!important;border-color:rgba(0,192,107,.25)!important;color:#E2E8F0!important;}
-/* User bubble unchanged (dark navy → looks great on dark) */
-/* Send button — green glow */
-[data-testid="baseButton-primary"]{background:linear-gradient(135deg,#00C06B,#009952)!important;box-shadow:0 4px 20px rgba(0,192,107,.4)!important;}
+/* Preset chips — dark glass to match page */
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.13)!important;color:rgba(255,255,255,.72)!important;box-shadow:none!important;}
+[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button:hover{background:rgba(255,255,255,.13)!important;color:#fff!important;transform:translateY(-2px)!important;}
+/* AI bubble — semi-transparent dark */
+.ai-bubble-ai{background:rgba(255,255,255,.05)!important;border-color:rgba(0,192,107,.22)!important;color:#CBD5E1!important;}
+/* Send button — green */
+[data-testid="baseButton-primary"]{background:linear-gradient(135deg,#00C06B,#009952)!important;box-shadow:0 4px 20px rgba(0,192,107,.38)!important;}
 [data-testid="baseButton-primary"]:hover{box-shadow:0 6px 28px rgba(0,192,107,.55)!important;transform:translateY(-1px)!important;}
-/* Powered-by label */
-.stMarkdownContainer p{color:rgba(255,255,255,.4)!important;}
-/* New-chat button on dark bg */
-[data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button{background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.14)!important;color:rgba(255,255,255,.6)!important;}
-[data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button:hover{background:rgba(255,255,255,.12)!important;color:rgba(255,255,255,.85)!important;}
-/* ── Dashboard toggle — fixed top-left pill ─── */
+/* New-chat compact button */
+[data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button{background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.13)!important;color:rgba(255,255,255,.5)!important;}
+[data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button:hover{background:rgba(255,255,255,.11)!important;color:rgba(255,255,255,.8)!important;}
+/* Powered-by */
+.stMarkdownContainer p{color:rgba(255,255,255,.32)!important;}
+/* Dashboard button — top-left ghost pill */
 [data-testid="stMarkdownContainer"]:has(#ai-dash-toggle)+div .stButton>button{
-  position:fixed!important;top:18px!important;left:22px!important;z-index:9999!important;
-  background:rgba(255,255,255,.1)!important;border:1px solid rgba(255,255,255,.2)!important;
-  border-radius:999px!important;padding:7px 18px!important;
-  color:rgba(255,255,255,.85)!important;font-size:.78rem!important;font-weight:600!important;
-  backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;
-  min-height:0!important;height:auto!important;box-shadow:0 2px 16px rgba(0,0,0,.3)!important;
-  transition:all .15s!important;letter-spacing:.01em!important;
+  background:transparent!important;border:1px solid rgba(255,255,255,.18)!important;
+  border-radius:999px!important;padding:5px 15px!important;
+  color:rgba(255,255,255,.52)!important;font-size:.74rem!important;font-weight:500!important;
+  min-height:0!important;height:auto!important;box-shadow:none!important;
+  transition:all .15s!important;letter-spacing:.01em!important;margin-bottom:.5rem!important;
 }
 [data-testid="stMarkdownContainer"]:has(#ai-dash-toggle)+div .stButton>button:hover{
-  background:rgba(255,255,255,.18)!important;color:#fff!important;
+  background:rgba(255,255,255,.08)!important;color:rgba(255,255,255,.85)!important;
+  border-color:rgba(255,255,255,.32)!important;
 }
 </style>""", unsafe_allow_html=True)
 
-    # ── Dashboard toggle button ───────────────────────────────
+    # ── Full-page aurora orbs (fixed, bleed whole viewport) ──
+    st.markdown('<div class="ai-page-orbs"><div class="op1"></div><div class="op2"></div><div class="op3"></div></div>', unsafe_allow_html=True)
+
+    # ── Dashboard button — top-left, subtle ghost ─────────────
     st.markdown('<div id="ai-dash-toggle"></div>', unsafe_allow_html=True)
     if st.button("← Dashboard", key="ai_go_dashboard"):
         st.session_state["nav"] = "Dashboard"
