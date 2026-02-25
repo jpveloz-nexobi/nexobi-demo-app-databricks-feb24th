@@ -50,6 +50,12 @@ PURPLE   = "#8B5CF6"
 INK      = "#111827"
 SOFT     = "#EEF2F7"
 
+# Industry benchmarks — healthcare marketing averages
+BENCH_ROAS      = 2.8    # Avg paid media ROAS for healthcare
+BENCH_CPL       = 45.0   # Avg cost per lead ($)
+BENCH_SHOW_RATE = 78.0   # Avg appointment show rate (%)
+BENCH_LEAD_GRO  = 10.0   # Expected lead growth % vs prior
+
 st.set_page_config(
     page_title="NexoBI · Attribution Intelligence",
     layout="wide",
@@ -553,6 +559,38 @@ section[data-testid="stSidebar"] label {
 .sig-sev-green{background:rgba(0,192,107,.10);color:#009952;}
 .sig-detail{font-size:.73rem;color:#64748B;line-height:1.35;margin-bottom:4px;}
 .sig-action{font-size:.71rem;color:#334155;line-height:1.35;padding-top:4px;border-top:1px solid rgba(0,0,0,.06);}
+
+/* ===== COMPLIANCE BADGES (header) ===== */
+.comply-badge{border-radius:999px;font-size:.63rem;font-weight:800;padding:2px 9px;letter-spacing:.04em;}
+.comply-hipaa{background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0;}
+.comply-soc2{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;}
+
+/* ===== COMMAND CENTER ===== */
+.cmd-health{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:20px;margin-bottom:.75rem;flex-wrap:wrap;}
+.cmd-score-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;width:68px;height:68px;border-radius:50%;border:3.5px solid #00C06B;flex-shrink:0;}
+.cmd-score-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.45rem;font-weight:900;line-height:1;}
+.cmd-score-den{font-size:.6rem;color:#94A3B8;font-weight:500;}
+.cmd-health-stat{flex:1;min-width:100px;border-left:1px solid #F1F5F9;padding-left:18px;}
+.cmd-health-label{font-size:.63rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;}
+.cmd-health-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:800;color:#0F172A;}
+.cmd-health-sub{font-size:.70rem;color:#64748B;margin-top:1px;}
+
+/* Benchmark tiles */
+.bench-tile{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;}
+.bench-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.bt-good::before{background:#00C06B;} .bt-warn::before{background:#F59E0B;} .bt-bad::before{background:#EF4444;}
+.bench-label{font-size:.65rem;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.bench-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:900;color:#0F172A;line-height:1.1;margin-bottom:3px;}
+.bench-delta{font-size:.74rem;font-weight:700;}
+.bench-avg{font-size:.69rem;color:#94A3B8;margin-top:2px;}
+
+/* KPI benchmark row */
+.metric-bench{font-size:.70rem;color:#94A3B8;margin-top:5px;padding-top:4px;border-top:1px solid rgba(0,0,0,.05);}
+
+/* Integration strip */
+.integ-strip{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:.55rem;}
+.integ-badge{display:inline-flex;align-items:center;gap:5px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:4px 11px;font-size:.74rem;font-weight:600;color:#475569;}
+.integ-dot{width:7px;height:7px;border-radius:50%;background:#00C06B;display:inline-block;flex-shrink:0;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -570,7 +608,11 @@ st.markdown(f'''
       <div class="nexo-brand-sub">Attribution Intelligence · Last data: {max_d}</div>
     </div>
   </div>
-  <span class="nexo-badge">Healthcare Analytics</span>
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+    <span class="nexo-badge">Healthcare Analytics</span>
+    <span class="comply-badge comply-hipaa">HIPAA</span>
+    <span class="comply-badge comply-soc2">SOC 2</span>
+  </div>
 </div>
 ''', unsafe_allow_html=True)
 
@@ -586,7 +628,7 @@ with st.sidebar:
     _export_slot = st.empty()
 
     # --- Navigation ---
-    page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
+    page = st.radio("Navigation", ["Dashboard", "Command Center", "AI Agent"], key="nav")
 
     st.markdown("---")
     # --------------------------------------------------
@@ -904,6 +946,98 @@ def df_light(df: pd.DataFrame):
         return df
 
 # ==========================================================
+# PLATFORM HEALTH SCORE
+# ==========================================================
+def compute_health_score(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> int:
+    """0–100 health score weighted across ROAS, CPL, revenue growth, show rate."""
+    try:
+        rev   = float(cur_df["total_revenue"].sum() or 0)
+        spend = float(cur_df["total_cost"].sum() or 0)
+        leads = max(float(cur_df["leads"].sum() or 0), 0.01)
+        att   = float(cur_df["attended"].sum() or 0)
+        book  = max(float(cur_df["booked"].sum() or 0), 0.01)
+        p_rev = float(prev_df["total_revenue"].sum() or 0)
+
+        roas      = safe_div(rev, spend)
+        cpl       = safe_div(spend, leads)
+        show      = safe_div(att, book) * 100
+        rev_growth = safe_div(rev - p_rev, max(abs(p_rev), 0.01)) * 100
+
+        # 25 pts each
+        roas_score = min(25, max(0, (roas / BENCH_ROAS) * 25))
+        cpl_score  = min(25, max(0, (BENCH_CPL / max(cpl, 1)) * 25)) if cpl > 0 else 10
+        show_score = min(25, max(0, (show / BENCH_SHOW_RATE) * 25))
+        rev_score  = min(25, max(0, 12.5 + rev_growth * 0.65))
+
+        return min(100, int(roas_score + cpl_score + show_score + rev_score))
+    except Exception:
+        return 72
+
+
+# ==========================================================
+# REVENUE FORECAST  (linear extrapolation, 30-day horizon)
+# ==========================================================
+def plot_forecast(df: pd.DataFrame, days_ahead: int = 30):
+    """Returns (fig, projected_total) or (None, 0) if insufficient data."""
+    try:
+        daily = (df.groupby("date")["total_revenue"].sum()
+                   .reset_index()
+                   .sort_values("date"))
+        daily["date"] = pd.to_datetime(daily["date"])
+        if len(daily) < 5:
+            return None, 0
+
+        x = np.array([(d - daily["date"].iloc[0]).days for d in daily["date"]])
+        y = daily["total_revenue"].values
+
+        coeffs = np.polyfit(x, y, 1)
+
+        # Future dates
+        last_x    = x[-1]
+        fut_x     = np.arange(last_x + 1, last_x + days_ahead + 1)
+        fut_dates = [daily["date"].iloc[-1] + timedelta(days=int(i - last_x)) for i in fut_x]
+        fut_y     = np.maximum(0, np.polyval(coeffs, fut_x))
+
+        # Confidence band — ±1.5 residual std
+        residuals = y - np.polyval(coeffs, x)
+        band      = np.std(residuals) * 1.5
+        upper     = fut_y + band
+        lower     = np.maximum(0, fut_y - band)
+
+        fig = go.Figure()
+
+        # Confidence band
+        fig.add_trace(go.Scatter(
+            x=fut_dates + fut_dates[::-1],
+            y=np.concatenate([upper, lower[::-1]]).tolist(),
+            fill="toself",
+            fillcolor="rgba(59,130,246,0.07)",
+            line=dict(color="rgba(0,0,0,0)"),
+            showlegend=False, hoverinfo="skip", name="band",
+        ))
+        # Actual revenue
+        fig.add_trace(go.Scatter(
+            x=daily["date"], y=y,
+            name="Actual", mode="lines",
+            line=dict(color=GREEN, width=2.5),
+            fill="tozeroy", fillcolor="rgba(0,192,107,0.06)",
+            hovertemplate="<b>$%{y:,.0f}</b><extra>Actual</extra>",
+        ))
+        # Forecast
+        fig.add_trace(go.Scatter(
+            x=fut_dates, y=fut_y.tolist(),
+            name="Forecast", mode="lines",
+            line=dict(color=BLUE, width=2, dash="dash"),
+            hovertemplate="<b>$%{y:,.0f}</b><extra>Forecast</extra>",
+        ))
+
+        fig.update_layout(**base_layout("Revenue Forecast — 30-Day Projection", 280))
+        return fig, float(fut_y.sum())
+    except Exception:
+        return None, 0
+
+
+# ==========================================================
 # STORY MODE CARDS — front and center demo navigation
 # ==========================================================
 def render_story_cards():
@@ -1022,6 +1156,149 @@ def plot_patient_funnel(df: pd.DataFrame):
 
 
 # ==========================================================
+# COMMAND CENTER — executive view
+# ==========================================================
+def render_command_center():
+    base     = CUR_MKT if not practice_mode else CUR
+    prev_b   = PREV_MKT if not practice_mode else PREV
+    has_prev = len(prev_b) > 0
+
+    rev      = float(base["total_revenue"].sum() or 0)
+    spend    = float(base["total_cost"].sum() or 0)
+    leads    = max(float(base["leads"].sum() or 0), 0.01)
+    booked   = max(float(base["booked"].sum() or 0), 0.01)
+    attended = float(base["attended"].sum() or 0)
+    p_rev    = float(prev_b["total_revenue"].sum() or 0)
+    p_leads  = max(float(prev_b["leads"].sum() or 0), 0.01)
+
+    roas       = safe_div(rev, spend)
+    cpl        = safe_div(spend, leads)
+    show_rate  = safe_div(attended, booked) * 100
+    rev_growth = safe_div(rev - p_rev, max(abs(p_rev), 0.01)) * 100
+    lead_growth = safe_div(leads - p_leads, p_leads) * 100
+
+    score = compute_health_score(base, prev_b)
+    sc_color = GREEN if score >= 80 else (AMBER if score >= 60 else RED)
+    sc_label = "Strong" if score >= 80 else ("Moderate" if score >= 60 else "Needs Attention")
+
+    period_label = f"{start.strftime('%b %d')} – {end.strftime('%b %d, %Y')}"
+
+    # ── Section title ─────────────────────────────────────
+    st.markdown('<div class="section-title">Command Center</div>', unsafe_allow_html=True)
+
+    # ── Health banner ─────────────────────────────────────
+    st.markdown(f'''
+<div class="cmd-health">
+  <div class="cmd-score-ring" style="border-color:{sc_color};">
+    <div class="cmd-score-num" style="color:{sc_color};">{score}</div>
+    <div class="cmd-score-den">/100</div>
+  </div>
+  <div style="flex:2;min-width:160px;">
+    <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:800;color:#0F172A;margin-bottom:2px;">
+      Platform Health &nbsp;<span style="color:{sc_color};font-size:.8rem;font-weight:700;">{sc_label}</span>
+    </div>
+    <div style="font-size:.74rem;color:#64748B;">{period_label} &nbsp;·&nbsp; {period_days}-day window &nbsp;·&nbsp; {len(base):,} records</div>
+  </div>
+  <div class="cmd-health-stat">
+    <div class="cmd-health-label">Revenue</div>
+    <div class="cmd-health-val">{money(rev)}</div>
+    <div class="cmd-health-sub">{delta_html(rev_growth, has_prev)}</div>
+  </div>
+  <div class="cmd-health-stat">
+    <div class="cmd-health-label">ROAS</div>
+    <div class="cmd-health-val">{roas:.2f}x</div>
+    <div class="cmd-health-sub" style="color:{'#009952' if roas>=BENCH_ROAS else '#D97706'};">{'▲ Above' if roas>=BENCH_ROAS else '▼ Below'} {BENCH_ROAS}x avg</div>
+  </div>
+  <div class="cmd-health-stat">
+    <div class="cmd-health-label">Cost / Lead</div>
+    <div class="cmd-health-val">{money(cpl)}</div>
+    <div class="cmd-health-sub" style="color:{'#009952' if cpl<=BENCH_CPL else '#D97706'};">{'▲ Efficient' if cpl<=BENCH_CPL else '▼ Above'} ${BENCH_CPL:.0f} avg</div>
+  </div>
+  <div class="cmd-health-stat">
+    <div class="cmd-health-label">Show Rate</div>
+    <div class="cmd-health-val">{pct(show_rate)}</div>
+    <div class="cmd-health-sub" style="color:{'#009952' if show_rate>=BENCH_SHOW_RATE else '#D97706'};">{'▲ Above' if show_rate>=BENCH_SHOW_RATE else '▼ Below'} {BENCH_SHOW_RATE:.0f}% avg</div>
+  </div>
+</div>
+''', unsafe_allow_html=True)
+
+    # ── Benchmark tiles ────────────────────────────────────
+    def _btile(label, val_str, bench_str, val_num, bench_num, higher_better=True):
+        beat  = (val_num >= bench_num) if higher_better else (val_num <= bench_num)
+        close = abs(val_num - bench_num) / max(bench_num, 0.01) < 0.12
+        cls   = "bt-good" if beat else ("bt-warn" if close else "bt-bad")
+        dc    = "#009952" if beat else ("#D97706" if close else "#DC2626")
+        arrow = ("▲" if beat else "▼") if higher_better else ("▼" if beat else "▲")
+        lbl   = "Above benchmark" if beat else ("Near benchmark" if close else "Below benchmark")
+        return (f'<div class="bench-tile {cls}">'
+                f'<div class="bench-label">{label}</div>'
+                f'<div class="bench-val">{val_str}</div>'
+                f'<div class="bench-delta" style="color:{dc};">{arrow} {lbl}</div>'
+                f'<div class="bench-avg">Industry avg: {bench_str}</div>'
+                f'</div>')
+
+    b1, b2, b3, b4 = st.columns(4, gap="small")
+    with b1:
+        st.markdown(_btile("ROAS", f"{roas:.2f}x", f"{BENCH_ROAS}x", roas, BENCH_ROAS), unsafe_allow_html=True)
+    with b2:
+        st.markdown(_btile("Cost per Lead", money(cpl), f"${BENCH_CPL:.0f}", cpl, BENCH_CPL, higher_better=False), unsafe_allow_html=True)
+    with b3:
+        st.markdown(_btile("Show Rate", pct(show_rate), f"{BENCH_SHOW_RATE:.0f}%", show_rate, BENCH_SHOW_RATE), unsafe_allow_html=True)
+    with b4:
+        st.markdown(_btile("Lead Growth", f"{lead_growth:+.0f}%", f"+{BENCH_LEAD_GRO:.0f}%", lead_growth, BENCH_LEAD_GRO), unsafe_allow_html=True)
+
+    st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+
+    # ── Forecast + Signals ─────────────────────────────────
+    _fc, _sc = st.columns([1.65, 1], gap="medium")
+
+    with _fc:
+        st.markdown('<div class="section-title" style="margin-top:.2rem;">Revenue Forecast</div>', unsafe_allow_html=True)
+        fig_fc, proj_total = plot_forecast(base)
+        if fig_fc:
+            st.markdown(
+                f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
+                f'Projected next 30 days: <b style="color:{TEXT};font-size:.85rem;">{money(proj_total)}</b>'
+                f' &nbsp;·&nbsp; Based on {period_days}-day trend</div>',
+                unsafe_allow_html=True
+            )
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+            st.plotly_chart(fig_fc, use_container_width=True, config={"displayModeBar": False})
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.info("Not enough data for forecast. Widen the date range to at least 5 days.")
+
+    with _sc:
+        st.markdown('<div class="section-title" style="margin-top:.2rem;">Top Signals</div>', unsafe_allow_html=True)
+        _cls_map = {
+            "sb-pill-red":   ("sig-red",   "sig-sev-red"),
+            "sb-pill-amber": ("sig-amber", "sig-sev-amber"),
+            "sb-pill-green": ("sig-green", "sig-sev-green"),
+        }
+        for sev, pill_cls, title, detail, action in _alerts[:4]:
+            sig_cls, sev_cls = _cls_map.get(pill_cls, ("sig-green", "sig-sev-green"))
+            st.markdown(f'''<div class="sig-card {sig_cls}" style="margin-bottom:.4rem;">
+  <div class="sig-head"><div class="sig-title">{title}</div><div class="sig-sev {sev_cls}">{sev}</div></div>
+  <div class="sig-detail">{detail}</div>
+  <div class="sig-action"><b>Action:</b> {action}</div>
+</div>''', unsafe_allow_html=True)
+
+    # ── Integration ecosystem ──────────────────────────────
+    st.markdown('<div class="section-title" style="margin-top:.75rem;">Platform Integrations</div>', unsafe_allow_html=True)
+    st.markdown(f'''
+<div class="integ-strip">
+  <span style="font-size:.72rem;font-weight:600;color:#94A3B8;margin-right:4px;">Connected data sources:</span>
+  <span class="integ-badge"><span class="integ-dot"></span>Google Ads</span>
+  <span class="integ-badge"><span class="integ-dot"></span>Meta Ads</span>
+  <span class="integ-badge"><span class="integ-dot"></span>Salesforce CRM</span>
+  <span class="integ-badge"><span class="integ-dot"></span>Epic EHR</span>
+  <span class="integ-badge"><span class="integ-dot"></span>HubSpot</span>
+  <span style="font-size:.68rem;color:#94A3B8;margin-left:6px;">· Unified via Databricks Unity Catalog</span>
+</div>
+''', unsafe_allow_html=True)
+
+
+# ==========================================================
 # DASHBOARD
 # ==========================================================
 def render_marketing():
@@ -1047,10 +1324,25 @@ def render_marketing():
     rev_chg = safe_div(revenue - prev_rev, max(abs(prev_rev), 0.01)) * 100
     lds_chg = safe_div(leads - prev_leads, max(abs(prev_leads), 0.01)) * 100
 
+    # Benchmark comparison helpers
+    _cpl = safe_div(spend, max(leads, 0.01))
+    def _brow(val_num, bench_num, bench_label, higher_better=True, fmt_fn=None):
+        beat  = (val_num >= bench_num) if higher_better else (val_num <= bench_num)
+        close = abs(val_num - bench_num) / max(bench_num, 0.01) < 0.12
+        c     = "#009952" if beat else ("#D97706" if close else "#EF4444")
+        arrow = ("▲" if beat else "▼") if higher_better else ("▼" if beat else "▲")
+        return f'<div class="metric-bench"><span style="color:{c};font-weight:700;">{arrow}</span> vs {bench_label} avg</div>'
+
     st.markdown('<div class="section-title">Performance Overview</div>', unsafe_allow_html=True)
+    _kpi_bench = {
+        "Revenue":  "",   # no universal $ benchmark
+        "Ad Spend": _brow(_cpl, BENCH_CPL, f"${BENCH_CPL:.0f} CPL", higher_better=False),
+        "ROAS":     _brow(roas, BENCH_ROAS, f"{BENCH_ROAS}x ROAS"),
+        "Leads":    _brow(lds_chg, BENCH_LEAD_GRO, f"+{BENCH_LEAD_GRO:.0f}% growth"),
+    }
     for col,(label,value,meta) in zip(st.columns(4),[
         ("Revenue", money(revenue), delta_html(rev_chg, has_prev)),
-        ("Ad Spend", money(spend), f'<span style="color:{MUTED};font-size:.8rem;">Total investment</span>'),
+        ("Ad Spend", money(spend), f'<span style="color:{MUTED};font-size:.8rem;">CPL: {money(_cpl)}</span>'),
         ("ROAS", f"{roas:.2f}x", f'<span style="color:{MUTED};font-size:.8rem;">Return on ad spend</span>'),
         ("Leads", fmt(leads), delta_html(lds_chg, has_prev)),
     ]):
@@ -1060,6 +1352,7 @@ def render_marketing():
                 <div class="metric-label">{label}</div>
                 <div class="metric-value">{value}</div>
                 <div class="metric-meta">{meta}</div>
+                {_kpi_bench.get(label, "")}
               </div>
             ''', unsafe_allow_html=True)
 
@@ -1904,5 +2197,7 @@ if page == "Dashboard":
         render_practice()
     else:
         render_marketing()
+elif page == "Command Center":
+    render_command_center()
 else:
     render_ai()
