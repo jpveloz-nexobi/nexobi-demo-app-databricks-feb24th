@@ -446,60 +446,48 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
 
-/* ── Hero dark card ─────────────────────────────────────── */
+/* ── Hero — clean, transparent, sits on gradient bg ─────── */
 .ai-hero-wrap{
-  position:relative;border-radius:22px;overflow:hidden;
-  padding:3.8rem 2.5rem 2.8rem;text-align:center;
-  background:linear-gradient(135deg,#0b1120 0%,#0d2235 35%,#081a12 68%,#0b1120 100%);
-  background-size:300% 300%;animation:aurora 12s ease infinite;
-  margin-bottom:1.4rem;
-  box-shadow:0 20px 60px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.06);
+  text-align:center;padding:4.5rem 1rem 2rem;
+  background:transparent;
 }
-/* Noise texture overlay */
-.ai-hero-wrap::after{
-  content:'';position:absolute;inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events:none;opacity:.4;
-}
-/* Floating orbs */
-.ai-orb{position:absolute;border-radius:50%;filter:blur(55px);pointer-events:none;}
-.ai-orb-1{width:320px;height:320px;background:rgba(0,192,107,.16);top:-100px;right:8%;animation:floatA 8s ease-in-out infinite;}
-.ai-orb-2{width:240px;height:240px;background:rgba(59,130,246,.12);bottom:-70px;left:12%;animation:floatB 11s ease-in-out infinite;}
-.ai-orb-3{width:180px;height:180px;background:rgba(139,92,246,.09);top:25%;left:3%;animation:floatB 7s ease-in-out infinite reverse;}
-/* Ready status pill */
 .ai-status-pill{
   display:inline-flex;align-items:center;gap:7px;
-  background:rgba(0,192,107,.12);border:1px solid rgba(0,192,107,.28);
-  border-radius:999px;padding:5px 16px;
-  font-size:.7rem;font-weight:700;color:#6EE7B7;
-  letter-spacing:.07em;text-transform:uppercase;margin-bottom:1.3rem;
+  background:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.75);
+  backdrop-filter:blur(8px);border-radius:999px;padding:5px 16px;
+  font-size:.7rem;font-weight:700;color:#334155;
+  letter-spacing:.07em;text-transform:uppercase;margin-bottom:1.4rem;
 }
 .ai-pulse{width:7px;height:7px;background:#00C06B;border-radius:50%;display:inline-block;animation:pulseRing 1.8s ease-in-out infinite;}
 /* Hero headline */
-.ai-catch{font-family:'Plus Jakarta Sans',sans-serif;font-size:3.1rem;font-weight:900;color:#F1F5F9;line-height:1.1;margin-bottom:.6rem;position:relative;z-index:1;}
-.ai-catch-hi{background:linear-gradient(120deg,#00C06B 0%,#38BDF8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.ai-catch-sub{font-size:.75rem;color:rgba(148,163,184,.75);font-weight:400;letter-spacing:.1em;text-transform:uppercase;position:relative;z-index:1;}
+.ai-catch{font-family:'Plus Jakarta Sans',sans-serif;font-size:3.4rem;font-weight:900;color:#0F172A;line-height:1.08;margin-bottom:.65rem;}
+.ai-catch-hi{background:linear-gradient(120deg,#0369A1 0%,#0EA5E9 55%,#00C06B 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.ai-catch-sub{font-size:.85rem;color:#475569;font-weight:400;max-width:440px;margin:0 auto 2rem;}
+/* Cycling suggestion hints */
+@keyframes suggFade{0%,100%{opacity:0;transform:translateY(6px)}10%,32%{opacity:1;transform:translateY(0)}40%{opacity:0;transform:translateY(-4px)}}
+.ai-suggestions{position:relative;height:1.3rem;margin-bottom:.9rem;overflow:hidden;}
+.ai-suggestions span{position:absolute;inset:0;text-align:center;font-size:.78rem;font-weight:600;color:#64748B;letter-spacing:.01em;opacity:0;animation:suggFade 15s ease-in-out infinite;}
+.ai-suggestions span:nth-child(1){animation-delay:0s}
+.ai-suggestions span:nth-child(2){animation-delay:5s}
+.ai-suggestions span:nth-child(3){animation-delay:10s}
 
-/* ── Preset cards — glassmorphism dark ──────────────────── */
+/* ── Preset chips — frosted pill buttons ─────────────────── */
 [data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{
-  background:rgba(15,23,42,.72)!important;
-  backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;
-  border:1px solid rgba(255,255,255,.09)!important;
-  border-radius:18px!important;padding:1.2rem 1.1rem!important;
-  min-height:88px!important;height:auto!important;text-align:left!important;
-  font-size:.86rem!important;font-weight:600!important;color:#CBD5E1!important;
-  box-shadow:0 8px 32px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07)!important;
-  transition:all .2s ease!important;line-height:1.45!important;white-space:normal!important;width:100%!important;
-  margin-top:-1.4rem!important;
+  background:rgba(255,255,255,.62)!important;
+  backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;
+  border:1px solid rgba(255,255,255,.85)!important;
+  border-radius:999px!important;padding:.5rem 1.4rem!important;
+  min-height:0!important;height:auto!important;text-align:center!important;
+  font-size:.83rem!important;font-weight:600!important;color:#334155!important;
+  box-shadow:0 2px 12px rgba(0,0,0,.08)!important;
+  transition:all .16s ease!important;line-height:1.4!important;white-space:nowrap!important;width:100%!important;
 }
 [data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button:hover{
-  background:rgba(15,23,42,.9)!important;border-color:rgba(255,255,255,.18)!important;
-  box-shadow:0 12px 40px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.12)!important;
-  transform:translateY(-3px)!important;color:#F1F5F9!important;
+  background:rgba(255,255,255,.92)!important;
+  box-shadow:0 4px 18px rgba(0,0,0,.13)!important;
+  transform:translateY(-2px)!important;color:#0F172A!important;
 }
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(1) .stButton>button{border-bottom:2px solid #00C06B!important;}
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(2) .stButton>button{border-bottom:2px solid #38BDF8!important;}
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:nth-child(3) .stButton>button{border-bottom:2px solid #A78BFA!important;}
+/* remove per-chip colour overrides — all chips same style */
 
 /* ── "New chat" button ───────────────────────────────────── */
 [data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button{background:transparent!important;border:1px solid #E2E8F0!important;border-radius:8px!important;color:#64748B!important;font-size:.74rem!important;font-weight:400!important;padding:.2rem .65rem!important;height:auto!important;min-height:0!important;box-shadow:none!important;}
@@ -2378,13 +2366,13 @@ def render_ai():
     if not has_history and not has_pending:
         st.markdown(f'''
 <div class="ai-hero-wrap">
-  <div class="ai-orb ai-orb-1"></div>
-  <div class="ai-orb ai-orb-2"></div>
-  <div class="ai-orb ai-orb-3"></div>
-  <div style="position:relative;z-index:2;">
-    <div><span class="ai-status-pill"><span class="ai-pulse"></span>{"Local data" if _csv_mode else "Live · Databricks"}</span></div>
-    <div class="ai-catch">Ask anything.<br><span class="ai-catch-hi">Clarity on Demand.</span></div>
-    <div class="ai-catch-sub">Your data &nbsp;·&nbsp; Straight answers &nbsp;·&nbsp; No dashboards needed</div>
+  <div><span class="ai-status-pill"><span class="ai-pulse"></span>{"Local data" if _csv_mode else "Live · Databricks"}</span></div>
+  <div class="ai-catch">Ask anything about<br><span class="ai-catch-hi">your practice.</span></div>
+  <div class="ai-catch-sub">Get straight answers from your data. No dashboards needed.</div>
+  <div class="ai-suggestions">
+    <span>💡 What was my revenue last 30 days?</span>
+    <span>💡 Compare Google vs Facebook ROAS...</span>
+    <span>💡 Which campaign has the best CPL?</span>
   </div>
 </div>
 ''', unsafe_allow_html=True)
@@ -2531,5 +2519,28 @@ if page == "Dashboard":
         render_practice()
     else:
         render_marketing()
+
 elif page == "AI Agent":
+    # ── Full-bleed page: hide sidebar + header, gradient bg, centre content ──
+    st.markdown("""<style>
+[data-testid="stSidebar"]{display:none!important;}
+[data-testid="stHeader"]{display:none!important;}
+[data-testid="stToolbar"]{display:none!important;}
+header{display:none!important;}
+footer{display:none!important;}
+section.main{margin-left:0!important;}
+.stApp{background:linear-gradient(160deg,#82C8DE 0%,#A8D8EC 22%,#C8E8F2 44%,#E2D4B4 72%,#E8BE88 100%)!important;min-height:100vh!important;}
+.block-container{max-width:720px!important;margin:0 auto!important;padding-top:0!important;padding-bottom:3rem!important;background:transparent!important;}
+/* Frosted input on gradient */
+div[data-baseweb="base-input"],div[data-baseweb="input"]{background:rgba(255,255,255,.82)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;border:1px solid rgba(255,255,255,.95)!important;box-shadow:0 4px 28px rgba(0,0,0,.08)!important;border-radius:18px!important;}
+div[data-baseweb="base-input"]:focus-within{background:rgba(255,255,255,.96)!important;box-shadow:0 0 0 3px rgba(3,105,161,.15),0 4px 28px rgba(0,0,0,.08)!important;border-color:rgba(3,105,161,.4)!important;}
+/* AI bubble on gradient */
+.ai-bubble-ai{background:rgba(255,255,255,.92)!important;border-color:rgba(0,192,107,.2)!important;}
+/* Send button */
+[data-testid="baseButton-primary"]{background:linear-gradient(135deg,#0369A1,#0EA5E9)!important;box-shadow:0 4px 18px rgba(3,105,161,.35)!important;}
+[data-testid="baseButton-primary"]:hover{box-shadow:0 6px 26px rgba(3,105,161,.5)!important;transform:translateY(-1px)!important;}
+/* Powered-by label */
+.stMarkdownContainer p{color:#64748B!important;}
+</style>""", unsafe_allow_html=True)
+    # Note: AI Agent uses DATA (full dataset) — sidebar filters have no effect
     render_ai()
