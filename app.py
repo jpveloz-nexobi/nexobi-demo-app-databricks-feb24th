@@ -370,10 +370,13 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#0F172
   font-weight: 900 !important;
 }
 
-/* Buttons — main content */
-.stButton>button{background:#00C06B!important;color:#fff!important;border:none!important;border-radius:12px!important;font-weight:900!important;padding:.62rem 1rem!important;}
-.stButton>button:hover{background:#009952!important;}
-.stButton>button:focus{outline:none!important;box-shadow:0 0 0 3px rgba(0,192,107,.22)!important;}
+/* Buttons — main content (neutral white base) */
+.stButton>button{background:#FFFFFF!important;color:#0F172A!important;border:1.5px solid #E2E8F0!important;border-radius:12px!important;font-weight:600!important;padding:.6rem 1rem!important;box-shadow:0 1px 3px rgba(0,0,0,.04)!important;transition:all .14s!important;}
+.stButton>button:hover{background:#F8FAFC!important;border-color:#CBD5E1!important;}
+.stButton>button:focus{outline:none!important;box-shadow:0 0 0 3px rgba(0,192,107,.18)!important;}
+/* Primary action buttons (Send, etc.) — explicitly green */
+[data-testid="baseButton-primary"]{background:#00C06B!important;color:#fff!important;border:none!important;box-shadow:0 2px 8px rgba(0,192,107,.28)!important;}
+[data-testid="baseButton-primary"]:hover{background:#009952!important;}
 
 /* Sidebar buttons — subtle ghost style */
 section[data-testid="stSidebar"] .stButton>button{background:#F5F7FA!important;color:#64748B!important;border:1px solid #E2E8F0!important;border-radius:8px!important;font-weight:500!important;font-size:.80rem!important;padding:.4rem .75rem!important;}
@@ -410,10 +413,10 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 }
 
 /* === AI AGENT — hero welcome screen === */
-.ai-hero{position:relative;text-align:center;padding:2.8rem 1rem 1.6rem;overflow:hidden;}
-.ai-hero .wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);width:400px;opacity:.04;pointer-events:none;user-select:none;filter:grayscale(1);}
-.ai-greeting{font-family:'Plus Jakarta Sans',sans-serif;font-size:2.05rem;font-weight:900;color:#0F172A;line-height:1.2;margin-bottom:.45rem;}
-.ai-greeting-sub{font-size:.97rem;color:#64748B;font-weight:400;margin-bottom:0;}
+.ai-hero{position:relative;text-align:center;padding:3rem 0 1.8rem;overflow:hidden;}
+.ai-hero::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-56%);width:640px;height:300px;background:radial-gradient(ellipse at center,rgba(0,192,107,.09) 0%,rgba(59,130,246,.04) 50%,transparent 72%);pointer-events:none;border-radius:50%;}
+.ai-greeting{font-family:'Plus Jakarta Sans',sans-serif;font-size:2.15rem;font-weight:900;color:#0F172A;line-height:1.15;margin-bottom:.5rem;position:relative;}
+.ai-greeting-sub{font-size:.98rem;color:#64748B;font-weight:400;position:relative;margin-bottom:0;}
 /* Preset cards — :has() sibling from marker */
 [data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{background:#FFFFFF!important;border:1.5px solid #E2E8F0!important;border-radius:16px!important;padding:1.15rem 1.1rem!important;min-height:90px!important;height:auto!important;text-align:left!important;font-size:.87rem!important;font-weight:600!important;box-shadow:0 2px 14px rgba(0,0,0,.05)!important;transition:all .16s!important;line-height:1.45!important;white-space:normal!important;width:100%!important;}
 [data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button:hover{box-shadow:0 8px 28px rgba(0,0,0,.11)!important;transform:translateY(-2px)!important;}
