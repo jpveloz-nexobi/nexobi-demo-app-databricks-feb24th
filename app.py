@@ -227,27 +227,39 @@ def load_data_databricks(catalog: str, schema: str, table: str) -> pd.DataFrame:
     return _normalize_df(df)
 
 
-# ---- Load data based on mode ----
+# ---- Load data based on mode (with automatic CSV fallback) ----
+_ACTIVE_MODE   = DATA_MODE          # tracks which source actually loaded
+_FALLBACK_WARN = None               # banner message shown in sidebar
+
 try:
     if DATA_MODE == "databricks":
         DATA = load_data_databricks(DBX_CATALOG, DBX_SCHEMA, DBX_TABLE)
     else:
         DATA = load_data(CSV_PATH)
-except Exception as e:
+except Exception as _dbx_err:
     if DATA_MODE == "databricks":
-        st.error(
-            f"Could not load Delta table `{DBX_CATALOG}.{DBX_SCHEMA}.{DBX_TABLE}`. "
-            f"Check that the table exists and env vars are set correctly. Error: {e}"
-        )
+        # Databricks unavailable — silently fall back to local CSV
+        try:
+            DATA = load_data(CSV_PATH)
+            _ACTIVE_MODE   = "csv"
+            _FALLBACK_WARN = str(_dbx_err)
+        except Exception as _csv_err:
+            st.error(
+                f"⚠️ Databricks unreachable **and** local CSV failed to load.\n\n"
+                f"• Databricks error: `{_dbx_err}`\n"
+                f"• CSV error: `{_csv_err}`\n\n"
+                f"Place `data.csv` next to `app.py` and retry."
+            )
+            st.stop()
     else:
-        st.error(f"Could not load {CSV_PATH}. Put data.csv next to this file. Error: {e}")
-    st.stop()
+        st.error(f"Could not load `{CSV_PATH}`. Place data.csv next to app.py. Error: {_dbx_err}")
+        st.stop()
 
 MIN_DATE = DATA["date"].min()
 MAX_DATE = DATA["date"].max()
 
 # Show data source badge in header area + refresh button (Databricks mode only)
-_DBX_MODE = DATA_MODE == "databricks"
+_DBX_MODE = (_ACTIVE_MODE == "databricks")
 
 # ==========================================================
 # PLOTLY HELPERS
@@ -626,6 +638,27 @@ with st.sidebar:
 
     # --- Export downloads — very top of left panel ---
     _export_slot = st.empty()
+
+    # --- Data source mode indicator ---
+    if _FALLBACK_WARN:
+        st.markdown(
+            '<div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;'
+            'padding:7px 10px;margin-bottom:6px;">'
+            '<div style="font-size:.70rem;font-weight:700;color:#C2410C;">⚠ CSV Mode (offline)</div>'
+            '<div style="font-size:.66rem;color:#92400E;margin-top:1px;line-height:1.35;">'
+            'Databricks unreachable · using local data.csv · AI Agent unavailable</div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
+    elif _DBX_MODE:
+        st.markdown(
+            '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;'
+            'padding:5px 10px;margin-bottom:6px;display:flex;align-items:center;gap:6px;">'
+            '<div style="width:6px;height:6px;border-radius:50%;background:#16A34A;flex-shrink:0;"></div>'
+            '<div style="font-size:.70rem;font-weight:600;color:#15803D;">Live · Databricks</div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
 
     # --- Navigation ---
     page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
@@ -1963,8 +1996,17 @@ _MODEL_ENDPOINT = "databricks-meta-llama-3-3-70b-instruct"
 def ai_query_ask(question: str) -> dict:
     """
     Answer a question using Databricks ai_query() SQL function.
-    Runs over the existing SQL connector — no Genie permissions needed.
+    Returns a graceful offline message when Databricks is unavailable.
     """
+    # If we're running in CSV fallback mode, skip the call entirely
+    if _ACTIVE_MODE != "databricks":
+        return {
+            "text": "",
+            "sql": "",
+            "df": None,
+            "error": "offline",
+        }
+
     from databricks import sql as _dbsql
 
     endpoint = _MODEL_ENDPOINT
@@ -2019,6 +2061,19 @@ def render_ai():
 
     has_history  = len(st.session_state.ai_history) > 0
     has_pending  = bool(st.session_state.get("ai_preset"))   # preset queued → skip hero
+
+    # ── Offline notice (CSV fallback mode) ──────────────────
+    if _ACTIVE_MODE != "databricks":
+        st.markdown(
+            '<div style="background:#FFF7ED;border:1px solid #FED7AA;border-left:4px solid #F59E0B;'
+            'border-radius:12px;padding:10px 16px;margin-bottom:.75rem;">'
+            '<span style="font-weight:700;color:#92400E;">AI Agent offline</span>'
+            ' &nbsp;·&nbsp; <span style="font-size:.83rem;color:#78716C;">'
+            'Databricks quota exhausted. The dashboard is fully functional using your local CSV. '
+            'Charts below will still generate from your data.</span>'
+            '</div>',
+            unsafe_allow_html=True
+        )
 
     # ── EMPTY STATE: hero + preset cards ────────────────────
     if not has_history and not has_pending:
@@ -2107,6 +2162,24 @@ def render_ai():
 
         # User bubble
         st.markdown(f'<div class="ai-bubble-user"><span>{q}</span></div>', unsafe_allow_html=True)
+
+        if error == "offline":
+            st.markdown(
+                '<div class="ai-bubble-ai" style="border-left:3px solid #F59E0B;background:#FFFBEB;">'
+                '<span style="font-weight:700;color:#92400E;">AI Agent offline</span> — '
+                '<span style="color:#78716C;">Databricks is currently unreachable (free tier quota may be exhausted). '
+                'Dashboard data is still live via CSV. AI responses will resume when Databricks is available.</span>'
+                '</div>',
+                unsafe_allow_html=True
+            )
+            # Still show chart from local CSV data if question is visual
+            if _is_visual_question(q):
+                chart = _ai_chart(q)
+                if chart is not None:
+                    st.markdown('<div class="chart-card" style="margin-top:.4rem;">', unsafe_allow_html=True)
+                    st.plotly_chart(chart, use_container_width=True, config={"displayModeBar": False})
+                    st.markdown('</div>', unsafe_allow_html=True)
+            continue
 
         if error:
             st.error(f"AI error: {error}")
