@@ -1317,70 +1317,17 @@ def render_command_center():
                 f'<div class="bench-val">{val_str}</div>'
                 f'{sub}</div>')
 
-    # metric view selector — native segmented pill control
-    if "cmd_metric_view" not in st.session_state:
-        st.session_state["cmd_metric_view"] = "Efficiency"
-
-    _tile_col, _tog_col = st.columns([3, 1.2])
-    with _tog_col:
-        try:
-            # st.segmented_control available in Streamlit ≥ 1.40 — native pills, no dots
-            _seg_val = st.segmented_control(
-                "Tiles", ["Efficiency", "Funnel", "Growth"],
-                default=st.session_state.get("cmd_metric_view", "Efficiency"),
-                label_visibility="collapsed", key="cmd_seg_ctrl"
-            )
-            if _seg_val:
-                st.session_state["cmd_metric_view"] = _seg_val
-        except AttributeError:
-            # Older Streamlit fallback
-            _radio_val = st.radio(
-                "Tiles", ["Efficiency", "Funnel", "Growth"],
-                horizontal=True,
-                index=["Efficiency", "Funnel", "Growth"].index(
-                    st.session_state.get("cmd_metric_view", "Efficiency")
-                ),
-                label_visibility="collapsed", key="cmd_metric_radio"
-            )
-            if _radio_val:
-                st.session_state["cmd_metric_view"] = _radio_val
-
-    _metric_view = st.session_state.get("cmd_metric_view", "Efficiency")
+    # ── Growth tiles — period-over-period ──────────────────
+    p_spend   = float(prev_b["total_cost"].sum() or 0)
+    p_book    = float(prev_b["booked"].sum() or 0)
+    spend_chg = safe_div(spend - p_spend, max(abs(p_spend), 0.01)) * 100
+    book_chg  = safe_div(float(base["booked"].sum() or 0) - p_book, max(abs(p_book), 0.01)) * 100
 
     b1, b2, b3, b4 = st.columns(4, gap="small")
-
-    book_rate  = safe_div(float(base["booked"].sum() or 0), max(float(base["leads"].sum() or 0), 0.01)) * 100
-    p_spend    = float(prev_b["total_cost"].sum() or 0)
-    p_book     = float(prev_b["booked"].sum() or 0)
-    spend_chg  = safe_div(spend - p_spend, max(abs(p_spend), 0.01)) * 100
-    book_chg   = safe_div(float(base["booked"].sum() or 0) - p_book, max(abs(p_book), 0.01)) * 100
-
-    if _metric_view == "Efficiency":
-        # ROAS / CPL / Show Rate / Lead Growth — vs industry benchmarks
-        with b1: st.markdown(_btile("ROAS", f"{roas:.2f}x", f"Industry avg: {BENCH_ROAS}x", roas, BENCH_ROAS), unsafe_allow_html=True)
-        with b2: st.markdown(_btile("Cost / Lead", money(cpl), f"Industry avg: ${BENCH_CPL:.0f}", cpl, BENCH_CPL, higher_better=False), unsafe_allow_html=True)
-        with b3: st.markdown(_btile("Show Rate", pct(show_rate), f"Industry avg: {BENCH_SHOW_RATE:.0f}%", show_rate, BENCH_SHOW_RATE), unsafe_allow_html=True)
-        with b4: st.markdown(_btile("Lead Growth", f"{lead_growth:+.0f}%", f"Industry avg: +{BENCH_LEAD_GRO:.0f}%", lead_growth, BENCH_LEAD_GRO), unsafe_allow_html=True)
-
-    elif _metric_view == "Funnel":
-        # Leads / Book Rate / Show Rate / Drop-off — funnel health
-        _tot_leads = float(base["leads"].sum() or 0)
-        _tot_book  = float(base["booked"].sum() or 0)
-        _tot_att   = float(base["attended"].sum() or 0)
-        _drop_pct  = safe_div(_tot_leads - _tot_att, max(_tot_leads, 0.01)) * 100
-        p_leads_v  = max(float(prev_b["leads"].sum() or 0), 0.01)
-        leads_chg  = safe_div(_tot_leads - p_leads_v, p_leads_v) * 100
-        with b1: st.markdown(_btile("Total Leads", fmt(_tot_leads), f"vs prior period", leads_chg, 0, has_bench=False), unsafe_allow_html=True)
-        with b2: st.markdown(_btile("Book Rate", pct(book_rate), f"Leads → Booked", book_rate, 60), unsafe_allow_html=True)
-        with b3: st.markdown(_btile("Show Rate", pct(show_rate), f"Industry avg: {BENCH_SHOW_RATE:.0f}%", show_rate, BENCH_SHOW_RATE), unsafe_allow_html=True)
-        with b4: st.markdown(_btile("Funnel Drop-off", pct(_drop_pct), "Leads never attended", 100 - _drop_pct, 40), unsafe_allow_html=True)
-
-    else:  # Growth
-        # Revenue Growth / Lead Growth / Spend Growth / Booked Growth — period-over-period
-        with b1: st.markdown(_btile("Revenue Growth", f"{rev_growth:+.1f}%", "vs prior period", rev_growth, 0, has_bench=False), unsafe_allow_html=True)
-        with b2: st.markdown(_btile("Lead Growth", f"{lead_growth:+.1f}%", f"Industry avg: +{BENCH_LEAD_GRO:.0f}%", lead_growth, BENCH_LEAD_GRO), unsafe_allow_html=True)
-        with b3: st.markdown(_btile("Booked Growth", f"{book_chg:+.1f}%", "vs prior period", book_chg, 0, has_bench=False), unsafe_allow_html=True)
-        with b4: st.markdown(_btile("Spend Growth", f"{spend_chg:+.1f}%", "vs prior period", -spend_chg, 0, has_bench=False), unsafe_allow_html=True)
+    with b1: st.markdown(_btile("Revenue Growth", f"{rev_growth:+.1f}%", "vs prior period", rev_growth, 0, has_bench=False), unsafe_allow_html=True)
+    with b2: st.markdown(_btile("Lead Growth", f"{lead_growth:+.1f}%", f"Industry avg: +{BENCH_LEAD_GRO:.0f}%", lead_growth, BENCH_LEAD_GRO), unsafe_allow_html=True)
+    with b3: st.markdown(_btile("Booked Growth", f"{book_chg:+.1f}%", "vs prior period", book_chg, 0, has_bench=False), unsafe_allow_html=True)
+    with b4: st.markdown(_btile("Spend Growth", f"{spend_chg:+.1f}%", "vs prior period", -spend_chg, 0, has_bench=False), unsafe_allow_html=True)
 
     st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
