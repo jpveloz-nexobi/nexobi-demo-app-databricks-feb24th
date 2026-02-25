@@ -580,6 +580,49 @@ div[data-baseweb="base-input"]:focus-within{
 .refresh-wrap .stButton>button{background:transparent!important;border:1px solid #00C06B!important;border-radius:8px!important;color:#00C06B!important;font-size:.75rem!important;font-weight:500!important;padding:3px 10px!important;min-height:0!important;height:26px!important;width:auto!important;}
 .refresh-wrap .stButton>button:hover{background:#E6F9F0!important;}
 
+/* === CURTAIN VIEW SYSTEM ===================================================
+   Agent mode  → sidebar hidden, content centred, fixed tab on right edge
+   Dashboard mode → normal sidebar, "Back to Chat" button at sidebar top
+   ========================================================================= */
+
+/* ── View-enter animations ── */
+@keyframes viewSlideRight{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+@keyframes viewSlideLeft{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:translateX(0)}}
+.view-agent-enter .block-container{animation:viewSlideLeft .28s ease-out}
+.view-dash-enter  .block-container{animation:viewSlideRight .28s ease-out}
+
+/* ── Agent mode: hide sidebar, centre content ── */
+.agent-fullscreen [data-testid="stSidebar"]{display:none!important;}
+.agent-fullscreen section.main{margin-left:0!important;}
+.agent-fullscreen .block-container{max-width:860px!important;margin:0 auto!important;padding-top:1.5rem!important;}
+
+/* ── Fixed curtain tab (right edge, agent mode only) ── */
+[data-testid="stMarkdownContainer"]:has(#curtain-tab)+[data-testid="element-container"] .stButton>button{
+  position:fixed!important;right:0!important;top:50%!important;
+  transform:translateY(-50%)!important;
+  z-index:9999!important;
+  background:linear-gradient(180deg,#0d2235 0%,#081a12 100%)!important;
+  color:#6EE7B7!important;border:none!important;border-radius:10px 0 0 10px!important;
+  padding:22px 9px!important;width:32px!important;min-height:0!important;height:auto!important;
+  writing-mode:vertical-rl!important;font-size:.68rem!important;font-weight:700!important;
+  letter-spacing:.1em!important;text-transform:uppercase!important;
+  box-shadow:-4px 0 24px rgba(0,0,0,.22)!important;
+  transition:all .18s!important;
+}
+[data-testid="stMarkdownContainer"]:has(#curtain-tab)+[data-testid="element-container"] .stButton>button:hover{
+  background:linear-gradient(180deg,#0f2e45 0%,#0a2218 100%)!important;
+  color:#A7F3D0!important;width:36px!important;
+}
+
+/* ── Back-to-chat button in sidebar ── */
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"]:has(#back-chat-wrap)+[data-testid="element-container"] .stButton>button,
+[data-testid="stSidebar"] .stButton:first-of-type>button{
+  background:linear-gradient(135deg,#0f172a,#1a2744)!important;
+  color:#6EE7B7!important;border:none!important;border-radius:10px!important;
+  font-size:.78rem!important;font-weight:700!important;letter-spacing:.04em!important;
+  box-shadow:0 2px 12px rgba(0,0,0,.15)!important;
+}
+
 
 /* KPI row — inline, no boxes */
 .ai-kpi-row{display:flex;gap:28px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid #F1F5F9;}
@@ -745,6 +788,17 @@ def list_unique(col: str):
 
 with st.sidebar:
 
+    # --- Back to Chat button (dashboard mode only) ---
+    if st.session_state.get("app_view") == "dashboard":
+        st.markdown(
+            '<div style="margin-bottom:10px;">',
+            unsafe_allow_html=True
+        )
+        if st.button("◀  Back to Chat", key="back_to_chat_btn", use_container_width=True):
+            st.session_state["app_view"] = "agent"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
     # --- Data mode badge + one-click switch ---
     _is_live = st.session_state.get("force_live_mode", False) and not bool(_FALLBACK_WARN)
     if _FALLBACK_WARN:
@@ -786,6 +840,8 @@ with st.sidebar:
     # --------------------------------------------------
     # State init (kept here for stability)
     # --------------------------------------------------
+    if "app_view" not in st.session_state:
+        st.session_state["app_view"] = "agent"   # AI Agent is the front door
     if "demo_scenario" not in st.session_state:
         st.session_state["demo_scenario"] = "None"
     if "dismiss_quick" not in st.session_state:
@@ -2522,14 +2578,35 @@ def render_ai():
                 st.code(sql, language="sql")
 
 # ==========================================================
-# ROUTER
+# ROUTER  —  curtain view system
 # ==========================================================
 
-if page == "Dashboard":
-    render_command_center()
-    if practice_mode:
-        render_practice()
-    else:
-        render_marketing()
-elif page == "AI Agent":
+_app_view = st.session_state.get("app_view", "agent")
+
+if _app_view == "agent":
+    # ── Full-screen AI Agent — sidebar hidden ──────────────
+    st.markdown(
+        '<style>'
+        '.agent-fullscreen [data-testid="stSidebar"]{display:none!important;}'
+        'section.main{margin-left:0!important;}'
+        '.block-container{max-width:860px!important;margin:0 auto!important;padding-top:1.5rem!important;}'
+        '</style>',
+        unsafe_allow_html=True
+    )
+    # Fixed tab on right edge → open dashboard
+    st.markdown('<div id="curtain-tab"></div>', unsafe_allow_html=True)
+    if st.button("Dashboard  ▶", key="open_dashboard_btn"):
+        st.session_state["app_view"] = "dashboard"
+        st.rerun()
     render_ai()
+
+else:
+    # ── Dashboard — normal sidebar visible ─────────────────
+    if page == "Dashboard":
+        render_command_center()
+        if practice_mode:
+            render_practice()
+        else:
+            render_marketing()
+    elif page == "AI Agent":
+        render_ai()
