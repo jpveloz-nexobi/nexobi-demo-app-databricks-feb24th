@@ -2337,16 +2337,6 @@ def _is_visual_question(q: str) -> bool:
 
 
 def render_ai():
-    # ── NexoBI wordmark header ────────────────────────────────
-    st.markdown('''
-<div style="text-align:center;padding:2rem 0 0;">
-  <span style="font-family:\'Plus Jakarta Sans\',\'Inter\',sans-serif;font-size:1.35rem;font-weight:900;
-               color:#0F172A;letter-spacing:-.03em;">
-    Nexo<span style="color:#00C06B;">BI</span>
-  </span>
-</div>
-''', unsafe_allow_html=True)
-
     # ── Session state init ───────────────────────────────────
     if "ai_history" not in st.session_state:
         st.session_state.ai_history = []
@@ -2359,18 +2349,6 @@ def render_ai():
     has_pending  = bool(st.session_state.get("ai_preset"))   # preset queued → skip hero
 
     _csv_mode = (_ACTIVE_MODE != "databricks")
-
-    # ── CSV mode notice — subtle banner ──────────────────────
-    if _csv_mode:
-        st.markdown(
-            '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-left:4px solid #00C06B;'
-            'border-radius:10px;padding:8px 14px;margin-bottom:.9rem;">'
-            '<span style="font-size:.78rem;font-weight:700;color:#15803D;">Local CSV mode</span>'
-            '<span style="font-size:.77rem;color:#64748B;"> · Answers computed from your data file. '
-            'Switch to Live for full AI.</span>'
-            '</div>',
-            unsafe_allow_html=True
-        )
 
     # ── EMPTY STATE: hero + preset cards ────────────────────
     if not has_history and not has_pending:
