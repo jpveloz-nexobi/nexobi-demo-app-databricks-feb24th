@@ -434,8 +434,9 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 .refresh-wrap .stButton>button{background:transparent!important;border:1px solid #00C06B!important;border-radius:8px!important;color:#00C06B!important;font-size:.75rem!important;font-weight:500!important;padding:3px 10px!important;min-height:0!important;height:26px!important;width:auto!important;}
 .refresh-wrap .stButton>button:hover{background:#E6F9F0!important;}
 
-/* AI answer cards — minimal genie style */
-.ai-answer{background:#FAFBFC;border:1px solid #EEF2F7;border-radius:14px;padding:16px 18px;margin:.5rem 0;box-shadow:none;}
+/* AI send button */
+.ai-send .stButton>button{background:#00C06B!important;color:#fff!important;border:none!important;border-radius:10px!important;font-weight:600!important;padding:.45rem 1.2rem!important;font-size:.88rem!important;}
+.ai-send .stButton>button:hover{background:#009952!important;}
 
 /* KPI row — inline, no boxes */
 .ai-kpi-row{display:flex;gap:28px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid #F1F5F9;}
@@ -1642,8 +1643,14 @@ def ai_query_ask(question: str) -> dict:
 
 
 def render_ai():
-    st.markdown(f"""<p style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.3rem;font-weight:700;color:{TEXT};margin:0 0 .2rem;">Ask your data anything</p>""", unsafe_allow_html=True)
-    st.markdown(f"""<p style="color:{MUTED};font-size:.88rem;margin:.0rem 0 .9rem;">Powered by Databricks AI &mdash; live queries on your data.</p>""", unsafe_allow_html=True)
+    # Header
+    st.markdown(
+        f'<p style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:1.25rem;'
+        f'font-weight:700;color:{TEXT};margin:0 0 .15rem;">Ask your data</p>'
+        f'<p style="color:{MUTED};font-size:.82rem;margin:0 0 1rem;">'
+        f'Powered by Databricks AI · Llama 3.3</p>',
+        unsafe_allow_html=True
+    )
 
     if "ai_history" not in st.session_state:
         st.session_state.ai_history = []
@@ -1652,35 +1659,32 @@ def render_ai():
     if "ai_preset" not in st.session_state:
         st.session_state.ai_preset = None
 
-    # 3 suggested prompts — pill style
-    presets = [
-        "Revenue last 30 days",
-        "ROAS by source",
-        "Compare Google vs Facebook",
-    ]
-
-    # Full-width input
-    user_q = st.text_input(
-        "",
-        placeholder="e.g. What was ROAS last 30 days?",
-        label_visibility="collapsed",
-        key=f"ai_input_{st.session_state.ai_nonce}"
-    )
-
-    # Presets + Ask + Clear in one row below input
-    st.markdown("<div class=\"ai-presets\">", unsafe_allow_html=True)
-    _pr1, _pr2, _pr3, _askcol, _clearcol = st.columns([2.4, 2.4, 2.4, 1.6, 1.1])
-    for col, p in zip([_pr1, _pr2, _pr3], presets):
+    # Suggestion chips
+    presets = ["Revenue last 30 days", "ROAS by source", "Compare Google vs Facebook"]
+    st.markdown('<div class="ai-chips">', unsafe_allow_html=True)
+    _pc = st.columns(len(presets))
+    for col, p in zip(_pc, presets):
         with col:
             if st.button(p, use_container_width=True, key=f"ai_p_{p}"):
                 st.session_state.ai_preset = p
                 st.rerun()
-    with _askcol:
-        ask = st.button("Ask", use_container_width=True, key="ai_ask")
-    with _clearcol:
-        reset = st.button("Clear", use_container_width=True, key="ai_reset", type="secondary")
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("<div class=\"ai-row-spacer\"></div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+
+    # Input row: text box + Send + Clear
+    _icol, _scol, _ccol = st.columns([8, 1.1, 1])
+    with _icol:
+        user_q = st.text_input(
+            "", placeholder="Ask anything about your data…",
+            label_visibility="collapsed",
+            key=f"ai_input_{st.session_state.ai_nonce}"
+        )
+    with _scol:
+        st.markdown('<div class="ai-send">', unsafe_allow_html=True)
+        ask = st.button("Send", use_container_width=True, key="ai_ask")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with _ccol:
+        reset = st.button("Clear", use_container_width=True, key="ai_reset")
 
     if reset:
         st.session_state.ai_history = []
@@ -1695,17 +1699,18 @@ def render_ai():
     elif ask and user_q.strip():
         run_q = user_q.strip()
 
-    # ---- Call AI and store result ----
+    # ---- Call AI ----
     if run_q:
-        with st.spinner("Thinking..."):
+        with st.spinner("Thinking…"):
             result = ai_query_ask(run_q)
-
         st.session_state.ai_history.insert(0, {"q": run_q, **result})
         if len(st.session_state.ai_history) > 10:
             st.session_state.ai_history = st.session_state.ai_history[:10]
         st.rerun()
 
-    # ---- Render conversation history ----
+    st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
+
+    # ---- Chat history ----
     for item in st.session_state.ai_history:
         q     = item.get("q", "")
         text  = item.get("text", "")
@@ -1713,27 +1718,16 @@ def render_ai():
         df    = item.get("df")
         error = item.get("error")
 
-        # Question header
-        st.markdown(f"""
-        <div class="ai-answer">
-          <div style="font-size:.72rem;font-weight:600;color:{MUTED};letter-spacing:.03em;">You asked</div>
-          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1.1rem;margin-top:.1rem;color:{TEXT};">{q}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        # User bubble (right-aligned green)
+        st.markdown(f'<div class="ai-bubble-user"><span>{q}</span></div>', unsafe_allow_html=True)
 
         if error:
             st.error(f"AI error: {error}")
             continue
 
-        # Natural language answer
+        # AI response bubble
         if text:
-            st.markdown(f"""
-            <div style="color:{TEXT};font-size:.92rem;line-height:1.65;margin:.35rem 0 .5rem;
-                        padding:12px 16px;background:#FAFBFC;border-radius:10px;
-                        border-left:3px solid #E2E8F0;">
-              {text}
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f'<div class="ai-bubble-ai">{text}</div>', unsafe_allow_html=True)
 
         # Auto-generated chart based on question
         chart = _ai_chart(q)
