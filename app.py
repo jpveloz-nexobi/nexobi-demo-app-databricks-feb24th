@@ -228,8 +228,11 @@ def load_data_databricks(catalog: str, schema: str, table: str) -> pd.DataFrame:
 
 
 # ---- Load data based on mode (with automatic CSV fallback) ----
-# Respect manual override set via sidebar toggle (persists in session_state)
-_force_live    = st.session_state.get("force_live_mode", False)
+# Default to CSV every fresh session; only go live when user explicitly switches
+if "force_live_mode" not in st.session_state:
+    st.session_state["force_live_mode"] = False   # CSV is always the default on open
+
+_force_live    = st.session_state["force_live_mode"]
 _ACTIVE_MODE   = "databricks" if _force_live else DATA_MODE
 _FALLBACK_WARN = None               # banner message shown in sidebar
 
