@@ -409,9 +409,11 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
     background: #FFFFFF !important;
 }
 
-/* AI suggestion chips */
-.ai-chips .stButton>button{background:#F8FAFC!important;color:#475569!important;border:1px solid #E2E8F0!important;border-radius:999px!important;font-weight:400!important;padding:.28rem .85rem!important;font-size:.77rem!important;height:28px!important;line-height:1!important;transition:all .12s!important;box-shadow:none!important;}
-.ai-chips .stButton>button:hover{background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;}
+/* AI suggestion chips — target the column block that directly follows the marker div */
+[data-testid="stMarkdownContainer"]:has(#ai-chips-marker) + [data-testid="stHorizontalBlock"] .stButton>button,
+[data-testid="stMarkdownContainer"]:has(#ai-chips-marker) ~ [data-testid="stHorizontalBlock"] .stButton>button{background:#F8FAFC!important;color:#475569!important;border:1px solid #E2E8F0!important;border-radius:999px!important;font-weight:400!important;padding:.22rem .78rem!important;font-size:.76rem!important;height:auto!important;min-height:0!important;line-height:1.4!important;transition:all .12s!important;box-shadow:none!important;width:auto!important;}
+[data-testid="stMarkdownContainer"]:has(#ai-chips-marker) + [data-testid="stHorizontalBlock"] .stButton>button:hover,
+[data-testid="stMarkdownContainer"]:has(#ai-chips-marker) ~ [data-testid="stHorizontalBlock"] .stButton>button:hover{background:#E6F9F0!important;border-color:#00C06B!important;color:#009952!important;}
 /* AI chat bubbles */
 .ai-bubble-user{display:flex;justify-content:flex-end;margin:.6rem 0 .15rem;}
 .ai-bubble-user span{background:#00C06B;color:#fff;border-radius:16px 16px 4px 16px;padding:8px 14px;font-size:.87rem;font-weight:500;max-width:75%;line-height:1.45;display:inline-block;}
@@ -521,9 +523,6 @@ st.markdown(f'''
 </div>
 ''', unsafe_allow_html=True)
 
-# Export slot — top of main area, filled after data is ready
-_export_slot = st.empty()
-
 # ==========================================================
 # SIDEBAR + FILTERS
 # ==========================================================
@@ -531,6 +530,9 @@ def list_unique(col: str):
     return sorted(DATA[col].dropna().astype(str).unique().tolist())
 
 with st.sidebar:
+
+    # --- Export downloads — very top of left panel ---
+    _export_slot = st.empty()
 
     # --- Navigation ---
     page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
@@ -952,10 +954,10 @@ _ico_down = ('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke
              '<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>'
              '<polyline points="7 10 12 15 17 10"/>'
              '<line x1="12" y1="15" x2="12" y2="3"/></svg>')
-_btn_style = ("display:inline-flex;align-items:center;padding:5px 13px;font-size:.76rem;font-weight:500;"
-              "color:#475569;border:1px solid #E2E8F0;border-radius:8px;"
-              "text-decoration:none;background:#FFFFFF;font-family:'DM Sans',sans-serif;"
-              "margin-left:8px;transition:border-color .15s,color .15s;")
+_btn_style = ("display:inline-flex;align-items:center;padding:3px 10px;font-size:.73rem;font-weight:500;"
+              "color:#64748B;border:1px solid #E2E8F0;border-radius:7px;"
+              "text-decoration:none;background:#F8FAFC;font-family:'DM Sans',sans-serif;"
+              "margin-right:5px;transition:border-color .15s,color .15s;")
 _csv_link = (f'<a href="data:text/csv;base64,{_csv_b64}" download="{_fname_csv}" style="{_btn_style}">'
              f'{_ico_down}CSV</a>')
 if pdf_bytes:
@@ -972,7 +974,8 @@ if pdf_bytes:
 else:
     _pdf_link = ""
 _export_slot.markdown(
-    f'<div style="display:flex;justify-content:flex-end;align-items:center;margin:-.4rem 0 .6rem;">'
+    f'<div style="display:flex;justify-content:flex-start;align-items:center;'
+    f'padding:4px 0 6px;border-bottom:1px solid #F1F5F9;margin-bottom:4px;">'
     f'{_csv_link}{_pdf_link}'
     f'</div>',
     unsafe_allow_html=True
@@ -1171,118 +1174,120 @@ def render_practice():
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar":False})
         st.markdown('</div>', unsafe_allow_html=True)
 
-    
-    # --- Treatment Movers (Phase 3B) ---
-    if "treatment" in CUR.columns:
-        cur_t = CUR.dropna(subset=["treatment"]).copy()
-        prev_t = PREV.dropna(subset=["treatment"]).copy() if len(PREV) else pd.DataFrame(columns=cur_t.columns)
-        if len(cur_t) > 0:
-            cur_g = cur_t.groupby("treatment", as_index=False).agg(
-                Patients=("conversions", "sum"),
-                Booked=("booked", "sum"),
-                Attended=("attended", "sum"),
-                Revenue=("total_revenue", "sum"),
-            )
-            cur_g["Show Rate"] = cur_g.apply(lambda r: safe_div(r["Attended"], r["Booked"]) * 100, axis=1)
-            cur_g["Rev/Patient"] = cur_g.apply(lambda r: safe_div(r["Revenue"], r["Patients"]), axis=1)
 
-            if len(prev_t) > 0:
-                prev_g = prev_t.groupby("treatment", as_index=False).agg(
-                    Patients_p=("conversions", "sum"),
-                    Booked_p=("booked", "sum"),
-                    Attended_p=("attended", "sum"),
-                    Revenue_p=("total_revenue", "sum"),
+    # --- CRM Tabs: Treatment Movers | Patient Journey ---
+    if "treatment" in CUR.columns:
+        _crm_tab1, _crm_tab2 = st.tabs(["Treatment Movers", "Patient Journey"])
+
+        # ── Tab 1: Treatment Movers ──────────────────────────────
+        with _crm_tab1:
+            cur_t = CUR.dropna(subset=["treatment"]).copy()
+            prev_t = PREV.dropna(subset=["treatment"]).copy() if len(PREV) else pd.DataFrame(columns=cur_t.columns)
+            if len(cur_t) > 0:
+                cur_g = cur_t.groupby("treatment", as_index=False).agg(
+                    Patients=("conversions", "sum"),
+                    Booked=("booked", "sum"),
+                    Attended=("attended", "sum"),
+                    Revenue=("total_revenue", "sum"),
                 )
-                prev_g["Show Rate_p"] = prev_g.apply(lambda r: safe_div(r["Attended_p"], r["Booked_p"]) * 100, axis=1)
-                prev_g["Rev/Patient_p"] = prev_g.apply(lambda r: safe_div(r["Revenue_p"], r["Patients_p"]), axis=1)
-                movers = cur_g.merge(prev_g[["treatment","Show Rate_p","Rev/Patient_p","Patients_p"]], on="treatment", how="left")
+                cur_g["Show Rate"] = cur_g.apply(lambda r: safe_div(r["Attended"], r["Booked"]) * 100, axis=1)
+                cur_g["Rev/Patient"] = cur_g.apply(lambda r: safe_div(r["Revenue"], r["Patients"]), axis=1)
+
+                if len(prev_t) > 0:
+                    prev_g = prev_t.groupby("treatment", as_index=False).agg(
+                        Patients_p=("conversions", "sum"),
+                        Booked_p=("booked", "sum"),
+                        Attended_p=("attended", "sum"),
+                        Revenue_p=("total_revenue", "sum"),
+                    )
+                    prev_g["Show Rate_p"] = prev_g.apply(lambda r: safe_div(r["Attended_p"], r["Booked_p"]) * 100, axis=1)
+                    prev_g["Rev/Patient_p"] = prev_g.apply(lambda r: safe_div(r["Revenue_p"], r["Patients_p"]), axis=1)
+                    movers = cur_g.merge(prev_g[["treatment","Show Rate_p","Rev/Patient_p","Patients_p"]], on="treatment", how="left")
+                else:
+                    movers = cur_g.copy()
+                    movers["Show Rate_p"] = np.nan
+                    movers["Rev/Patient_p"] = np.nan
+                    movers["Patients_p"] = np.nan
+
+                movers["Δ Rev/Patient"] = movers.apply(lambda r: safe_div(r["Rev/Patient"] - (r["Rev/Patient_p"] if pd.notna(r["Rev/Patient_p"]) else 0), max(abs(r["Rev/Patient_p"]), 0.01)) * 100 if pd.notna(r["Rev/Patient_p"]) else np.nan, axis=1)
+                movers["Δ Show Rate (pp)"] = movers.apply(lambda r: (r["Show Rate"] - r["Show Rate_p"]) if pd.notna(r["Show Rate_p"]) else np.nan, axis=1)
+
+                movers_f = movers[movers["Patients"] >= 20].copy() if len(movers) else movers
+                if len(movers_f) > 0:
+                    # Capacity risk signal
+                    if len(PREV) > 0:
+                        overall_book_chg = safe_div(bk - float(PREV["booked"].sum() or 0), max(abs(float(PREV["booked"].sum() or 0)), 0.01)) * 100
+                        overall_show_pp = show - (safe_div(float(PREV["attended"].sum() or 0), float(PREV["booked"].sum() or 0)) * 100 if float(PREV["booked"].sum() or 0) > 0 else show)
+                        if overall_book_chg >= 15 and overall_show_pp <= -5:
+                            st.warning("Capacity risk: bookings are up while show rate is down. Consider tightening scheduling confirmation + resourcing high-demand treatments.")
+
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        top_up = movers_f.sort_values("Δ Rev/Patient", ascending=False).head(5)
+                        top_dn = movers_f.sort_values("Δ Rev/Patient", ascending=True).head(5)
+                        mini = pd.concat([top_up, top_dn], axis=0).reset_index(drop=True)
+                        mini = mini[["treatment","Rev/Patient","Rev/Patient_p","Δ Rev/Patient","Patients"]].rename(columns={"treatment":"Treatment"})
+                        mini["Rev/Patient"] = mini["Rev/Patient"].apply(money)
+                        mini["Rev/Patient_p"] = mini["Rev/Patient_p"].apply(lambda x: money(x) if pd.notna(x) else "—")
+                        mini["Δ Rev/Patient"] = mini["Δ Rev/Patient"].apply(lambda x: f"{x:+.0f}%" if pd.notna(x) else "—")
+                        mini["Patients"] = mini["Patients"].apply(fmt)
+                        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                        st.markdown('<div style="font-weight:950;color:%s;margin-bottom:6px;">Rev/Patient movers (Top ±)</div>' % INK, unsafe_allow_html=True)
+                        if mini.empty:
+                            st.info('Not enough treatment volume in this window. Try widening the date range.')
+                        else:
+                            st.dataframe(df_light(mini), use_container_width=True, hide_index=True, height=df_height(len(mini), max_h=360))
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+                    with c2:
+                        top_up = movers_f.sort_values("Δ Show Rate (pp)", ascending=False).head(5)
+                        top_dn = movers_f.sort_values("Δ Show Rate (pp)", ascending=True).head(5)
+                        mini = pd.concat([top_up, top_dn], axis=0).reset_index(drop=True)
+                        mini = mini[["treatment","Show Rate","Show Rate_p","Δ Show Rate (pp)","Booked"]].rename(columns={"treatment":"Treatment"})
+                        mini["Show Rate"] = mini["Show Rate"].apply(lambda x: f"{float(x or 0):.1f}%")
+                        mini["Show Rate_p"] = mini["Show Rate_p"].apply(lambda x: f"{float(x):.1f}%" if pd.notna(x) else "—")
+                        mini["Δ Show Rate (pp)"] = mini["Δ Show Rate (pp)"].apply(lambda x: f"{x:+.1f} pp" if pd.notna(x) else "—")
+                        mini["Booked"] = mini["Booked"].apply(fmt)
+                        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                        st.markdown('<div style="font-weight:950;color:%s;margin-bottom:6px;">Show rate movers (Top ±)</div>' % INK, unsafe_allow_html=True)
+                        if mini.empty:
+                            st.info('Not enough treatment volume in this window. Try widening the date range.')
+                        else:
+                            st.dataframe(df_light(mini), use_container_width=True, hide_index=True, height=df_height(len(mini), max_h=360))
+                        st.markdown('</div>', unsafe_allow_html=True)
+                else:
+                    st.info("Not enough treatment volume (min 20 patients) for movers. Try widening the date range.")
             else:
-                movers = cur_g.copy()
-                movers["Show Rate_p"] = np.nan
-                movers["Rev/Patient_p"] = np.nan
-                movers["Patients_p"] = np.nan
+                st.info("No treatment rows available for the selected date range.")
 
-            movers["Δ Rev/Patient"] = movers.apply(lambda r: safe_div(r["Rev/Patient"] - (r["Rev/Patient_p"] if pd.notna(r["Rev/Patient_p"]) else 0), max(abs(r["Rev/Patient_p"]), 0.01)) * 100 if pd.notna(r["Rev/Patient_p"]) else np.nan, axis=1)
-            movers["Δ Show Rate (pp)"] = movers.apply(lambda r: (r["Show Rate"] - r["Show Rate_p"]) if pd.notna(r["Show Rate_p"]) else np.nan, axis=1)
+        # ── Tab 2: Patient Journey ───────────────────────────────
+        with _crm_tab2:
+            tj = CUR.dropna(subset=["treatment"]).copy()
+            if len(tj) > 0:
+                grp = tj.groupby("treatment", as_index=False).agg(
+                    Patients=("conversions","sum"),
+                    Booked=("booked","sum"),
+                    Attended=("attended","sum"),
+                    Revenue=("total_revenue","sum"),
+                    Spend=("total_cost","sum"),
+                )
+                grp["Book Rate"] = grp.apply(lambda r: safe_div(r["Booked"], r["Patients"]) * 100, axis=1)
+                grp["Show Rate"] = grp.apply(lambda r: safe_div(r["Attended"], r["Booked"]) * 100, axis=1)
+                grp["Rev/Patient"] = grp.apply(lambda r: safe_div(r["Revenue"], r["Patients"]), axis=1)
+                grp = grp.sort_values("Revenue", ascending=False).head(25)
 
-            # filter for meaningful sample
-            movers_f = movers[movers["Patients"] >= 20].copy() if len(movers) else movers
-            if len(movers_f) > 0:
-                st.markdown('<div class="section-title">Treatment Movers</div>', unsafe_allow_html=True)
-
-                # Capacity risk signal (simple)
-                if len(PREV) > 0:
-                    overall_book_chg = safe_div(bk - float(PREV["booked"].sum() or 0), max(abs(float(PREV["booked"].sum() or 0)), 0.01)) * 100
-                    overall_show_pp = show - (safe_div(float(PREV["attended"].sum() or 0), float(PREV["booked"].sum() or 0)) * 100 if float(PREV["booked"].sum() or 0) > 0 else show)
-                    if overall_book_chg >= 15 and overall_show_pp <= -5:
-                        st.warning("Capacity risk: bookings are up while show rate is down. Consider tightening scheduling confirmation + resourcing high-demand treatments.")
-
-                c1, c2 = st.columns(2)
-                with c1:
-                    top_up = movers_f.sort_values("Δ Rev/Patient", ascending=False).head(5)
-                    top_dn = movers_f.sort_values("Δ Rev/Patient", ascending=True).head(5)
-                    mini = pd.concat([top_up, top_dn], axis=0)
-                    mini = mini.reset_index(drop=True)
-                    mini = mini[["treatment","Rev/Patient","Rev/Patient_p","Δ Rev/Patient","Patients"]].rename(columns={"treatment":"Treatment"})
-                    mini["Rev/Patient"] = mini["Rev/Patient"].apply(money)
-                    mini["Rev/Patient_p"] = mini["Rev/Patient_p"].apply(lambda x: money(x) if pd.notna(x) else "—")
-                    mini["Δ Rev/Patient"] = mini["Δ Rev/Patient"].apply(lambda x: f"{x:+.0f}%" if pd.notna(x) else "—")
-                    mini["Patients"] = mini["Patients"].apply(fmt)
-                    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-                    st.markdown('<div style="font-weight:950;color:%s;margin-bottom:6px;">Rev/Patient movers (Top ±)</div>' % INK, unsafe_allow_html=True)
-                    if mini.empty:
-                        st.info('Not enough treatment volume in this window to compute movers. Try widening the date range.')
-                    else:
-                        st.dataframe(df_light(mini), use_container_width=True, hide_index=True, height=df_height(len(mini), max_h=360))
-                    st.markdown('</div>', unsafe_allow_html=True)
-
-                with c2:
-                    top_up = movers_f.sort_values("Δ Show Rate (pp)", ascending=False).head(5)
-                    top_dn = movers_f.sort_values("Δ Show Rate (pp)", ascending=True).head(5)
-                    mini = pd.concat([top_up, top_dn], axis=0)
-                    mini = mini.reset_index(drop=True)
-                    mini = mini[["treatment","Show Rate","Show Rate_p","Δ Show Rate (pp)","Booked"]].rename(columns={"treatment":"Treatment"})
-                    mini["Show Rate"] = mini["Show Rate"].apply(lambda x: f"{float(x or 0):.1f}%")
-                    mini["Show Rate_p"] = mini["Show Rate_p"].apply(lambda x: f"{float(x):.1f}%" if pd.notna(x) else "—")
-                    mini["Δ Show Rate (pp)"] = mini["Δ Show Rate (pp)"].apply(lambda x: f"{x:+.1f} pp" if pd.notna(x) else "—")
-                    mini["Booked"] = mini["Booked"].apply(fmt)
-                    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-                    st.markdown('<div style="font-weight:950;color:%s;margin-bottom:6px;">Show rate movers (Top ±)</div>' % INK, unsafe_allow_html=True)
-                    if mini.empty:
-                        st.info('Not enough treatment volume in this window to compute movers. Try widening the date range.')
-                    else:
-                        st.dataframe(df_light(mini), use_container_width=True, hide_index=True, height=df_height(len(mini), max_h=360))
-                    st.markdown('</div>', unsafe_allow_html=True)
-
-    # --- Treatment table (Practice CRM only) ---
-    if "treatment" in CUR.columns:
-        st.markdown('<div class="section-title">Patient Journey by Treatment</div>', unsafe_allow_html=True)
-        tj = CUR.dropna(subset=["treatment"]).copy()
-        if len(tj) > 0:
-            grp = tj.groupby("treatment", as_index=False).agg(
-                Patients=("conversions","sum"),
-                Booked=("booked","sum"),
-                Attended=("attended","sum"),
-                Revenue=("total_revenue","sum"),
-                Spend=("total_cost","sum"),
-            )
-            grp["Book Rate"] = grp.apply(lambda r: safe_div(r["Booked"], r["Patients"]) * 100, axis=1)
-            grp["Show Rate"] = grp.apply(lambda r: safe_div(r["Attended"], r["Booked"]) * 100, axis=1)
-            grp["Rev/Patient"] = grp.apply(lambda r: safe_div(r["Revenue"], r["Patients"]), axis=1)
-            grp = grp.sort_values("Revenue", ascending=False).head(25)
-
-            show_df = grp.rename(columns={"treatment":"Treatment"}).copy()
-            show_df["Patients"] = show_df["Patients"].apply(fmt)
-            show_df["Booked"] = show_df["Booked"].apply(fmt)
-            show_df["Attended"] = show_df["Attended"].apply(fmt)
-            show_df["Revenue"] = show_df["Revenue"].apply(money)
-            show_df["Spend"] = show_df["Spend"].apply(money)
-            show_df["Book Rate"] = show_df["Book Rate"].apply(lambda x: f"{float(x or 0):.1f}%")
-            show_df["Show Rate"] = show_df["Show Rate"].apply(lambda x: f"{float(x or 0):.1f}%")
-            show_df["Rev/Patient"] = show_df["Rev/Patient"].apply(money)
-            st.dataframe(df_light(show_df), use_container_width=True, hide_index=True, height=df_height(len(show_df)))
-        else:
-            st.info("No treatment rows available for the selected date range.")
+                show_df = grp.rename(columns={"treatment":"Treatment"}).copy()
+                show_df["Patients"] = show_df["Patients"].apply(fmt)
+                show_df["Booked"] = show_df["Booked"].apply(fmt)
+                show_df["Attended"] = show_df["Attended"].apply(fmt)
+                show_df["Revenue"] = show_df["Revenue"].apply(money)
+                show_df["Spend"] = show_df["Spend"].apply(money)
+                show_df["Book Rate"] = show_df["Book Rate"].apply(lambda x: f"{float(x or 0):.1f}%")
+                show_df["Show Rate"] = show_df["Show Rate"].apply(lambda x: f"{float(x or 0):.1f}%")
+                show_df["Rev/Patient"] = show_df["Rev/Patient"].apply(money)
+                st.dataframe(df_light(show_df), use_container_width=True, hide_index=True, height=df_height(len(show_df)))
+            else:
+                st.info("No treatment rows available for the selected date range.")
 
 
 # ==========================================================
@@ -1661,14 +1666,13 @@ def render_ai():
 
     # Suggestion chips
     presets = ["Revenue last 30 days", "ROAS by source", "Compare Google vs Facebook"]
-    st.markdown('<div class="ai-chips">', unsafe_allow_html=True)
-    _pc = st.columns(len(presets))
-    for col, p in zip(_pc, presets):
+    st.markdown('<div id="ai-chips-marker"></div>', unsafe_allow_html=True)
+    _pc = st.columns([1.7, 1.4, 2.1, 1.8])  # 3 chip cols + spacer
+    for col, p in zip(_pc[:3], presets):
         with col:
-            if st.button(p, use_container_width=True, key=f"ai_p_{p}"):
+            if st.button(p, key=f"ai_p_{p}"):
                 st.session_state.ai_preset = p
                 st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
     # Input row: text box + Send + Clear
