@@ -2546,33 +2546,43 @@ section.main{margin-left:0!important;}
   transition:all .18s;
 }
 #nexobi-dash-pill:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.22);}
-/* ── Textarea ───────────────────────────────────────────── */
-[data-testid="stTextArea"] textarea{
-  background:rgba(255,255,255,.07)!important;
-  border:1px solid rgba(255,255,255,.14)!important;
-  border-radius:16px!important;color:#E2E8F0!important;
+/* ── Textarea — white bg (Streamlit enforced), DARK text ─── */
+html body textarea,
+[data-testid="stTextArea"] textarea,
+.stTextArea textarea{
+  color:#0F172A!important;
+  background:#ffffff!important;
+  border:1.5px solid rgba(0,192,107,.35)!important;
+  border-radius:16px!important;
   padding:13px 16px!important;font-size:.9rem!important;
   line-height:1.5!important;resize:none!important;box-shadow:none!important;
 }
-[data-testid="stTextArea"] textarea::placeholder{color:rgba(255,255,255,.3)!important;}
-[data-testid="stTextArea"] textarea:focus{border-color:rgba(0,192,107,.35)!important;box-shadow:0 0 0 3px rgba(0,192,107,.12)!important;}
+html body textarea::placeholder,
+[data-testid="stTextArea"] textarea::placeholder{color:#94A3B8!important;}
+html body textarea:focus,
+[data-testid="stTextArea"] textarea:focus{
+  border-color:#00C06B!important;
+  box-shadow:0 0 0 3px rgba(0,192,107,.12)!important;
+}
 [data-testid="stTextArea"]>div,[data-testid="stTextArea"]>div>div{border:none!important;background:transparent!important;}
-/* ── Secondary buttons — dark glass using data-testid ─── */
+/* ── Secondary buttons — frosted on dark bg ─────────────── */
+html body [data-testid="stBaseButton-secondary"],
 [data-testid="stBaseButton-secondary"]{
-  background:rgba(255,255,255,.07)!important;
-  border:1px solid rgba(255,255,255,.14)!important;
-  color:rgba(255,255,255,.62)!important;
+  background:rgba(255,255,255,.10)!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+  color:rgba(255,255,255,.78)!important;
   box-shadow:none!important;border-radius:999px!important;
   padding:.3rem .95rem!important;font-size:.77rem!important;
   min-height:0!important;height:auto!important;letter-spacing:.01em!important;
   transition:all .16s!important;
 }
+html body [data-testid="stBaseButton-secondary"]:hover,
 [data-testid="stBaseButton-secondary"]:hover{
-  background:rgba(255,255,255,.13)!important;
-  color:rgba(255,255,255,.88)!important;
-  border-color:rgba(255,255,255,.22)!important;
+  background:rgba(255,255,255,.18)!important;
+  color:#ffffff!important;border-color:rgba(255,255,255,.32)!important;
 }
 /* ── Primary / Send — circular green ────────────────────── */
+html body [data-testid="stBaseButton-primary"],
 [data-testid="stBaseButton-primary"]{
   border-radius:50%!important;
   width:46px!important;min-width:46px!important;
@@ -2583,6 +2593,7 @@ section.main{margin-left:0!important;}
   box-shadow:0 4px 18px rgba(0,192,107,.35)!important;
   transition:all .18s!important;
 }
+html body [data-testid="stBaseButton-primary"]:hover,
 [data-testid="stBaseButton-primary"]:hover{
   box-shadow:0 6px 26px rgba(0,192,107,.5)!important;
   transform:scale(1.07)!important;
