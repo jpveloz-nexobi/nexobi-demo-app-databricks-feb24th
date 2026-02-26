@@ -228,6 +228,11 @@ def load_data_databricks(catalog: str, schema: str, table: str) -> pd.DataFrame:
 
 
 # ---- Load data based on mode (with automatic CSV fallback) ----
+# Handle query-param navigation from AI Agent fixed "← Dashboard" button
+if st.query_params.get("_nav") == "dash":
+    st.query_params.clear()
+    st.session_state["nav"] = "Dashboard"
+
 # Default to CSV every fresh session; only go live when user explicitly switches
 if "force_live_mode" not in st.session_state:
     st.session_state["force_live_mode"] = False   # CSV is always the default on open
@@ -2520,120 +2525,91 @@ elif page == "AI Agent":
 [data-testid="stSidebar"]{display:none!important;}
 [data-testid="stHeader"]{display:none!important;}
 [data-testid="stToolbar"]{display:none!important;}
-header{display:none!important;}
-footer{display:none!important;}
+header{display:none!important;}footer{display:none!important;}
 .nexo-header{display:none!important;}
 section.main{margin-left:0!important;}
-/* Override Streamlit theme variables for this page */
 .stApp{
   --background-color:#060D1A!important;
   --secondary-background-color:rgba(255,255,255,.07)!important;
   --text-color:#CBD5E1!important;
   background:#060D1A!important;min-height:100vh!important;
 }
-.block-container{max-width:720px!important;margin:0 auto!important;padding-top:1.2rem!important;padding-bottom:3rem!important;background:transparent!important;}
+.block-container{max-width:680px!important;margin:0 auto!important;padding-top:1rem!important;padding-bottom:3rem!important;background:transparent!important;}
 /* Fixed full-page aurora orbs */
 .ai-page-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
-.ai-page-orbs .op1{position:absolute;width:520px;height:520px;background:rgba(0,192,107,.14);border-radius:50%;filter:blur(90px);top:-140px;right:-80px;animation:floatA 9s ease-in-out infinite;}
-.ai-page-orbs .op2{position:absolute;width:420px;height:420px;background:rgba(14,165,233,.11);border-radius:50%;filter:blur(90px);bottom:-100px;left:-60px;animation:floatB 13s ease-in-out infinite;}
-.ai-page-orbs .op3{position:absolute;width:300px;height:300px;background:rgba(139,92,246,.09);border-radius:50%;filter:blur(80px);top:42%;right:-50px;animation:floatA 17s ease-in-out infinite reverse;}
-/* ── Text area input ───────────────────────────────────── */
+.ai-page-orbs .op1{position:absolute;width:520px;height:520px;background:rgba(0,192,107,.13);border-radius:50%;filter:blur(90px);top:-140px;right:-80px;animation:floatA 9s ease-in-out infinite;}
+.ai-page-orbs .op2{position:absolute;width:420px;height:420px;background:rgba(14,165,233,.10);border-radius:50%;filter:blur(90px);bottom:-100px;left:-60px;animation:floatB 13s ease-in-out infinite;}
+.ai-page-orbs .op3{position:absolute;width:300px;height:300px;background:rgba(139,92,246,.08);border-radius:50%;filter:blur(80px);top:42%;right:-50px;animation:floatA 17s ease-in-out infinite reverse;}
+/* ── Dashboard pill — fixed top-left anchor link ─────── */
+#nexobi-dash-pill{
+  position:fixed;top:14px;left:14px;z-index:10000;
+  background:transparent;border:1px solid rgba(255,255,255,.13);
+  border-radius:999px;padding:4px 13px;
+  color:rgba(255,255,255,.36);font-size:.68rem;font-weight:500;
+  cursor:pointer;font-family:inherit;letter-spacing:.02em;
+  text-decoration:none;display:inline-block;
+  transition:all .18s;
+}
+#nexobi-dash-pill:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.22);}
+/* ── Textarea ───────────────────────────────────────────── */
 .stTextArea>div>div>textarea{
+  background:rgba(255,255,255,.055)!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  border-radius:16px!important;color:#E2E8F0!important;
+  padding:13px 16px!important;font-size:.9rem!important;
+  line-height:1.5!important;resize:none!important;box-shadow:none!important;
+}
+.stTextArea>div>div>textarea::placeholder{color:rgba(255,255,255,.28)!important;}
+.stTextArea>div>div>textarea:focus{border-color:rgba(0,192,107,.35)!important;box-shadow:0 0 0 3px rgba(0,192,107,.12)!important;background:rgba(255,255,255,.08)!important;}
+.stTextArea>div>div,.stTextArea>div{border:none!important;background:transparent!important;}
+/* ── ALL non-primary buttons — dark glass ──────────────── */
+section.main button[kind="secondary"],
+section.main .stButton>button:not([kind="primary"]){
   background:rgba(255,255,255,.06)!important;
-  border:1px solid rgba(255,255,255,.13)!important;
-  border-radius:18px!important;
-  color:#E2E8F0!important;
-  padding:14px 18px!important;
-  font-size:.93rem!important;
-  line-height:1.5!important;
-  resize:none!important;
+  border:1px solid rgba(255,255,255,.11)!important;
+  color:rgba(255,255,255,.58)!important;
   box-shadow:none!important;
-  backdrop-filter:blur(10px)!important;
+  border-radius:999px!important;
+  padding:.38rem 1.1rem!important;
+  font-size:.79rem!important;
+  min-height:0!important;height:auto!important;
 }
-.stTextArea>div>div>textarea::placeholder{color:rgba(255,255,255,.3)!important;}
-.stTextArea>div>div>textarea:focus{
-  border-color:rgba(0,192,107,.38)!important;
-  box-shadow:0 0 0 3px rgba(0,192,107,.15)!important;
-  background:rgba(255,255,255,.09)!important;
+section.main button[kind="secondary"]:hover,
+section.main .stButton>button:not([kind="primary"]):hover{
+  background:rgba(255,255,255,.10)!important;
+  color:rgba(255,255,255,.85)!important;
+  border-color:rgba(255,255,255,.2)!important;
 }
-.stTextArea>div>div{border:none!important;background:transparent!important;}
-/* ── Circular icon send button ─────────────────────────── */
-[data-testid="stMarkdownContainer"]:has(#ai-send-row)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton>button,
+/* ── Primary / Send button — circular green ─────────────── */
+section.main button[kind="primary"],
+section.main .stButton>button[kind="primary"],
+[data-testid="stBaseButton-primary"],
 [data-testid="baseButton-primary"]{
   border-radius:50%!important;
   width:46px!important;min-width:46px!important;
   height:46px!important;min-height:46px!important;
-  padding:0!important;font-size:1.15rem!important;
-  background:linear-gradient(135deg,#00C06B,#009952)!important;
-  box-shadow:0 4px 20px rgba(0,192,107,.38)!important;
+  padding:0!important;font-size:1.1rem!important;
+  background:linear-gradient(135deg,#00C06B,#00875A)!important;
+  color:#fff!important;border:none!important;
+  box-shadow:0 4px 18px rgba(0,192,107,.35)!important;
   transition:all .18s!important;
 }
-[data-testid="baseButton-primary"]:hover{
-  box-shadow:0 6px 28px rgba(0,192,107,.55)!important;
-  transform:scale(1.08)!important;
-}
-/* ── ALL secondary buttons — dark glass, no white ──────── */
-button[kind="secondary"],
-.stButton>button[kind="secondary"],
-section.main .stButton>button{
-  background:rgba(255,255,255,.06)!important;
-  border:1px solid rgba(255,255,255,.12)!important;
-  color:rgba(255,255,255,.62)!important;
-  box-shadow:none!important;
-}
-button[kind="secondary"]:hover,
-.stButton>button[kind="secondary"]:hover,
-section.main .stButton>button:hover{
-  background:rgba(255,255,255,.11)!important;
-  color:rgba(255,255,255,.88)!important;
-  border-color:rgba(255,255,255,.22)!important;
-}
-/* Preset chips — pill shape */
-[data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{border-radius:999px!important;}
-/* ── AI bubble — force ALL child text light grey ────────── */
-.ai-bubble-ai{background:rgba(255,255,255,.05)!important;border-color:rgba(0,192,107,.22)!important;color:#CBD5E1!important;}
+section.main button[kind="primary"]:hover,
+[data-testid="stBaseButton-primary"]:hover,
+[data-testid="baseButton-primary"]:hover{box-shadow:0 6px 26px rgba(0,192,107,.5)!important;transform:scale(1.07)!important;}
+/* ── AI bubble — light text ──────────────────────────────── */
+.ai-bubble-ai{background:rgba(255,255,255,.04)!important;border-color:rgba(0,192,107,.2)!important;color:#CBD5E1!important;}
 .ai-bubble-ai *{color:#CBD5E1!important;}
 .ai-bubble-ai b,.ai-bubble-ai strong,.ai-bubble-ai th{color:#E8EDF4!important;}
-.ai-bubble-ai span[style]{color:#CBD5E1!important;}
-.ai-bubble-ai .ai-msg-label{color:#00C06B!important;}
-/* ── New-chat button ───────────────────────────────────── */
-[data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button{border-radius:8px!important;padding:.2rem .65rem!important;min-height:0!important;height:auto!important;}
-/* ── Powered-by text ───────────────────────────────────── */
-.stMarkdownContainer p{color:rgba(255,255,255,.28)!important;}
-/* ── Hidden Streamlit dashboard button (triggered by fixed HTML) */
-[data-testid="stMarkdownContainer"]:has(#ai-dash-toggle)+div{
-  position:absolute!important;left:-9999px!important;
-  width:1px!important;height:1px!important;overflow:hidden!important;
-}
+/* ── Misc ────────────────────────────────────────────────── */
+.stMarkdownContainer p{color:rgba(255,255,255,.26)!important;}
 </style>""", unsafe_allow_html=True)
 
-    # ── Full-page aurora orbs (fixed, bleed whole viewport) ──
+    # ── Full-page aurora orbs ─────────────────────────────────
     st.markdown('<div class="ai-page-orbs"><div class="op1"></div><div class="op2"></div><div class="op3"></div></div>', unsafe_allow_html=True)
 
-    # ── Fixed dashboard pill — raw HTML for reliable top-left position ──
-    st.markdown("""
-<button id="nexobi-dash-pill" onclick="var b=document.querySelector('[data-testid=stMarkdownContainer] ~ div #ai-dash-trigger');if(!b){var all=document.querySelectorAll('button');for(var i=0;i<all.length;i++){if(all[i].innerText.trim()==='__DASH__'){b=all[i];break;}}}if(b)b.click();">← Dashboard</button>
-<style>
-#nexobi-dash-pill{
-  position:fixed;top:16px;left:16px;z-index:10000;
-  background:transparent;border:1px solid rgba(255,255,255,.14);
-  border-radius:999px;padding:4px 14px;
-  color:rgba(255,255,255,.38);font-size:.7rem;font-weight:500;
-  cursor:pointer;font-family:inherit;letter-spacing:.02em;
-  transition:all .18s;
-}
-#nexobi-dash-pill:hover{
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.65);
-  border-color:rgba(255,255,255,.22);
-}
-</style>""", unsafe_allow_html=True)
-
-    # Hidden Streamlit button — handles session state, triggered by JS above
-    st.markdown('<div id="ai-dash-toggle"></div>', unsafe_allow_html=True)
-    if st.button("__DASH__", key="ai_go_dashboard"):
-        st.session_state["_go_dashboard"] = True
-        st.rerun()
+    # ── Dashboard pill — simple anchor, query-param nav ───────
+    st.markdown('<a id="nexobi-dash-pill" href="?_nav=dash">← Dashboard</a>', unsafe_allow_html=True)
 
     # Note: AI Agent uses DATA (full dataset) — sidebar filters have no effect
     render_ai()
