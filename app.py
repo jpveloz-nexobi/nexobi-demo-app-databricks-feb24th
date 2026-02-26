@@ -2390,23 +2390,7 @@ def render_ai():
 
         st.markdown('<div style="height:1.4rem"></div>', unsafe_allow_html=True)
 
-    # ── ACTIVE STATE: compact header ─────────────────────────
-    else:
-        _hcol, _ncol = st.columns([10, 1.8])
-        with _hcol:
-            st.markdown(
-                f'<p style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:.94rem;'
-                f'font-weight:700;color:#F1F5F9;margin:0 0 .5rem;">'
-                f'<span style="color:#00C06B;margin-right:6px;">◆</span>NexoBI AI · Ask your data</p>',
-                unsafe_allow_html=True
-            )
-        with _ncol:
-            st.markdown('<div id="ai-newchat-marker"></div>', unsafe_allow_html=True)
-            if st.button("New chat", key="ai_reset_compact", use_container_width=True):
-                st.session_state.ai_history = []
-                st.session_state.ai_nonce  += 1
-                st.session_state.ai_preset  = None
-                st.rerun()
+    # ── ACTIVE STATE: no header, just go straight to input ───
 
     # ── Chat input (always rendered) ─────────────────────────
     st.markdown('<div id="ai-send-row"></div>', unsafe_allow_html=True)
@@ -2508,6 +2492,17 @@ def render_ai():
             with st.expander("View SQL", expanded=False):
                 st.code(sql, language="sql")
 
+    # ── New chat — below dialogue, only when history exists ──
+    if has_history:
+        st.markdown('<div style="height:.6rem"></div>', unsafe_allow_html=True)
+        _nc_gap, _nc_col = st.columns([8, 2])
+        with _nc_col:
+            if st.button("↺  New chat", key="ai_reset_compact", use_container_width=True):
+                st.session_state.ai_history = []
+                st.session_state.ai_nonce  += 1
+                st.session_state.ai_preset  = None
+                st.rerun()
+
 # ==========================================================
 # ROUTER
 # ==========================================================
@@ -2562,23 +2557,24 @@ section.main{margin-left:0!important;}
 .stTextArea>div>div>textarea::placeholder{color:rgba(255,255,255,.28)!important;}
 .stTextArea>div>div>textarea:focus{border-color:rgba(0,192,107,.35)!important;box-shadow:0 0 0 3px rgba(0,192,107,.12)!important;background:rgba(255,255,255,.08)!important;}
 .stTextArea>div>div,.stTextArea>div{border:none!important;background:transparent!important;}
-/* ── ALL non-primary buttons — dark glass ──────────────── */
+/* ── ALL non-primary buttons — ghost transparent ────────── */
 section.main button[kind="secondary"],
 section.main .stButton>button:not([kind="primary"]){
-  background:rgba(255,255,255,.06)!important;
-  border:1px solid rgba(255,255,255,.11)!important;
-  color:rgba(255,255,255,.58)!important;
+  background:rgba(255,255,255,.04)!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  color:rgba(255,255,255,.5)!important;
   box-shadow:none!important;
   border-radius:999px!important;
-  padding:.38rem 1.1rem!important;
-  font-size:.79rem!important;
+  padding:.28rem .9rem!important;
+  font-size:.76rem!important;
   min-height:0!important;height:auto!important;
+  letter-spacing:.01em!important;
 }
 section.main button[kind="secondary"]:hover,
 section.main .stButton>button:not([kind="primary"]):hover{
-  background:rgba(255,255,255,.10)!important;
-  color:rgba(255,255,255,.85)!important;
-  border-color:rgba(255,255,255,.2)!important;
+  background:rgba(255,255,255,.09)!important;
+  color:rgba(255,255,255,.82)!important;
+  border-color:rgba(255,255,255,.18)!important;
 }
 /* ── Primary / Send button — circular green ─────────────── */
 section.main button[kind="primary"],
@@ -2609,7 +2605,7 @@ section.main button[kind="primary"]:hover,
     st.markdown('<div class="ai-page-orbs"><div class="op1"></div><div class="op2"></div><div class="op3"></div></div>', unsafe_allow_html=True)
 
     # ── Dashboard pill — simple anchor, query-param nav ───────
-    st.markdown('<a id="nexobi-dash-pill" href="?_nav=dash">← Dashboard</a>', unsafe_allow_html=True)
+    st.markdown('<a id="nexobi-dash-pill" href="?_nav=dash" target="_self">← Dashboard</a>', unsafe_allow_html=True)
 
     # Note: AI Agent uses DATA (full dataset) — sidebar filters have no effect
     render_ai()
