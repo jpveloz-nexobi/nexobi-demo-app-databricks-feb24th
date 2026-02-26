@@ -2048,7 +2048,6 @@ def render_ai():
 <div class="ai-hero-wrap">
   <div><span class="ai-status-pill"><span class="ai-pulse"></span>◆ NexoBI AI &nbsp;·&nbsp; {"Local data" if _csv_mode else "Live · Databricks"}</span></div>
   <div class="ai-catch">Ask anything<br><span class="ai-catch-hi">Clarity on Demand.</span></div>
-  <div class="ai-catch-sub">Get straight answers from your data.</div>
 </div>
 ''', unsafe_allow_html=True)
 
