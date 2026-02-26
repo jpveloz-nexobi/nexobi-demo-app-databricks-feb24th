@@ -2557,28 +2557,27 @@ section.main{margin-left:0!important;}
 .stTextArea>div>div>textarea::placeholder{color:rgba(255,255,255,.28)!important;}
 .stTextArea>div>div>textarea:focus{border-color:rgba(0,192,107,.35)!important;box-shadow:0 0 0 3px rgba(0,192,107,.12)!important;background:rgba(255,255,255,.08)!important;}
 .stTextArea>div>div,.stTextArea>div{border:none!important;background:transparent!important;}
-/* ── ALL non-primary buttons — ghost transparent ────────── */
-section.main button[kind="secondary"],
-section.main .stButton>button:not([kind="primary"]){
-  background:rgba(255,255,255,.04)!important;
-  border:1px solid rgba(255,255,255,.10)!important;
-  color:rgba(255,255,255,.5)!important;
+/* ── ALL buttons — reset to dark glass base ─────────────── */
+section.main .stButton button{
+  background:rgba(255,255,255,.07)!important;
+  border:1px solid rgba(255,255,255,.13)!important;
+  color:rgba(255,255,255,.62)!important;
   box-shadow:none!important;
   border-radius:999px!important;
-  padding:.28rem .9rem!important;
-  font-size:.76rem!important;
+  padding:.3rem .95rem!important;
+  font-size:.77rem!important;
   min-height:0!important;height:auto!important;
   letter-spacing:.01em!important;
+  transition:all .16s!important;
 }
-section.main button[kind="secondary"]:hover,
-section.main .stButton>button:not([kind="primary"]):hover{
-  background:rgba(255,255,255,.09)!important;
-  color:rgba(255,255,255,.82)!important;
-  border-color:rgba(255,255,255,.18)!important;
+section.main .stButton button:hover{
+  background:rgba(255,255,255,.12)!important;
+  color:rgba(255,255,255,.88)!important;
+  border-color:rgba(255,255,255,.22)!important;
 }
-/* ── Primary / Send button — circular green ─────────────── */
-section.main button[kind="primary"],
-section.main .stButton>button[kind="primary"],
+/* ── Primary / Send button — circular green (wins cascade) ─ */
+section.main .stButton button[data-testid="stBaseButton-primary"],
+section.main .stButton button[data-testid="baseButton-primary"],
 [data-testid="stBaseButton-primary"],
 [data-testid="baseButton-primary"]{
   border-radius:50%!important;
@@ -2588,11 +2587,13 @@ section.main .stButton>button[kind="primary"],
   background:linear-gradient(135deg,#00C06B,#00875A)!important;
   color:#fff!important;border:none!important;
   box-shadow:0 4px 18px rgba(0,192,107,.35)!important;
-  transition:all .18s!important;
 }
-section.main button[kind="primary"]:hover,
+section.main .stButton button[data-testid="stBaseButton-primary"]:hover,
 [data-testid="stBaseButton-primary"]:hover,
-[data-testid="baseButton-primary"]:hover{box-shadow:0 6px 26px rgba(0,192,107,.5)!important;transform:scale(1.07)!important;}
+[data-testid="baseButton-primary"]:hover{
+  box-shadow:0 6px 26px rgba(0,192,107,.5)!important;
+  transform:scale(1.07)!important;
+}
 /* ── AI bubble — light text ──────────────────────────────── */
 .ai-bubble-ai{background:rgba(255,255,255,.04)!important;border-color:rgba(0,192,107,.2)!important;color:#CBD5E1!important;}
 .ai-bubble-ai *{color:#CBD5E1!important;}
