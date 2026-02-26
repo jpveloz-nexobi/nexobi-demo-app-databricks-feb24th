@@ -5,11 +5,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import re
-import difflib
-import hashlib
 import os
-import time
-import requests
 from datetime import datetime, timedelta, date
 
 # ==========================================================
@@ -17,8 +13,6 @@ from datetime import datetime, timedelta, date
 # Set NEXOBI_DATA_MODE=databricks in Databricks Apps env vars
 # ==========================================================
 CSV_PATH = "data.csv"   # used when DATA_MODE == "csv"
-
-DATA_MODE = os.getenv("NEXOBI_DATA_MODE", "csv").lower()   # "csv" | "databricks"
 
 # Unity Catalog coordinates — set these as Databricks Apps env vars
 DBX_CATALOG = os.getenv("NEXOBI_CATALOG", "workspace")
@@ -300,15 +294,6 @@ def plot_line(df: pd.DataFrame, x: str, y: str, title: str, height: int = 260, c
     fig.update_layout(**base_layout(title, height))
     return fig
 
-def plot_bar(df: pd.DataFrame, x: str, y: str, title: str, color: str = GREEN, height: int = 260):
-    fig = go.Figure(go.Bar(
-        x=df[x], y=df[y],
-        marker_color=color, marker_line_width=0,
-        hovertemplate="%{x}<br><b>%{y:,.0f}</b><extra></extra>",
-    ))
-    fig.update_layout(**base_layout(title, height))
-    return fig
-
 def plot_bar_multi(df: pd.DataFrame, x: str, y: str, title: str, height: int = 260):
     palette = [GREEN, BLUE, AMBER, PURPLE, "#EC4899", "#14B8A6", "#F97316"]
     fig = go.Figure()
@@ -444,12 +429,10 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 /* === AI AGENT — ultra-modern redesign === */
 
 /* Keyframes */
-@keyframes aurora{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @keyframes floatA{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(28px,-22px) scale(1.08)}}
 @keyframes floatB{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-22px,20px) scale(.94)}}
 @keyframes pulseRing{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.5)}}
 @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
 
 /* ── Hero — transparent, sits on full-page aurora ────────── */
 .ai-hero-wrap{
@@ -474,14 +457,6 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 /* Green → sky-blue gradient tagline */
 .ai-catch-hi{background:linear-gradient(120deg,#00C06B 0%,#38BDF8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .ai-catch-sub{font-size:.85rem;color:rgba(255,255,255,.52);font-weight:400;max-width:440px;margin:0 auto 2rem;}
-/* Cycling suggestion hints */
-@keyframes suggFade{0%,100%{opacity:0;transform:translateY(6px)}10%,32%{opacity:1;transform:translateY(0)}40%{opacity:0;transform:translateY(-4px)}}
-.ai-suggestions{position:relative;height:1.3rem;margin-bottom:.9rem;overflow:hidden;}
-.ai-suggestions span{position:absolute;inset:0;text-align:center;font-size:.78rem;font-weight:600;color:rgba(255,255,255,.48);letter-spacing:.01em;opacity:0;animation:suggFade 15s ease-in-out infinite;}
-.ai-suggestions span:nth-child(1){animation-delay:0s}
-.ai-suggestions span:nth-child(2){animation-delay:5s}
-.ai-suggestions span:nth-child(3){animation-delay:10s}
-
 /* ── Preset chips — frosted pill buttons ─────────────────── */
 [data-testid="stMarkdownContainer"]:has(#ai-cards-marker)+[data-testid="stHorizontalBlock"] .stButton>button{
   background:rgba(255,255,255,.62)!important;
@@ -567,10 +542,6 @@ div[data-baseweb="base-input"]:focus-within{
 /* Story card primary buttons — slightly compact */
 [data-testid="stMarkdownContainer"]:has(#story-cards-row)+[data-testid="stHorizontalBlock"] [data-testid="baseButton-primary"]{height:36px!important;min-height:36px!important;font-size:.78rem!important;font-weight:600!important;}
 
-/* Reset button */
-.reset-wrap .stButton>button{background:#F5F7FA!important;color:#64748B!important;border:1px solid #E2E8F0!important;font-weight:500!important;}
-.reset-wrap .stButton>button:hover{background:#F1F5F9!important;}
-
 /* Export icon buttons — all sidebar download buttons */
 [data-testid="stSidebar"] [data-testid="stDownloadButton"]>button{background:transparent!important;border:1px solid #E2E8F0!important;border-radius:8px!important;color:#64748B!important;font-size:.75rem!important;font-weight:500!important;padding:3px 10px!important;min-height:0!important;height:26px!important;line-height:1!important;width:auto!important;}
 [data-testid="stSidebar"] [data-testid="stDownloadButton"]>button:hover{border-color:#00C06B!important;color:#00C06B!important;background:transparent!important;}
@@ -578,24 +549,6 @@ div[data-baseweb="base-input"]:focus-within{
 /* Refresh button — subtle green, compact */
 .refresh-wrap .stButton>button{background:transparent!important;border:1px solid #00C06B!important;border-radius:8px!important;color:#00C06B!important;font-size:.75rem!important;font-weight:500!important;padding:3px 10px!important;min-height:0!important;height:26px!important;width:auto!important;}
 .refresh-wrap .stButton>button:hover{background:#E6F9F0!important;}
-
-
-/* KPI row — inline, no boxes */
-.ai-kpi-row{display:flex;gap:28px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid #F1F5F9;}
-.ai-kpi{flex:1;min-width:100px;}
-.ai-kpi .k{font-size:.68rem;font-weight:400;color:#94A3B8;letter-spacing:.03em;}
-.ai-kpi .v{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:600;color:#1E293B;margin-top:2px;}
-
-/* Pills — very subtle */
-.ai-pill{display:inline-block;background:#F1F5F9;color:#475569;border:none;border-radius:999px;font-weight:500;font-size:.68rem;padding:2px 9px;margin-right:4px;}
-.ai-pill-muted{background:#F8FAFC;color:#94A3B8;}
-
-/* Action items — minimal left-border list */
-.ai-actions{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
-.ai-action{background:transparent;border-left:2px solid #E2E8F0;padding:5px 10px;}
-.ai-action .t{font-weight:500;font-size:.85rem;color:#334155;}
-.ai-action .d{color:#94A3B8;font-size:.80rem;margin-top:1px;line-height:1.35;}
-
 
 
 /* Sidebar alert cards */
@@ -707,10 +660,6 @@ section[data-testid="stSidebar"] label {
 .sb-reset-wrap .stButton>button[kind="secondary"][data-testid="mode_switch_btn"],
 .sb-reset-wrap .stButton>button{font-size:.72rem!important;text-align:left!important;}
 
-/* Integration strip */
-.integ-strip{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:.55rem;}
-.integ-badge{display:inline-flex;align-items:center;gap:5px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:4px 11px;font-size:.74rem;font-weight:600;color:#475569;}
-.integ-dot{width:7px;height:7px;border-radius:50%;background:#00C06B;display:inline-block;flex-shrink:0;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -779,9 +728,6 @@ with st.sidebar:
     st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Navigation ---
-    # Allow AI Agent's Dashboard button to navigate without a widget-key conflict
-    if st.session_state.pop("_go_dashboard", False):
-        st.session_state["nav"] = "Dashboard"
     page = st.radio("Navigation", ["Dashboard", "AI Agent"], key="nav")
 
     st.markdown("---")
@@ -790,9 +736,6 @@ with st.sidebar:
     # --------------------------------------------------
     if "demo_scenario" not in st.session_state:
         st.session_state["demo_scenario"] = "None"
-    if "dismiss_quick" not in st.session_state:
-        st.session_state["dismiss_quick"] = False
-
     # --------------------------------------------------
     # Reset flag — must be checked BEFORE widgets render
     # so Streamlit allows overwriting widget-bound keys
@@ -1265,34 +1208,6 @@ letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">{_meta['title'
 
 
 # ==========================================================
-# INTELLIGENCE SIGNALS — proactive insights on dashboard
-# ==========================================================
-def render_signals(alerts_list, max_signals: int = 3):
-    """Render top intelligence signals prominently inline on the dashboard."""
-    if not alerts_list:
-        return
-    top = alerts_list[:max_signals]
-    st.markdown('<div class="section-title" style="margin-top:.5rem;">Live Intelligence</div>', unsafe_allow_html=True)
-    cols = st.columns(len(top), gap="small")
-    _cls_map = {
-        "sb-pill-red":   ("sig-red",   "sig-sev-red"),
-        "sb-pill-amber": ("sig-amber", "sig-sev-amber"),
-        "sb-pill-green": ("sig-green", "sig-sev-green"),
-    }
-    for col, (sev, pill_cls, title, detail, action) in zip(cols, top):
-        sig_cls, sev_cls = _cls_map.get(pill_cls, ("sig-green", "sig-sev-green"))
-        with col:
-            st.markdown(f'''<div class="sig-card {sig_cls}">
-  <div class="sig-head">
-    <div class="sig-title">{title}</div>
-    <div class="sig-sev {sev_cls}">{sev}</div>
-  </div>
-  <div class="sig-detail">{detail}</div>
-  <div class="sig-action"><b>Action:</b> {action}</div>
-</div>''', unsafe_allow_html=True)
-
-
-# ==========================================================
 # PATIENT ACQUISITION FUNNEL
 # ==========================================================
 def plot_patient_funnel(df: pd.DataFrame):
@@ -1487,11 +1402,6 @@ def render_marketing():
 
     roas = safe_div(revenue, spend)
     show_rate = safe_div(attended, booked) * 100
-
-    prev_rev   = float(prev_base["total_revenue"].sum() or 0)
-    prev_leads = float(prev_base["leads"].sum() or 0)
-    rev_chg = safe_div(revenue - prev_rev, max(abs(prev_rev), 0.01)) * 100
-    lds_chg = safe_div(leads - prev_leads, max(abs(prev_leads), 0.01)) * 100
 
     render_story_cards()
     st.markdown('<div class="section-title">Patient Funnel</div>', unsafe_allow_html=True)
@@ -1777,220 +1687,6 @@ def render_practice():
                 st.info("No treatment rows available for the selected date range.")
 
 
-# ==========================================================
-# AI AGENT (DETERMINISTIC)
-# ==========================================================
-MONTHS={"january":1,"jan":1,"february":2,"feb":2,"march":3,"mar":3,"april":4,"apr":4,"may":5,"june":6,"jun":6,"july":7,"jul":7,"august":8,"aug":8,"september":9,"sep":9,"sept":9,"october":10,"oct":10,"november":11,"nov":11,"december":12,"dec":12}
-
-def parse_dates(q: str, gmin: date, gmax: date):
-    ql = norm(q)
-    m = re.search(r"last\s+(\d+)\s+days?", ql)
-    if m:
-        n = max(1, min(3650, int(m.group(1))))
-        return gmax - timedelta(days=n-1), gmax, f"Last {n} days"
-    if "mtd" in ql or "month to date" in ql or "this month" in ql:
-        s = gmax.replace(day=1)
-        return s, gmax, "Month-to-date"
-    if "last month" in ql:
-        first = gmax.replace(day=1)
-        prev_end = first - timedelta(days=1)
-        prev_start = prev_end.replace(day=1)
-        return prev_start, prev_end, "Last month"
-    m2 = re.search(r"\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)(\s+\d{4})?\b", ql)
-    if m2:
-        mon = MONTHS.get(m2.group(1))
-        yr = int(m2.group(2).strip()) if m2.group(2) else gmax.year
-        if mon:
-            from calendar import monthrange
-            s = date(yr, mon, 1)
-            e = date(yr, mon, monthrange(yr, mon)[1])
-            return max(s, gmin), min(e, gmax), f"{datetime(yr,mon,1).strftime('%B')} {yr}"
-    return None, None, None
-
-METRICS = {
-    "revenue": dict(words=["revenue","rev","sales","income"], kind="sum", num="total_revenue"),
-    "spend": dict(words=["spend","cost","adspend","ad spend","investment"], kind="sum", num="total_cost"),
-    "sessions": dict(words=["sessions","session","traffic","visits"], kind="sum", num="sessions"),
-    "leads": dict(words=["leads","lead","conversions","conversion"], kind="sum", num="conversions"),
-    "booked": dict(words=["booked","booking","appointments","appt"], kind="sum", num="booked"),
-    "attended": dict(words=["attended","attendance"], kind="sum", num="attended"),
-    "roas": dict(words=["roas","return on ad spend","return"], kind="ratio", num="total_revenue", den="total_cost"),
-    "cpa": dict(words=["cpa","cost per lead","cpl"], kind="ratio", num="total_cost", den="conversions"),
-    "cvr": dict(words=["conversion rate","cvr","lead rate"], kind="ratio", num="conversions", den="sessions", mult=100.0),
-    "show_rate": dict(words=["show rate","attendance rate"], kind="ratio", num="attended", den="booked", mult=100.0),
-}
-
-def fuzzy_metric(q: str) -> str:
-    ql = norm(q)
-    if "show rate" in ql or "attendance rate" in ql:
-        return "show_rate"
-    for k, meta in METRICS.items():
-        for w in sorted(meta["words"], key=lambda x: -len(x)):
-            if w in ql:
-                return k
-    tokens = [t for t in ql.split() if len(t) >= 3]
-    candidates = []
-    for k, meta in METRICS.items():
-        for w in meta["words"]:
-            candidates.append((k, w))
-    best_k, best_s = "revenue", 0.0
-    for t in tokens:
-        for k, w in candidates:
-            s = difflib.SequenceMatcher(None, t, w.replace(" ", "")).ratio()
-            if s > best_s:
-                best_s, best_k = s, k
-    return best_k if best_s >= 0.72 else "revenue"
-
-def metric_value(df: pd.DataFrame, metric_key: str) -> float:
-    meta = METRICS[metric_key]
-    if meta["kind"] == "sum":
-        return float(df[meta["num"]].sum())
-    num = float(df[meta["num"]].sum())
-    den = float(df[meta["den"]].sum())
-    base = safe_div(num, den)
-    if "mult" in meta:
-        base *= float(meta["mult"])
-    return float(base)
-
-def metric_format(metric_key: str, v: float) -> str:
-    if metric_key in ["revenue","spend","cpa"]:
-        return money(v)
-    if metric_key == "roas":
-        return f"{v:.2f}x"
-    if metric_key in ["cvr","show_rate"]:
-        return f"{v:.1f}%"
-    return fmt(v)
-
-def actions_for(metric_key: str, direction: str):
-    if metric_key == "roas" and direction == "down":
-        return [
-            ("Cut waste spend", "Pause/limit the lowest-ROAS campaigns for 48h and reallocate to top performers."),
-            ("Fix conversion path", "Check landing pages + forms (mobile speed, booking friction) to recover CVR."),
-            ("Tighten targeting", "Exclude low-intent keywords/audiences; focus on high-intent treatment terms."),
-            ("Audit tracking", "Validate revenue attribution + conversion events (misfires can mimic ROAS drops)."),
-        ]
-    if metric_key == "show_rate" and direction == "down":
-        return [
-            ("Confirm reminders", "Enable SMS + email reminders 24h and 2h before appointment."),
-            ("Reduce no-shows", "Add deposits for high-no-show segments; confirm appointments same day."),
-            ("Shorten time-to-visit", "Offer earlier slots; long lead times drive cancellations."),
-            ("Staff follow-up", "Call high-value treatments within 10 minutes of booking."),
-        ]
-    return [
-        ("Focus on top drivers", "Scale segments with the strongest positive impact."),
-        ("Fix the weakest links", "Target biggest negative movers first for fast lift."),
-        ("Monitor daily", "Watch the same metric over time to confirm stabilization."),
-    ]
-
-def compute_why(metric_key: str, s_d: date, e_d: date, note: str, base_df: pd.DataFrame):
-    days = (e_d - s_d).days + 1
-    p_s = s_d - timedelta(days=days)
-    p_e = e_d - timedelta(days=days)
-
-    cur = base_df[(base_df["date"] >= s_d) & (base_df["date"] <= e_d)]
-    prev = base_df[(base_df["date"] >= p_s) & (base_df["date"] <= p_e)]
-
-    cur_v  = metric_value(cur, metric_key)
-    prev_v = metric_value(prev, metric_key)
-    delta  = cur_v - prev_v
-    pct_ch = safe_div(delta, max(abs(prev_v), 0.01)) * 100
-    direction = "down" if delta < 0 else "up" if delta > 0 else "flat"
-
-    # Drivers by data_source + channel_group only (keeps demo clean)
-    drivers = []
-    for dim in ["data_source", "channel_group", "campaign"]:
-        # Robust driver computation across pandas versions (avoid groupby(..., as_index=False).apply(...))
-        g1 = cur.groupby(dim).apply(lambda x: metric_value(x, metric_key)).reset_index(name="value")
-        g2 = prev.groupby(dim).apply(lambda x: metric_value(x, metric_key)).reset_index(name="value_prev")
-
-        m = pd.merge(g1, g2, on=dim, how="outer").fillna(0)
-        m["impact"] = m["value"] - m["value_prev"]
-
-        # Limit rows for demo readability
-        top_n = 5 if dim == "campaign" else 8
-        m = m.sort_values("impact", ascending=True if delta < 0 else False).head(top_n).copy()
-        drivers.append((dim, m))
-
-    return {
-        "current": cur_v, "prior": prev_v, "delta": delta, "pct": pct_ch,
-        "direction": direction, "period": f"{s_d} → {e_d}", "note": note,
-        "drivers": drivers,
-        "actions": actions_for(metric_key, direction if direction != "flat" else "down"),
-        "confidence": "High" if len(cur) > 20 else "Medium"
-    }
-
-def compute_compare(metric_key: str, s_d: date, e_d: date, base_df: pd.DataFrame, dim: str | None = None):
-    """Generic current vs prior comparison. If dim is provided, returns movers by dim."""
-    days = (e_d - s_d).days + 1
-    p_s = s_d - timedelta(days=days)
-    p_e = e_d - timedelta(days=days)
-    cur = base_df[(base_df["date"] >= s_d) & (base_df["date"] <= e_d)]
-    prev = base_df[(base_df["date"] >= p_s) & (base_df["date"] <= p_e)]
-
-    cur_v  = metric_value(cur, metric_key)
-    prev_v = metric_value(prev, metric_key)
-    delta  = cur_v - prev_v
-    pct_ch = safe_div(delta, max(abs(prev_v), 0.01)) * 100
-    direction = "down" if delta < 0 else "up" if delta > 0 else "flat"
-
-    movers = None
-    if dim:
-        # Pandas 2.x compatible — don't use reset_index(name=) on groupby result
-        g1 = cur.groupby(dim).apply(lambda x: metric_value(x, metric_key)).reset_index()
-        g1.columns = [dim, "value"]
-        g2 = prev.groupby(dim).apply(lambda x: metric_value(x, metric_key)).reset_index()
-        g2.columns = [dim, "value_prev"]
-        m = pd.merge(g1, g2, on=dim, how="outer").fillna(0)
-        m["impact"] = m["value"] - m["value_prev"]
-        # If overall is down, show biggest negative movers first; else biggest positive movers first
-        m = m.sort_values("impact", ascending=True if delta < 0 else False)
-        movers = m
-
-    return {
-        "current": cur_v,
-        "prior": prev_v,
-        "delta": delta,
-        "pct": pct_ch,
-        "direction": direction,
-        "period": f"{s_d} → {e_d}",
-        "prior_period": f"{p_s} → {p_e}",
-        "movers": movers,
-        "confidence": "High" if len(cur) > 20 else "Medium",
-    }
-
-def quick_recos(metric_key: str, direction: str):
-    """Short, executive recommendations for non-"why" answers."""
-    direction = direction if direction in ("up","down") else "down"
-    if metric_key == "revenue":
-        return [
-            ("Scale what works", "Shift budget toward the highest-ROAS sources/campaigns driving most revenue."),
-            ("Protect conversion", "Spot-check landing pages + forms to avoid hidden CVR drops."),
-            ("Prioritize high-value treatments", "Promote high Rev/Patient treatments to lift total revenue."),
-        ]
-    if metric_key == "spend":
-        return [
-            ("Re-balance budgets", "Cap spend on low-performing campaigns; set daily limits and reallocate."),
-            ("Guardrails", "Add ROAS/CPA alerts + rules to prevent runaway spend."),
-            ("Creative refresh", "If spend is rising without results, rotate creatives and audiences."),
-        ]
-    if metric_key == "roas":
-        return actions_for("roas", direction)
-    if metric_key == "cpa":
-        if direction == "up":
-            return [
-                ("Reduce waste", "Tighten targeting and exclude low-intent queries/audiences."),
-                ("Improve CVR", "Increase booking rate with shorter forms and faster follow-up."),
-                ("Shift mix", "Reallocate budget to sources/campaigns with lower CPA."),
-            ]
-        return [
-            ("Scale efficiently", "Increase budgets gradually on segments holding low CPA."),
-            ("Keep quality", "Monitor show rate to ensure low CPA isn’t low-intent leads."),
-            ("Expand winners", "Clone best campaigns into nearby geos / similar audiences."),
-        ]
-    if metric_key in ["cvr","show_rate"]:
-        return actions_for("show_rate" if metric_key == "show_rate" else metric_key, direction)
-    return actions_for(metric_key, direction)
-
 
 # ==========================================================
 # AI CHART GENERATOR
@@ -2094,25 +1790,7 @@ def _ai_chart(question: str) -> "go.Figure | None":
 # AI QUERY CLIENT  (uses existing SQL connector — no extra permissions)
 # ==========================================================
 def _build_data_context() -> str:
-    """Return a compact summary of the loaded dataset for use as AI context."""
-    try:
-        df = DATA.copy()
-        parts = []
-        if "Date" in df.columns:
-            parts.append(f"Date range: {df['Date'].min()} to {df['Date'].max()}, {len(df)} rows")
-        num_cols = ["Revenue", "Ad Spend", "ROAS", "Leads", "New Patients", "Appointments"]
-        for col in num_cols:
-            if col in df.columns:
-                parts.append(f"{col}: total={df[col].sum():,.1f}, avg={df[col].mean():,.2f}")
-        if "Source" in df.columns:
-            top = df.groupby("Source")["Revenue"].sum().nlargest(4).to_dict()
-            parts.append("Revenue by source: " + ", ".join(f"{k}=${v:,.0f}" for k, v in top.items()))
-        if "Channel" in df.columns:
-            top_ch = df.groupby("Channel")["Revenue"].sum().nlargest(3).to_dict()
-            parts.append("Revenue by channel: " + ", ".join(f"{k}=${v:,.0f}" for k, v in top_ch.items()))
-        return "; ".join(parts) if parts else "Healthcare practice marketing analytics data"
-    except Exception:
-        return "Healthcare practice marketing analytics data"
+    return "Healthcare practice marketing analytics data"
 
 
 # Model endpoint confirmed available in this workspace
@@ -2369,8 +2047,8 @@ def render_ai():
         st.markdown(f'''
 <div class="ai-hero-wrap">
   <div><span class="ai-status-pill"><span class="ai-pulse"></span>◆ NexoBI AI &nbsp;·&nbsp; {"Local data" if _csv_mode else "Live · Databricks"}</span></div>
-  <div class="ai-catch">Ask anything<br><span class="ai-catch-hi">Clarity on Demand.</span></div>
-  <div class="ai-catch-sub">Get straight answers from your data.</div>
+  <div class="ai-catch">Ask anything about<br><span class="ai-catch-hi">your practice.</span></div>
+  <div class="ai-catch-sub">Get straight answers from your data. No dashboards needed.</div>
 </div>
 ''', unsafe_allow_html=True)
 
