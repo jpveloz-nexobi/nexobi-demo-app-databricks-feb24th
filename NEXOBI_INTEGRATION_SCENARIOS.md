@@ -41,6 +41,9 @@
 ### Part VI — Market Position & Competitive Landscape
 20. [Who Is Doing This? Where Does NexoBI Fit?](#20-who-is-doing-this-where-does-nexobi-fit--competitive-landscape)
 
+### Part VII — The Winning Use Case
+21. [How NexoBI Wins — The Full Story in Plain English](#21-how-nexobi-wins--the-full-story-in-plain-english)
+
 ---
 
 ### Quick Reference — Find What You Need
@@ -60,6 +63,8 @@
 | Build the AI Agent architecture | §18 (AI Agent section) |
 | Understand the competitive landscape | §20 |
 | Find NexoBI's market gaps and positioning | §20.3, §20.4 |
+| See the full story in plain English (no tech) | §21 |
+| Understand the $800–$1,500 retainer model | §21.4 |
 
 ---
 
@@ -5993,5 +5998,216 @@ NexoBI's architecture — as documented throughout this document — addresses a
 
 ---
 
+---
+
+## 21. How NexoBI Wins — The Full Story in Plain English
+
+> **Purpose:** This section is not technical. No code, no SQL, no architecture diagrams. It tells the story of how NexoBI actually works in plain language — for a practice owner, a potential investor, an agency partner, or anyone who needs to understand the product in under 10 minutes. It also explains the realistic path to combining NexoBI's five capabilities, and how the $800–$1,500/month retainer makes sense on both sides of the table.
+
+---
+
+### 21.1 Start Here — The Problem Every Practice Has
+
+Picture a dental practice spending $8,000 a month on Google and Facebook ads.
+
+Every month, the owner gets a report from their marketing agency. The report shows:
+- 3,200 people saw the ads
+- 210 people clicked
+- 38 people filled out the contact form
+- Cost per lead: $210
+
+That's where the report ends.
+
+The owner doesn't know:
+- How many of those 38 people actually booked an appointment
+- How many showed up
+- How much money those patients spent
+- Whether the $8,000 was worth it
+
+Meanwhile, 40% of new patients that month came in without clicking any ad at all — they found the practice on Google, called the front desk, and booked. Those patients have no source attached to them anywhere. They are invisible to every report the agency sends.
+
+At the end of the year, the practice has spent $96,000 on marketing and has no reliable answer to the most basic question in business: *"Is this working?"*
+
+**That is the problem NexoBI solves.**
+
+---
+
+### 21.2 What NexoBI Actually Does — In Simple Terms
+
+NexoBI connects three things that have never talked to each other before:
+
+**1. Where patients come from** (Google Ads, Facebook, Google organic search, phone calls, referrals)
+
+**2. What patients do** (Did they book? Did they show up? Did they cancel?)
+
+**3. What patients spend** (What procedures did they get? How much production did they generate?)
+
+NexoBI pulls information from each of these sources every day, puts it all in one place (Databricks — think of it as a very secure, very smart spreadsheet in the cloud), and then gives the practice owner a simple dashboard and an AI assistant they can just ask questions.
+
+No spreadsheets. No waiting for the agency report. No guessing.
+
+---
+
+### 21.3 A Real Story — Before and After NexoBI
+
+**Before NexoBI — Riverside Dental Group (3 locations, $8,000/month ad spend)**
+
+- Marketing agency sends a PDF every month with clicks and leads
+- Owner doesn't know which location's campaigns are working
+- Front desk gets 60–80 calls a week from new patients — zero of those calls are connected to any ad or search result
+- 30% of new patients list "other" or leave the referral source blank — nobody knows where they came from
+- Owner makes budget decisions based on instinct: "Google feels like it's working, let's keep spending"
+- No way to know if a $300 Google Ads lead is better or worse than a $0 organic search lead — because the organic leads are invisible
+
+**After NexoBI — Same practice, 60 days later**
+
+The owner opens NexoBI on Monday morning and sees:
+
+*"Last month, Google Ads brought in 14 new patients who attended. Those patients generated $31,200 in production. Your return on that $8,000 spend was 3.9x — meaning every dollar you spent on ads returned $3.90 in patient revenue."*
+
+*"Your organic search (patients who found you on Google without an ad) brought in 19 patients. Those patients generated $44,800. Your organic cost was $0 in ad spend."*
+
+*"Location 2 has the best ROAS at 4.7x. Location 3 is at 1.8x — below the break-even point. You may want to review what's different there."*
+
+*"22 patients last month have no recorded source. Based on when they booked, what service they came in for, and how far they live from the office, NexoBI estimates 11 likely came from Google organic search, 7 from Google Business Profile, and 4 from referrals — but these are estimates, not confirmed."*
+
+The owner didn't run a report. They didn't call the agency. They just asked: *"How did my marketing do last month?"* — and got that answer in 8 seconds.
+
+---
+
+### 21.4 The $800–$1,500 Monthly Retainer — How It Makes Sense
+
+The reason the retainer price works at this level is that NexoBI is not a custom software project. It runs on Databricks — a platform the practice (or agency) is already subscribing to, and the NexoBI app lives inside that environment. The infrastructure cost is shared, and the platform is pre-built.
+
+Here is how the tiers would likely break down:
+
+---
+
+**Starter — $800/month**
+*Best for: Single-location practices spending $3,000–$8,000/month on ads*
+
+What's included:
+- Connect Google Ads → practice management system (EHR) → one dashboard
+- See: leads, bookings, show rate, production revenue, cost per attended patient — all in one place
+- AI assistant for basic questions ("How did last month go?" / "Which campaign is working best?")
+- Monthly report generated automatically — no agency needed to interpret it
+- Databricks infrastructure (hosted, managed, no IT team required)
+
+**The ROI math:** If the practice is spending $8,000/month on ads and NexoBI reveals that 30% of that budget is going to a campaign with a negative return, stopping that campaign saves $2,400/month. The tool pays for itself in the first month — and every month after.
+
+---
+
+**Growth — $1,200/month**
+*Best for: Practices or small groups spending $8,000–$25,000/month on ads, or 2–4 locations*
+
+Everything in Starter, plus:
+- Add Facebook/Meta Ads data
+- Add phone call tracking (every call connected to its marketing source)
+- Add organic search attribution (Google search patients identified and counted, not just ignored)
+- Multi-location comparison view
+- AI assistant with deeper questions ("Which location has the best show rate by source?" / "Are my Meta leads converting worse than my Google leads?")
+- Weekly automated performance alerts
+
+**The ROI math:** At this spend level, identifying one underperforming campaign or one high-performing channel to double-down on is worth $3,000–$8,000/month in recovered or improved spend. A $1,200 retainer against that upside is an obvious decision.
+
+---
+
+**Full Platform — $1,500/month**
+*Best for: DSOs or groups with 5+ locations, or practices where organic is a major channel*
+
+Everything in Growth, plus:
+- Probabilistic attribution — the 20–30% of patients with no recorded source get a statistically estimated source attached, with a confidence score
+- Proactive daily alerts ("Your Google Ads ROAS dropped 22% vs. last week — here's what changed")
+- Cross-location performance benchmarking ("Location 1 is in the top 20% for show rate — here's what they're doing differently")
+- AI assistant for complex questions across all locations and all time periods
+- Priority support and quarterly strategy review
+
+**The ROI math:** For a 5-location DSO spending $40,000/month on marketing, recovering even 10% of misdirected spend is $4,000/month. NexoBI at $1,500 pays for itself 2.5x on waste reduction alone — before counting the revenue from better decisions.
+
+---
+
+### 21.5 You Don't Need All Five Pieces to Start — Here Is the Minimum That Works
+
+The five domains NexoBI combines are:
+1. Healthcare knowledge (understanding the patient funnel and EHR)
+2. Marketing attribution (connecting ads to patients)
+3. Data storage and organization (Databricks)
+4. AI and smart estimation (the AI assistant and probabilistic attribution)
+5. Proactive intelligence (daily alerts that find problems before you do)
+
+**The honest truth: you don't need all five from day one.**
+
+The combination that creates the most immediate value — and the clearest reason for a practice to pay $800–$1,500/month — is just the first three:
+
+> **Healthcare knowledge + Marketing attribution + Databricks**
+
+That alone — connecting Google Ads to EHR production data and showing actual patient revenue by source — is something no other affordable tool does. That is already the product. That is already the sale.
+
+Domains 4 and 5 (AI assistant and probabilistic attribution) make the product dramatically better. But they are the upgrade path, not the prerequisite.
+
+Here is how a realistic build sequence looks:
+
+---
+
+**Phase 1 — The Core Product (Month 1–2)**
+*Domains: Healthcare knowledge + Marketing attribution + Databricks*
+
+- Connect Google Ads and one EHR (start with Dentrix or athenahealth — the two most common)
+- Sync data daily into Databricks
+- Build the core dashboard: spend, leads, bookings, show rate, production, ROAS
+- Sell this at $800/month
+
+This version alone answers: *"Did my marketing pay off?"* — which no current affordable tool can do.
+
+---
+
+**Phase 2 — Add the AI Layer (Month 3–4)**
+*Add: AI/ML — the AI assistant*
+
+- Add the AI assistant (Databricks already supports this — it's a built-in feature of the platform)
+- Practice owners can now ask questions in plain English instead of reading a dashboard
+- Sell Phase 2 as the $1,200 tier
+
+This version answers any question the practice owner has, on demand.
+
+---
+
+**Phase 3 — Add Intelligence and Estimation (Month 5–6)**
+*Add: Proactive intelligence + Probabilistic attribution*
+
+- Add daily automated alerts (ROAS dropped, show rate warning, organic rank drop)
+- Add the probabilistic estimation for unattributed patients (walk-ins, referrals with no source)
+- Sell Phase 3 as the $1,500 tier
+
+This version doesn't wait for the practice to ask — it finds the problems and surfaces them every morning.
+
+---
+
+### 21.6 The Story NexoBI Tells in a Demo
+
+When a practice owner sits down to see NexoBI for the first time, the demo doesn't start with technology. It starts with a question:
+
+> *"Can you tell me right now, without calling your agency or opening a spreadsheet — what was the return on your marketing spend last month?"*
+
+Almost every practice owner says no.
+
+Then NexoBI opens. And in 15 seconds, the number is on the screen: production revenue, by channel, by location, for any time period they want. The AI assistant explains it in plain English. The comparison to the prior month is automatic. The underperforming location is highlighted.
+
+The sale isn't about features. It's about replacing a feeling — the feeling of flying blind with $8,000 of their money every month — with clarity.
+
+At $800–$1,500/month, NexoBI costs less than a single slow month of misdirected ad spend. For a practice spending $5,000–$20,000 a month on marketing, the question isn't whether NexoBI is worth the price. The question is: *"How much have we already lost by not having this?"*
+
+---
+
+### 21.7 The Single Sentence That Wins the Room
+
+If NexoBI needs to be described in one sentence — for a pitch, a cold email, a conference introduction — this is it:
+
+> **"NexoBI is the first platform that connects what you spend on marketing to what patients actually pay — and tells you, in plain English, what to do about it."**
+
+Everything else in this document is the proof behind that sentence.
+
+---
+
 *NexoBI · Integration Scenarios · February 2026*
-*Last updated: February 27, 2026 — Section 20 added (Competitive Landscape — Who Is Doing This? Where Does NexoBI Fit?)*
+*Last updated: February 27, 2026 — Section 21 added (How NexoBI Wins — The Full Story in Plain English)*
