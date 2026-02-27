@@ -3,7 +3,7 @@
 
 > **Purpose:** Full reference for NexoBI integration scenarios — attribution architecture, patient journey examples, platform connections, organic search, probabilistic attribution, and AI Agent design. Use for sales demos, technical discovery, and product roadmap.
 >
-> **Last updated:** February 27, 2026 · 19 sections · ~5,400 lines
+> **Last updated:** February 27, 2026 · 20 sections · ~6,200 lines
 
 ---
 
@@ -38,6 +38,9 @@
 18. [Real Problems. Real Revenue. The NexoBI Case.](#18-real-problems-real-revenue-the-nexobi-case-for-ai-driven-attribution)
 19. [Probabilistic Attribution — Walk-ins & Referrals](#19-probabilistic-attribution--filling-the-walk-in-and-referral-gap)
 
+### Part VI — Market Position & Competitive Landscape
+20. [Who Is Doing This? Where Does NexoBI Fit?](#20-who-is-doing-this-where-does-nexobi-fit--competitive-landscape)
+
 ---
 
 ### Quick Reference — Find What You Need
@@ -55,6 +58,8 @@
 | See real client problems + solutions | §18 |
 | Fill walk-in and referral attribution gaps | §19 |
 | Build the AI Agent architecture | §18 (AI Agent section) |
+| Understand the competitive landscape | §20 |
+| Find NexoBI's market gaps and positioning | §20.3, §20.4 |
 
 ---
 
