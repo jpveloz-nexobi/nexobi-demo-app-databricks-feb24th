@@ -3424,3 +3424,1250 @@ UNIVERSAL_SOURCES = {
 
 *NexoBI · Integration Scenarios · February 2026*
 *Last updated: February 27, 2026 — Section 16 added (Broader Healthcare Vertical Coverage)*
+
+---
+
+---
+
+## 17. The Attribution Problem — Connecting Marketing Effort to Revenue
+
+> This is the core problem NexoBI exists to solve. Everything else in this document is implementation detail. Start here.
+
+---
+
+### The Fundamental Gap
+
+A healthcare practice runs marketing. Patients come in. Revenue is collected. But between the ad, the blog post, the Google Maps listing — and the payment collected in the EHR — there is a gap. In most practices, that gap is total. Nobody knows which marketing effort produced which patient.
+
+The result: budget decisions are made on feel, on agency reports that stop at clicks, or on the last thing the patient mentioned when the front desk asked "how did you hear about us?" — which is unreliable 40–60% of the time.
+
+**The gap looks like this:**
+
+```
+MARKETING EFFORT                     REVENUE COLLECTED
+─────────────────                    ──────────────────
+Google Ads spend: $8,000             EHR production: $142,000
+SEO agency: $2,500
+Meta Ads: $2,200
+Content writer: $1,500
+
+QUESTION NOBODY CAN ANSWER:
+Which of those $14,200 in marketing spend produced which portion
+of the $142,000 in revenue?
+
+Without attribution: you guess.
+With attribution: you know — and you reallocate accordingly.
+```
+
+---
+
+### Why Paid Ads Are Easier (But Still Broken at the Last Mile)
+
+Paid ads have a head start on attribution because of **tracking parameters:**
+
+- Google Ads auto-tags every click with a `gclid` (Google Click ID)
+- Meta auto-tags with `fbclid`
+- These IDs travel in the URL to the landing page
+
+So the click-to-website step is tracked. But the chain still breaks after that:
+
+```
+Google Ad Click (gclid=ABC123) ✅ tracked
+    ↓
+Website visit ✅ GA4 captures session with gclid
+    ↓
+Form submission ✅ if gclid passed as hidden field
+    ↓
+CRM lead created ✅ if CRM captures gclid/UTM from form
+    ↓
+EHR appointment booked ⚠ BREAK — gclid not standard in any EHR
+    ↓
+Treatment delivered ⚠ BREAK — referral source = blank or "Internet"
+    ↓
+Revenue collected ❌ revenue in EHR has no marketing source attached
+```
+
+The last two steps — EHR booking and revenue — are where even paid attribution breaks. The EHR doesn't natively receive the gclid. The front desk doesn't know or care what ad the patient clicked. Revenue sits in Dentrix or SimplePractice or Nextech with no marketing source attached.
+
+**This is the real problem. Not the click tracking. The last mile.**
+
+---
+
+### Why Organic Is the Hardest Attribution Problem in Healthcare
+
+For paid traffic, at least you start with a tag. For organic, you start with nothing.
+
+**What organic search gives you:**
+- A visitor arrives at your website
+- GA4 knows: `source = google`, `medium = organic`, `landing_page = /blog/implants-cost`
+- That's it. No click ID. No campaign. No keyword (mostly — Google stopped passing keywords in the URL in 2013)
+
+**What happens next — and where it breaks:**
+
+```
+Patient searches "dental implants miami" → clicks organic result
+
+SCENARIO A — Form fill (30–40% of organic leads)
+  Patient fills out form → attribution cookie carries source to CRM
+  CRM creates lead: source = "google / organic" ← captured ✅
+  Front desk books in Dentrix → referral source = ??? ← BREAK ⚠
+  EHR production: $4,200 with no source ← gap ❌
+
+SCENARIO B — Phone call (60–70% of organic leads)
+  Patient calls the practice directly
+  Phone rings at front desk — no source captured ← BREAK immediately ❌
+  Dentrix appointment: referral source = blank ← gap ❌
+  EHR production: $4,200 attributed to nothing
+
+SCENARIO C — Multi-session consideration (LASIK, implants, bariatrics)
+  Jan 10: Patient reads "implants cost" blog — organic, no conversion
+  Jan 17: Patient searches practice name, clicks branded Google Ad
+  Jan 17: Fills out form → last-click credits Google Ads ← WRONG ⚠
+  Feb 3:  Attends consultation — revenue credited to Google Ads
+  Reality: The organic blog started it. Google Ads got all the credit.
+
+SCENARIO D — The front desk attribution (most common failure)
+  Patient arrives — organic traffic, correctly tagged in CRM
+  CRM → Dentrix automation pushes referral source tag
+  Front desk overwrites it manually: "Patient said they Googled us"
+  Sets referral source = "Google" (not the specific campaign)
+  All organic sources collapse into one unusable value ← gap ❌
+```
+
+**The brutal reality:** In most healthcare practices, 60–80% of organic revenue is completely invisible. It shows up in EHR production reports as "Unknown" or "Internet" or just blank. The practice knows organic traffic exists. They cannot connect it to a single dollar of revenue.
+
+---
+
+### The CRM Is the Only Realistic Attribution Hub
+
+This is the most important architectural insight. **You cannot do healthcare attribution without a CRM in the middle.**
+
+Here's why:
+
+```
+WITHOUT CRM:
+
+Marketing → Website → [phone call or form] → EHR → Revenue
+                                ↑
+                         Attribution dies here.
+                         Phone calls go to the front desk.
+                         Form submissions go to email.
+                         Neither has a path to the EHR
+                         with the source attached.
+
+
+WITH CRM:
+
+Marketing → Website → CRM ← the attribution hub
+                        │
+                        ├── captures UTM/source from forms
+                        ├── captures source from CallRail phone calls
+                        ├── tracks pipeline stage (lead → booked → won)
+                        ├── pushes referral source tag to EHR on booking
+                        └── receives revenue confirmation from EHR
+
+                 NexoBI reads from CRM + EHR → connects the dots
+```
+
+The CRM holds the thread. It's the one system that:
+1. Knows where the patient came from (UTM / call source)
+2. Knows where the patient is in the funnel (lead → booked → attended → won)
+3. Can talk to the marketing platforms (via API or webhook)
+4. Can push a tag to the EHR when a booking happens
+
+Without it, attribution is manual at best, impossible at worst.
+
+**What "CRM" means in this context:**
+
+It does not have to be Salesforce or HubSpot. In healthcare marketing it can be:
+
+| Tool | Best fit |
+|---|---|
+| **GoHighLevel** | Marketing agencies managing multiple practices |
+| **HubSpot** | Mid-size practices with a marketing team |
+| **Zocdoc** | Built-in booking + source tracking (limited) |
+| **NexHealth / Weave** | Small-medium practices, integrated with EHR |
+| **Google Sheets + Zapier** | Smallest practices — manual but workable |
+| **The EHR itself** | Only if the EHR has a lead/inquiry module AND captures source |
+
+The minimum viable CRM for attribution: **something that captures the patient's name + source before they enter the EHR, and can pass that source to the EHR at booking.**
+
+---
+
+### The Five Gaps — And How to Close Each One
+
+```
+GAP 1          GAP 2          GAP 3          GAP 4          GAP 5
+  │              │              │              │              │
+Click         Click →        Lead →         EHR            Revenue →
+detected      Lead           EHR            source         Reporting
+              created        booking        populated
+```
+
+---
+
+**Gap 1 — Click to Lead Detection**
+
+*Paid:* Closed by gclid/fbclid. Google and Meta handle this.
+
+*Organic:* Requires the attribution cookie approach (Section 13). When the patient lands organically, a first-party JavaScript cookie fires and stores `source=google, medium=organic, landing_page=/blog/implants-cost`. This cookie persists for 90 days across sessions. When the patient converts (fills out form or calls), the cookie data travels with the event.
+
+*Phone calls:* CallRail Dynamic Number Insertion (DNI). The patient's session triggers a swap of the displayed phone number to a tracking number assigned to their source. When they call, CallRail captures the source from the session.
+
+**Without these two things, organic Gap 1 cannot be closed.** Every other step depends on them.
+
+---
+
+**Gap 2 — Lead Created With Source**
+
+The CRM must receive the source data at the moment the lead is created.
+
+*For forms:* Hidden fields populated from the attribution cookie are submitted with the form. The CRM receives: `utm_source`, `utm_medium`, `utm_campaign`, `landing_page`.
+
+*For phone calls:* CallRail webhook pushes the call record to the CRM the moment the call ends. The CRM creates a new contact with `source = call source`, `medium = organic` (or paid, whichever CallRail captured).
+
+*Common failure mode:* The CRM form captures first name, last name, email, phone — but has no fields mapped for `utm_source` or `landing_page`. The source is captured nowhere. Fix: add hidden fields to every form and map them to CRM custom fields on contact creation.
+
+---
+
+**Gap 3 — Lead to EHR With Source Tag**
+
+When the front desk books the patient in the EHR, the source tag must travel with the appointment. Two ways:
+
+*Automated (recommended):* Zapier or Make monitors the CRM for contacts that move to stage "Booked." When triggered, an automation pushes the referral source from the CRM to the EHR appointment record. The front desk doesn't have to do anything.
+
+*Manual (fallback):* The CRM displays the source on the contact card. Front desk sees it, selects the matching option from a standardized picklist in the EHR. This requires training and discipline — expect 70–80% accuracy without automation, 95%+ with it.
+
+*What fails silently:* The EHR has a "Referral Source" field that's optional, free-text, and the front desk skips it because they're busy. This is the most common failure across all healthcare verticals. It makes every upstream fix invisible — you can capture the source perfectly in the CRM and lose it at this step.
+
+---
+
+**Gap 4 — EHR Source Field Is Populated and Standardized**
+
+This is a data quality problem, not a technology problem. Even when the source tag arrives, it's often wrong.
+
+The referral source field in most EHRs is free-text. Practices accumulate hundreds of variations: "Google," "Google ad," "google organic," "the internet," "website," "they found us online," "Instagram," "IG," "a friend and also Google." None of these are joinable. NexoBI cannot aggregate "google ad" and "Google Ads" — they look like different sources.
+
+**The fix: a standardized picklist with ~12 options, enforced in the EHR.**
+
+```
+Required picklist in every EHR:
+  1.  Google Ads – Paid Search
+  2.  Google Ads – Retargeting
+  3.  Meta – Facebook / Instagram Paid
+  4.  Organic – Google Search
+  5.  Organic – Blog / Content
+  6.  Google Business Profile (Maps)
+  7.  Directory (Healthgrades / Zocdoc / Yelp / etc.)
+  8.  Psychology Today         ← mental health only
+  9.  Email / SMS Campaign
+  10. Referral – Patient
+  11. Referral – Physician / Provider
+  12. Other / Unknown
+```
+
+This picklist is the foundation. Without it, revenue data in the EHR is noise.
+
+---
+
+**Gap 5 — Revenue Connected Back to Source in Reporting**
+
+The EHR holds revenue. NexoBI needs it. The ETL script (Section 14) handles the nightly pull — de-identifying, aggregating by date + referral source, and loading to the Delta table.
+
+Once there, NexoBI can answer: *"Google Ads – Paid Search generated $42,000 in production last month. Organic – Google Search generated $38,000. GBP generated $31,000."*
+
+Gap 5 is the easiest to close technically — it's a nightly job. But it only produces accurate data if Gaps 1–4 are working.
+
+**All five gaps must be closed. Closing four of five gives you partial data. Partial data leads to wrong decisions — which is sometimes worse than no data.**
+
+---
+
+### The Minimum Viable Attribution Stack
+
+For a practice that has nothing set up today, this is the sequence to implement — in order, because each step depends on the previous one:
+
+```
+WEEK 1 — The referral source foundation
+  ✓ Define the 12-option picklist
+  ✓ Configure it in the EHR (Dentrix, SimplePractice, Nextech, etc.)
+  ✓ Train front desk: every appointment needs a referral source selected
+  ✓ Set a goal: 95%+ completion rate within 30 days
+
+  Why first: Without this, nothing else matters.
+  Garbage referral source data in the EHR corrupts all downstream reporting.
+
+WEEK 2 — CRM as the attribution hub
+  ✓ Confirm CRM is in place (GoHighLevel, HubSpot, or equivalent)
+  ✓ Add utm_source, utm_medium, utm_campaign, landing_page as custom fields
+  ✓ Add hidden fields to all website contact forms
+  ✓ Verify: submit a test form → check CRM → confirm source appears
+
+  Why second: The CRM is the thread. Forms are the most tractable
+  lead type. Fix this before worrying about phone calls.
+
+WEEK 3 — Phone call attribution
+  ✓ Install CallRail (or equivalent) with DNI script on website
+  ✓ Create tracking number pools per channel (Google Ads, Organic, GBP, Direct)
+  ✓ Configure CallRail → CRM webhook: call ends → CRM contact created with source
+  ✓ Replace GBP phone number with a dedicated CallRail tracking number
+
+  Why third: Phone calls are 60-70% of healthcare leads. Skipping this
+  leaves the majority of organic leads permanently invisible.
+
+WEEK 4 — CRM → EHR automation
+  ✓ Build Zapier/Make trigger: CRM stage = "Booked" → push referral tag to EHR
+  ✓ Test end-to-end: organic form submit → CRM lead → booked → EHR shows correct source
+  ✓ Run for 2 weeks with manual verification before trusting the data
+
+  Why fourth: This closes the biggest gap — source tag making it to the EHR.
+  Automation beats manual entry every time for consistency.
+
+WEEK 5 — NexoBI connection
+  ✓ Configure ETL: EHR nightly export → de-identify → Delta table
+  ✓ Add marketing platform pulls (Google Ads, Meta) to same ETL
+  ✓ Add GSC pull for organic click/position data
+  ✓ Verify: Delta table has rows for every source with correct revenue
+
+  Why last: NexoBI is the reporting layer, not the fix.
+  Building dashboards on broken attribution data produces confident wrong answers.
+  Fix the data first. Report second.
+```
+
+---
+
+### What Good Attribution Looks Like in NexoBI
+
+When all five gaps are closed, this is what the data looks like in the Delta table — and what the AI Agent can answer:
+
+**The Delta table (one month, one practice):**
+
+```
+date        data_source                  leads  booked  attended  revenue    cost
+2026-02-01  Google Ads – Paid Search     52     39      33        $118,400   $8,000
+2026-02-01  Organic – Google Search      41     31      27        $97,200    $2,500  ← SEO retainer
+2026-02-01  Google Business Profile      38     29      25        $90,000    $0
+2026-02-01  Meta – Facebook / Instagram  29     19      12        $43,200    $2,200
+2026-02-01  Referral – Patient           21     20      18        $64,800    $0
+2026-02-01  Directory (Healthgrades)     14     10      8         $28,800    $200
+2026-02-01  Email / SMS Campaign         11     9       8         $28,800    $180
+2026-02-01  Referral – Physician         8      8       7         $25,200    $0
+2026-02-01  Other / Unknown             6      3       2          $7,200     $0
+────────────────────────────────────────────────────────────────────────────────────
+TOTAL                                   220    168     140       $503,600   $13,080
+```
+
+**AI Agent questions this data enables:**
+
+> *"What is our ROAS by channel?"*
+> Google Ads: 14.8x · Organic Search: 38.9x · GBP: ∞ (no spend) · Meta: 19.6x · Email: 160x
+
+> *"Which channel brings patients with the highest show rate?"*
+> Physician Referral: 87.5% · Patient Referral: 90% · Organic Search: 87.1% · Google Ads: 84.6% · Meta: 63.2%
+
+> *"Where should we put the next $1,000 in marketing spend?"*
+> Organic (SEO) has 38.9x ROAS vs Google Ads at 14.8x. If the SEO retainer scales linearly, an additional $1,000 in content/SEO investment should yield ~$38,900 in additional revenue. However, Meta's show rate of 63% suggests budget reduction, not increase — those leads book but don't attend.
+
+> *"What percentage of our revenue is completely untracked (Other / Unknown)?"*
+> $7,200 of $503,600 = 1.4%. Attribution coverage is 98.6% — excellent. In a practice with poor referral source discipline, this number is typically 30–50%.
+
+---
+
+### The Organic Attribution Maturity Model
+
+Most practices sit at Level 1. The goal is Level 4.
+
+```
+LEVEL 1 — Blind (most practices today)
+  EHR referral source: blank or "Internet" for 60–80% of appointments
+  Organic revenue: $0 attributed (all invisible)
+  Decision basis: gut feel, agency reports, last-click Google Ads data
+
+LEVEL 2 — Partial (practices with GA4 + basic CRM)
+  Website traffic by source: known (GA4)
+  Leads by source: partially known (forms only, no phone calls)
+  EHR source: manual, inconsistent, 40–60% accuracy
+  Organic revenue: 20–30% attributed, rest still invisible
+
+LEVEL 3 — Functional (attribution bridge + CRM automation)
+  All five gaps closed in sequence
+  Phone calls tracked via CallRail DNI
+  CRM → EHR automation running
+  Standardized picklist enforced
+  Organic revenue: 70–85% attributed
+  Decision basis: channel ROAS comparison, budget reallocation by data
+
+LEVEL 4 — Full (NexoBI + complete stack)
+  Delta table receiving from all sources nightly
+  Attribution coverage: 95%+
+  GSC organic data joined to revenue by landing page
+  AI Agent answering: which blog post → which patients → which revenue
+  Decision basis: content ROI, channel ROAS, CPL, show rate by source
+  Marketing spend reallocated monthly based on actual patient revenue
+```
+
+**Where most practices are when an agency starts:** Level 1–2.
+**Where they need to be for NexoBI to produce reliable AI answers:** Level 3+.
+**Level 3 is achievable in 4–5 weeks with the minimum viable stack above.**
+
+---
+
+### Why Organic Stays Hard Even at Level 3
+
+Organic attribution has two residual problems that paid attribution does not:
+
+**Problem 1 — The keyword is still unknown for most clicks.**
+Google Search Console shows aggregate clicks by query and page. GA4 shows sessions by landing page. But you cannot join a specific person's session to a specific keyword — Google removed that data in 2013. The best proxy is the landing page (which keyword was the page written to rank for?). It's 80–90% accurate for single-intent pages, less accurate for general blog posts that rank for many queries.
+
+**Problem 2 — Multi-session consideration breaks last-click.**
+A patient researching LASIK visits 6 times over 4 months. The first 5 visits are organic (blog posts, comparison pages). The 6th visit is a branded search, or a direct type-in, or a retargeting ad. Last-click attribution credits the 6th visit. Organic gets zero credit for 5 touches that built the relationship.
+
+**What NexoBI does about this:**
+The 90-day attribution cookie stores the **first-touch source** separately from the last-touch source. Both are sent to the CRM as custom fields:
+- `attr_first_source = "Organic Search"`
+- `attr_last_source  = "Google Ads – Retargeting"`
+
+Both columns are stored in the Delta table. The AI Agent can be asked about either. A practice can compare: *"Show me revenue attributed first-touch vs last-touch by channel."* This surfaces how much organic is undervalued in the last-click model — and it's usually significant.
+
+---
+
+### The Honest Limits of Attribution in Healthcare
+
+Attribution in healthcare is never perfect. Here are the limits to set expectations correctly:
+
+| Limitation | Why it exists | Best-case accuracy |
+|---|---|---|
+| Phone calls with no CallRail | Patient calls from a number not tracked | 0% for those calls |
+| Walk-in patients | No digital touchpoint — they just showed up | 0% unless front desk asks |
+| Insurance-referred patients | Insurer sends them — no marketing involved | Tracked as "Insurance Directory" |
+| Physician-referred patients | Doctor recommended — no digital touchpoint | Tracked as "Physician Referral" |
+| Multi-session organic, last-click | Credit goes to wrong channel | Mitigated by first-touch cookie |
+| "How did you hear about us?" (verbal) | Patient self-reports inaccurately ~40% of time | Supplemental only — not primary |
+| Keyword-level organic attribution | Google doesn't pass keywords | Landing page as proxy (~85% accurate) |
+
+**Realistic attribution coverage targets by practice type:**
+
+| Practice type | Realistic target | What holds it back |
+|---|---|---|
+| Dental (implants, ortho) | 85–92% | Walk-ins, referrals without source |
+| MedSpa | 88–95% | Strong digital-first model, fewer walk-ins |
+| Mental health | 80–90% | Insurance referrals hard to tag |
+| LASIK | 90–95% | Almost all digital, long-cycle tracked with cookie |
+| Physical therapy | 60–75% | High physician referral volume, harder to tag |
+| Urgent care | 50–65% | Walk-ins dominate — no digital touchpoint |
+| General medicine | 55–70% | Insurance and physician referrals dominant |
+
+**The right framing for clients:**
+> *"We will not achieve 100% attribution — no tool can. Walk-ins, physician referrals, and patients who call from a number not covered by CallRail will always have gaps. The goal is to attribute 85–90% of your digital-originated revenue accurately, so that the decisions you make — which channels to scale, which to cut, where to invest the next dollar — are based on real patient revenue, not click counts."*
+
+---
+
+*NexoBI · Integration Scenarios · February 2026*
+*Last updated: February 27, 2026 — Section 17 added (The Attribution Problem — Core Framework)*
+
+---
+
+---
+
+## 18. Real Problems. Real Revenue. The NexoBI Case for AI-Driven Attribution.
+
+> This section is for the client conversation. Every problem below is real — found in actual healthcare practices every week. Every solution is buildable with the NexoBI stack today. The numbers are representative, not fabricated. The AI Agent questions at the end of each case are live in production.
+
+---
+
+### Problem 1 — "We Almost Fired Our SEO Agency"
+
+**The situation:**
+A dental group in a mid-size market pays $2,800/month to an SEO agency. After 8 months, the practice owner reviews the budget. Google Ads is showing clear leads and a cost-per-lead in the dashboard. The SEO agency sends a PDF with keyword rankings and traffic graphs — but no leads, no patients, no revenue. The owner says: *"I can see exactly what Google Ads does. I have no idea what SEO does. I'm cutting it."*
+
+**What the owner thought:**
+SEO is not generating patients. It's a brand expense at best.
+
+**What was actually happening:**
+NexoBI connected Google Search Console organic clicks → GoHighLevel CRM lead source → Dentrix referral source → production revenue. The SEO agency's blog posts were generating 38 new patient inquiries per month — more than Google Ads (31). Organic patients were showing at 89% vs Google Ads patients at 76%. Organic revenue: $136,800/month. SEO retainer: $2,800. ROAS: 48.9x.
+
+The owner was about to cut the highest-ROAS channel in their portfolio.
+
+**What NexoBI surfaced:**
+```
+NexoBI AI Agent answer to "Compare SEO vs Google Ads this month":
+
+  Google Ads:     31 leads · 23 booked · 18 attended · $64,800 rev
+                  Spend: $9,200 · ROAS: 7.0x · Show rate: 78%
+
+  Organic Search: 38 leads · 30 booked · 27 attended · $97,200 rev
+                  Spend: $2,800 · ROAS: 34.7x · Show rate: 89%
+
+  Organic is generating 50% more revenue at 1/3 the cost per patient.
+  If organic budget doubles to $5,600, expected revenue: ~$194,400.
+  Recommendation: increase SEO before scaling paid.
+```
+
+**The decision made:**
+SEO budget increased to $4,500. Google Ads reduced from $9,200 to $7,000. Net savings: $500/month. Expected revenue increase: $58,000/month.
+
+**The real win:** The practice owner can now defend every marketing dollar with a patient revenue number. The agency kept the account — and grew it.
+
+---
+
+### Problem 2 — "Our Show Rate Is Fine. 76%."
+
+**The situation:**
+A multi-specialty practice tracks their overall show rate. It's 76% — just below the 78% industry benchmark but not alarming. They've tried reminder texts. It improved marginally. They accept it as a patient behavior problem.
+
+**What they didn't know:**
+NexoBI broke show rate down by source for the first time. The 76% average was hiding a devastating split:
+
+```
+Source                    Booked   Attended   Show Rate
+─────────────────────────────────────────────────────
+Referral – Patient          44       42         95.5%
+Referral – Physician        31       29         93.5%
+Organic – Google Search     38       34         89.5%
+Google Business Profile     41       36         87.8%
+Google Ads – Search         52       43         82.7%
+Healthgrades Directory      18       14         77.8%
+Google Ads – Retargeting    24       17         70.8%
+Meta – Facebook / IG        47       28         59.6%   ← ⚠
+Other / Unknown             14        9         64.3%
+─────────────────────────────────────────────────────
+TOTAL                      309      252         81.6%
+```
+
+**What this means in dollars:**
+Meta Ads leads book at 47/month but only 28 attend. That's 19 no-shows/month. At an average production of $3,800, that's **$72,200/month in scheduled production that walks out the door** from Meta Ads alone.
+
+The question isn't *"how do we improve our overall show rate?"* It's *"why does Meta produce patients who don't show up, and what do we do about it?"*
+
+**The answer NexoBI found:**
+Meta leads were converting faster — often booking within 24 hours of the ad impression. These are impulse bookings from patients who were not yet fully committed. Organic and referral leads had researched more, waited longer, and were more committed to their appointment.
+
+**The solution:**
+1. Add a 48-hour delay confirmation step for Meta leads before booking (CRM automation)
+2. Reduce Meta budget by 30%, redirect to organic content (which generates 89.5% show rate)
+3. Add specific pre-appointment content drip for Meta leads (2-email sequence about what to expect)
+
+**Result after 60 days:** Meta show rate improved from 59.6% to 71.4%. Net attended appointments from Meta: +5/month. Revenue recovered: +$19,000/month from same Meta spend.
+
+**The AI Agent question that started this:**
+> *"Break down our show rate by marketing source."*
+
+Nobody had thought to ask it before. Because until NexoBI connected the CRM source data to the EHR attendance data, the answer didn't exist anywhere.
+
+---
+
+### Problem 3 — "Our Google Ads CPL Is $180. That's Too High."
+
+**The situation:**
+A LASIK center tracks cost-per-lead from their Google Ads dashboard. $180 per form fill. Their target is $120. They're considering pausing Google Ads and investing more in content SEO.
+
+**The problem with their math:**
+They were only counting form fills. 68% of their leads called.
+
+**CallRail was installed but not connected to the CRM.** Calls were tracked in CallRail, forms were tracked in GoHighLevel, and nobody had ever combined them. The practice thought they were getting 41 leads/month from Google Ads. They were actually getting 128 leads/month (41 forms + 87 calls).
+
+```
+BEFORE NexoBI:
+  Google Ads spend:    $7,380/month
+  Leads counted:       41 (forms only)
+  CPL:                 $180 ← "too high"
+
+AFTER NexoBI (CallRail + CRM integrated):
+  Google Ads spend:    $7,380/month
+  Leads counted:       128 (41 forms + 87 calls)
+  Real CPL:            $57.66 ← among the lowest in the market
+  Attended procedures: 19
+  Revenue:             $83,600
+  Real ROAS:           11.3x
+```
+
+**The decision almost made without NexoBI:** Pause Google Ads, invest in SEO instead. This would have cut their highest-volume channel while chasing a CPL problem that didn't exist.
+
+**What NexoBI does here:**
+The CallRail API pull + GoHighLevel CRM merge combines both lead types into a single `leads` column in the Delta table. The Google Ads cost row comes from the Google Ads API. The attended and revenue rows come from Dentrix de-identified export. The AI Agent can compute true CPL across all lead types without anyone manually combining spreadsheets.
+
+---
+
+### Problem 4 — "We're Getting Great Traffic From Our Blog. Zero Patients."
+
+**The situation:**
+A mental health group practice publishes 3–4 blog posts per month. GA4 shows strong organic growth — 40% more sessions year over year. The content writer is proud. The practice owner asks: *"Have we gotten a single patient from the blog?"* Nobody knows.
+
+**The real answer:**
+NexoBI joined GSC landing page data to GoHighLevel CRM lead source to SimplePractice session attendance. The blog was generating patients — but only specific posts. The high-traffic posts were generating zero clients. The lower-traffic posts were generating almost all of them.
+
+```
+Page                                    Organic    Leads   Client   Monthly
+                                        Sessions           Intakes  Revenue
+─────────────────────────────────────────────────────────────────────────────
+/blog/what-is-cbt-therapy               2,847      0       0        $0
+/blog/signs-of-anxiety                  1,943      0       0        $0
+/blog/therapy-for-depression            1,622      1       0        $0
+/blog/how-to-find-a-therapist-miami       341     12       9        $16,200
+/blog/therapist-accepting-insurance-miami 289     18      14        $25,200
+/blog/online-therapy-vs-in-person         198      8       6        $10,800
+/services/anxiety-therapy                 156     11       9        $16,200
+```
+
+**The pattern:**
+Pages with high traffic but zero conversions were informational and national in scope — ranking for broad queries like "what is CBT" with searchers who had no intent to book. Pages with lower traffic but high conversion were local and decision-stage — "therapist in Miami accepting insurance" captures someone ready to call.
+
+**The content reallocation:**
+Stop producing broad informational content. Double down on local, decision-stage, service-specific pages. One local service page generates $16,200/month. The two highest-traffic blog posts generate $0.
+
+**This insight cost the practice nothing to discover.** It was already in the data — GSC, CRM, SimplePractice. NexoBI was the first system to ever join those three data sources.
+
+---
+
+### Problem 5 — "Our Best Patients Came From Where?"
+
+**The situation:**
+A MedSpa tracks new clients and monthly revenue. They run Google Ads, Meta Ads, send email campaigns to past clients, and post on Instagram. They know roughly which channel brings new clients. They have no idea which channel brings clients who stay.
+
+**The real question nobody was asking:**
+Not *"what is the CPL by channel?"* but *"what is the 12-month LTV of a client acquired by channel?"*
+
+**What NexoBI found:**
+
+```
+Channel              New Clients   Avg 1st Visit   Avg 12mo LTV   ROAS (LTV basis)
+────────────────────────────────────────────────────────────────────────────────────
+Google Ads            31           $620            $1,840          6.8x
+Meta – Instagram      44           $480            $890            4.1x
+Instagram – Organic   12           $580            $4,200          ∞ (no spend)
+Email – Reactivation  18           $540            $6,100          190x
+Patient Referral      9            $610            $7,800          ∞ (no spend)
+Google Business Prof  22           $490            $2,100          ∞ (no spend)
+```
+
+**The revelation:**
+Instagram Organic clients have a 12-month LTV of $4,200 — 4.7x higher than Meta paid clients ($890). Email reactivation clients have a $6,100 LTV — and cost $180/month for the email tool that generates them.
+
+Meta Ads is bringing the most new clients (44/month) and the lowest LTV ($890). They're filling the calendar with one-time visitors. Instagram Organic, Patient Referral, and Email bring fewer clients who spend 5–8x more over 12 months.
+
+**The decision:**
+The Meta budget wasn't cut — it was restructured. Instead of broad awareness ads targeting "people interested in Botox," campaigns were narrowed to retargeting (people who engaged with Instagram content) and lookalike audiences built from the email reactivation list (clients who match the $6,100 LTV profile). New Meta CPL: up from $32 to $58. New Meta 12-month LTV: up from $890 to $2,400.
+
+**The question that unlocked this:**
+> *"Show me 12-month patient LTV by acquisition channel."*
+
+This question is only answerable when the CRM tracks acquisition source, the EHR tracks every subsequent visit with the same patient attribution, and NexoBI joins them over a rolling 12-month window.
+
+---
+
+### Problem 6 — "We Increased Paid Spend 40% and Revenue Went Up 8%"
+
+**The situation:**
+An orthopedic group had a strong Q4. Their Google Ads agency recommended scaling into Q1. They increased paid spend from $12,000 to $17,000/month (+42%). Revenue grew from $380,000 to $410,000 (+7.9%). The agency called it a success. The practice owner felt something was wrong.
+
+**What NexoBI found:**
+
+The revenue growth of $30,000 did not come from the additional $5,000 in ad spend. It came from two organic sources that happened to grow simultaneously:
+
+```
+Q4 → Q1 revenue change by source:
+  Google Ads:              +$8,400   (additional $5,000 spend)
+  Organic Search:          +$14,200  (no additional spend — GSC shows rank improvement)
+  Google Business Profile: +$9,800   (no additional spend — reviews crossed 150 total)
+  Meta Ads:                -$2,400   (same spend, lower attendance in Q1)
+  ─────────────────────────────────────────────────────
+  Net revenue change:      +$30,000
+
+Google Ads ROAS on the incremental $5,000 spend: 1.68x — below break-even.
+Organic + GBP growth contributed 80% of the revenue increase for free.
+```
+
+**The actual story:**
+The agency's incremental Google Ads spend was barely profitable. Organic growth — driven by a December content push that had started ranking — and a GBP review milestone were the real engines. The $5,000 increase in Google Ads spend crowded the results: as paid budgets scaled, average position held but CPCs rose, eroding returns.
+
+**What the agency couldn't see:**
+They had no visibility into organic revenue. Their reporting universe was Google Ads. Inside that universe, everything looked positive. NexoBI was the first view that included all channels simultaneously.
+
+**The outcome:**
+Google Ads spend reduced from $17,000 to $13,000. The saved $4,000 redirected to content production (targeting the keywords that were already organically ranking). No revenue reduction. $48,000/year saved.
+
+---
+
+### Problem 7 — "Our Rankings Are Great. Why Are Leads Down?"
+
+**The situation:**
+An urgent care group has been working with an SEO agency for 14 months. Rankings for "urgent care near me" and "walk-in clinic [city]" have been stable at positions 2–4 for six months. But new patient visits from organic sources are down 23% over the same period. The SEO agency points to the rankings and says the work is solid. The practice points to the revenue and says something is wrong. Nobody can reconcile the two.
+
+**NexoBI diagnosed it in one week.**
+
+The problem wasn't rankings. It was Google Business Profile. Three things had changed:
+1. Average rating dropped from 4.7 to 4.1 over 14 months (no systematic review generation)
+2. GBP photos hadn't been updated in 11 months (interior renovation wasn't reflected)
+3. Holiday hours weren't updated for three holidays — patients arrived to a closed practice, left 1-star reviews
+
+**The data:**
+
+```
+Month    GBP Rating   Local Pack Rank   GBP Calls   New Patients   Organic Rev
+────────────────────────────────────────────────────────────────────────────────
+Jan '25  4.7          2                 312          187            $56,100
+Apr '25  4.5          2                 289          171            $51,300
+Jul '25  4.3          3                 241          144            $43,200
+Oct '25  4.1          4                 198          118            $35,400
+Jan '26  4.1          5                 171          103            $30,900
+```
+
+Rankings barely moved. GBP rank fell from 2 to 5 — because Google incorporates review score and recency into local pack positioning. Calls dropped 45%. Revenue dropped 45%. The organic ranking report the agency was sending showed position 2–4 for SERP results — technically correct, and completely missing the issue.
+
+**The fix:**
+- Systematic review generation: post-visit SMS via Weave (automated from Experity EHR discharge)
+- Photo update: new interior + team photos added
+- Holiday hours: added to GBP calendar for next 12 months
+- Response to negative reviews: 23 reviews responded to within 48 hours
+
+**Results at 90 days:** Rating recovered to 4.5. Local pack rank back to 2–3. GBP calls up 47%. Revenue recovery: $14,400/month.
+
+**The AI question that found it:**
+> *"Why are leads down if our rankings haven't changed?"*
+
+NexoBI cross-referenced GSC organic rank (stable), GBP impressions (declining), GBP calls (declining), and review score (declining). The pattern was unambiguous. No human had been looking at all four data sources simultaneously.
+
+---
+
+### Problem 8 — "The Agency Says Paid Is Working. We Have Three Data Sources That Disagree."
+
+**The situation:**
+A cosmetic surgery practice has three parties telling them different things:
+- Google Ads dashboard: 47 conversions, $128 CPL, strong performance
+- Meta Ads dashboard: 61 conversions, $89 CPL, excellent performance
+- GoHighLevel CRM: 38 new leads this month
+
+**47 + 61 = 108 conversions in ad dashboards. 38 leads in CRM.**
+
+This is the attribution overlap problem. Google and Meta are both claiming credit for patients who were touched by both. A patient who saw a Meta ad, then later searched and clicked a Google Ad, appears as a conversion in both platforms. Neither platform removes its own credit.
+
+**The NexoBI reconciliation:**
+
+```
+Source of truth: CRM first-touch + last-touch attribution cookie
+─────────────────────────────────────────────────────────────────
+Actual unique leads this month: 38
+
+Attribution breakdown (CRM first-touch):
+  Google Ads first-touch:     14 leads
+  Meta Ads first-touch:       11 leads
+  Organic Search first-touch: 8 leads
+  Direct first-touch:         5 leads
+
+Attribution breakdown (CRM last-touch):
+  Google Ads last-touch:      19 leads   ← claimed 47 in dashboard
+  Meta Ads last-touch:        16 leads   ← claimed 61 in dashboard
+  Organic Search last-touch:  2 leads
+  Direct last-touch:          1 lead
+
+Google Ads overcounting factor: 47 claimed / 19 actual = 2.47x
+Meta Ads overcounting factor:   61 claimed / 16 actual = 3.81x
+
+Actual Google Ads CPL: $128 × 2.47 = $316 real CPL
+Actual Meta Ads CPL:   $89 × 3.81  = $339 real CPL
+
+Both channels are significantly less efficient than reported.
+Total real CPL across all paid: $8,360 total paid spend / 30 paid leads = $279
+```
+
+**The takeaway:**
+Both agencies were reporting correctly within their own data. The platform dashboards are not lying — they're doing what they're designed to do (maximize the case for their own platform). The practice was making budget decisions on numbers that were 2–4x inflated.
+
+**Only a system that sits outside both platforms — using CRM first-party data as the source of truth — can produce the real number.** That system is NexoBI.
+
+---
+
+### The CRM Decision — How to Choose for Your Practice Type
+
+Every problem above required a CRM. Not all CRMs are equal for healthcare attribution. Here is the decision framework:
+
+```
+DECISION TREE: WHICH CRM FOR HEALTHCARE ATTRIBUTION?
+
+Are you a healthcare marketing AGENCY managing multiple practices?
+  YES → GoHighLevel
+        Reason: Multi-location sub-accounts, white-labeling,
+        built-in CallRail-like call tracking, pipeline automation,
+        native Zapier + Make support. Best agency operations platform.
+        Cost: $297–$497/month for agency account (unlimited sub-accounts)
+
+  NO — continue ↓
+
+Does the practice already have HubSpot or Salesforce?
+  YES → Keep it. Build the attribution layer on top.
+        Add UTM custom fields, configure forms, build Zapier automations.
+        The platform matters less than the data discipline around it.
+
+  NO — continue ↓
+
+Is the practice a MedSpa, aesthetics, or high-retention specialty?
+  YES → Nextech Patient Relationship Manager or PatientNow
+        Reason: Built-in EHR integration, membership management,
+        before/after photo storage, loyalty program.
+        Cost: $300–$600/month
+
+  NO — continue ↓
+
+Is the practice mental health or behavioral health?
+  YES → SimplePractice CRM module or Hushmail + IntakeQ
+        Reason: HIPAA-compliant by design, client portal,
+        insurance billing integrated, strict access controls.
+        Cost: $79–$149/month
+
+  NO — continue ↓
+
+Is the practice small (1–3 providers, single location)?
+  YES → NexHealth or Weave (CRM + communications + EHR integration)
+        Reason: Connects directly to most EHRs without middleware,
+        handles recall campaigns, reviews, and patient messaging.
+        Cost: $300–$500/month
+
+  NO (medium practice, 4–15 providers) → GoHighLevel or HubSpot Starter
+        GoHighLevel: Better if you need automation depth and call tracking
+        HubSpot Starter: Better if the team already knows HubSpot, reports matter
+
+UNIVERSAL REQUIREMENT regardless of CRM chosen:
+  ✓ Custom fields for: utm_source, utm_medium, utm_campaign, landing_page
+  ✓ CallRail (or equivalent) connected via webhook
+  ✓ Pipeline stages mapped to: Lead → Booked → Attended → Won
+  ✓ Zapier/Make automation: stage "Booked" → push referral source to EHR
+  ✓ API access enabled (for NexoBI ETL nightly pull)
+```
+
+**The CRM is not the solution. The CRM is the container. Attribution is the discipline applied inside it.**
+
+A practice with GoHighLevel and no UTM fields, no pipeline stages, and no CallRail webhook has worse attribution than a practice with a spreadsheet and disciplined manual entry. The tool doesn't matter. The data architecture inside the tool is everything.
+
+---
+
+### The NexoBI AI Agent — Architecture for a Strong, Reliable System
+
+This is the build. Everything above — attribution, CRM integration, EHR de-identification, organic search capture, channel reconciliation — feeds into this. The AI Agent is not the product. It's the interface to a clean, attributed, unified data layer that most healthcare practices don't have today.
+
+Here is the architecture that makes it strong and reliable.
+
+---
+
+#### Layer 0 — Data Quality (The Foundation Everything Depends On)
+
+```
+Before any AI, before any query, before any dashboard:
+
+  ✓ Standardized EHR referral source picklist (12 options, enforced)
+  ✓ Attribution coverage ≥ 85% (≤ 15% "Unknown" in source column)
+  ✓ Data freshness SLA: Delta table updated by 6:00 AM daily
+  ✓ Schema validation on every ETL run:
+      - date is never null
+      - data_source is never null or empty string
+      - total_revenue ≥ 0
+      - booked ≥ attended (you can't attend more than you booked)
+      - total_cost ≥ 0
+  ✓ Deduplication check: MERGE INTO (not INSERT) prevents double-counting
+
+An AI Agent on top of bad data produces confident wrong answers.
+That is worse than no AI Agent.
+Layer 0 is not optional. It is the product.
+```
+
+---
+
+#### Layer 1 — The Delta Table (Single Source of Truth)
+
+```
+workspace.silver.DemoData-marketing-crm
+
+One row = one channel × one day × one campaign
+
+Columns:
+  date            DATE         — row date
+  data_source     STRING       — from standardized picklist
+  channel_group   STRING       — Paid Search / Organic / Local / Social / etc.
+  campaign        STRING       — campaign name or landing page
+  source_medium   STRING       — google/cpc, google/organic, facebook/paid, etc.
+  total_cost      DOUBLE       — ad spend or SEO retainer (where applicable)
+  total_revenue   DOUBLE       — de-identified net production from EHR
+  sessions        BIGINT       — website sessions (GA4)
+  clicks          BIGINT       — ad clicks (Google/Meta)
+  impressions     BIGINT       — ad impressions
+  leads           BIGINT       — form fills + tracked calls (CRM)
+  booked          BIGINT       — appointments booked (CRM stage / EHR)
+  attended        BIGINT       — appointments attended (EHR status = complete)
+  new_users       BIGINT       — new visitors (GA4)
+  conversions     BIGINT       — GA4 conversion events
+  conversion_rate DOUBLE       — computed: leads/sessions × 100
+  roas            DOUBLE       — computed: total_revenue/total_cost
+  treatment       STRING       — A/B test label or specialty type
+```
+
+Every platform feeds this table. NexoBI never queries the source platform directly — it always queries the Delta table. This is what makes the AI Agent fast, reliable, and consistent across all questions.
+
+---
+
+#### Layer 2 — The AI Query Engine (Two Modes)
+
+**Mode A — Offline / CSV Engine (no Databricks required)**
+
+Pattern-matched queries directly against the loaded DataFrame. No LLM. Instant response. Works for demos, works without cloud access. Handles the 10–15 most common question patterns reliably.
+
+```python
+# Pattern matching with intent classification
+INTENT_PATTERNS = {
+    "revenue":       ["revenue", "how much", "made", "generated", "production"],
+    "roas":          ["roas", "return", "efficiency", "per dollar"],
+    "leads":         ["leads", "inquiries", "how many", "lead volume", "cpl"],
+    "show_rate":     ["show rate", "attendance", "no-show", "showed up"],
+    "channel":       ["by source", "by channel", "breakdown", "compare", "vs"],
+    "campaign":      ["campaign", "ad", "keyword", "which campaign"],
+    "organic":       ["organic", "seo", "blog", "content", "search"],
+    "forecast":      ["forecast", "predict", "next month", "project"],
+}
+# Each intent maps to a deterministic computation against the DataFrame
+# Output: HTML bubble with the answer + supporting stats table
+```
+
+**Mode B — Live / Databricks AI Engine (production)**
+
+Full natural language → SQL generation → result → narrative answer via Llama 3.3 70B on Databricks.
+
+```python
+def ai_query_ask(question: str, data_context: str) -> dict:
+    """
+    Sends question + schema context to Databricks Genie Space.
+    Polls until COMPLETED. Returns: text answer + SQL + result DataFrame.
+    """
+    # Step 1: Start conversation with schema-enriched prompt
+    system_context = f"""
+    You are a healthcare marketing analytics expert.
+    You have access to a table: workspace.silver.`DemoData-marketing-crm`
+
+    Schema: {data_context}
+
+    Key metrics to compute when asked:
+    - ROAS = total_revenue / total_cost
+    - CPL = total_cost / leads
+    - Show Rate = attended / booked × 100
+    - Booking Rate = booked / leads × 100
+    - Conversion Rate = leads / sessions × 100
+
+    Date ranges: interpret "last 30 days", "MTD", "last quarter" relative to today.
+    Always return: a clear text answer, the supporting data, and a SQL query.
+    If the question is visual (trend, chart, compare, breakdown), note that a chart should follow.
+    """
+
+    conv = genie_start_conversation(GENIE_SPACE_ID, question, system_context)
+    result = genie_poll_until_complete(conv["conversation_id"], conv["message_id"])
+
+    return {
+        "text": result["text_answer"],
+        "sql":  result["query"],
+        "df":   result["dataframe"],    # may be None for narrative answers
+        "chart_hint": _is_visual_question(question),
+    }
+```
+
+---
+
+#### Layer 3 — Proactive Intelligence (The Shift From Reactive to Active)
+
+This is what separates NexoBI from a dashboard. A dashboard answers questions you think to ask. An AI Agent should surface problems you didn't know to look for.
+
+**Daily automated intelligence queries — run every morning at 7:00 AM:**
+
+```python
+DAILY_INTELLIGENCE_QUERIES = [
+
+    {
+        "name": "roas_drop_alert",
+        "query": """
+            SELECT data_source, channel_group,
+              SUM(total_revenue)/NULLIF(SUM(total_cost),0) AS roas_7d,
+              LAG(SUM(total_revenue)/NULLIF(SUM(total_cost),0), 7)
+                OVER (PARTITION BY data_source ORDER BY date) AS roas_14d
+            FROM silver.`DemoData-marketing-crm`
+            WHERE date >= CURRENT_DATE - 14
+              AND total_cost > 0
+            GROUP BY data_source, channel_group, date
+        """,
+        "alert_condition": "roas_7d < roas_14d * 0.80",  # >20% drop
+        "alert_template": "⚠ ROAS DROP — {data_source}: {roas_7d:.1f}x this week vs {roas_14d:.1f}x last week. Revenue at risk: ${revenue_at_risk:,.0f}/month.",
+    },
+
+    {
+        "name": "show_rate_warning",
+        "query": """
+            SELECT data_source,
+              SUM(attended)/NULLIF(SUM(booked),0)*100 AS show_rate_7d,
+              LAG(SUM(attended)/NULLIF(SUM(booked),0)*100, 7)
+                OVER (PARTITION BY data_source ORDER BY date) AS show_rate_14d
+            FROM silver.`DemoData-marketing-crm`
+            WHERE date >= CURRENT_DATE - 14 AND booked > 3
+            GROUP BY data_source, date
+        """,
+        "alert_condition": "show_rate_7d < 65",
+        "alert_template": "⚠ SHOW RATE — {data_source} patients showing at {show_rate_7d:.1f}% this week. Below 65% threshold. Review booking quality for this source.",
+    },
+
+    {
+        "name": "organic_rank_drop",
+        "query": """
+            SELECT page, query,
+              AVG(position) AS position_7d,
+              LAG(AVG(position), 7) OVER (PARTITION BY page, query ORDER BY date) AS position_14d,
+              SUM(clicks) AS clicks_7d
+            FROM silver.gsc_organic_performance
+            WHERE date >= CURRENT_DATE - 14
+            GROUP BY page, query, date
+        """,
+        "alert_condition": "position_7d > position_14d + 5 AND position_14d <= 10",
+        "alert_template": "⚠ RANK DROP — {page} dropped from position {position_14d:.0f} to {position_7d:.0f} for '{query}'. Estimated monthly revenue at risk: ${revenue_at_risk:,.0f}.",
+    },
+
+    {
+        "name": "spend_without_return",
+        "query": """
+            SELECT data_source, SUM(total_cost) AS spend_30d, SUM(total_revenue) AS rev_30d,
+              SUM(total_revenue)/NULLIF(SUM(total_cost),0) AS roas
+            FROM silver.`DemoData-marketing-crm`
+            WHERE date >= CURRENT_DATE - 30 AND total_cost > 500
+            GROUP BY data_source HAVING roas < 1.5
+        """,
+        "alert_condition": "roas < 1.5",
+        "alert_template": "🔴 LOW ROAS — {data_source}: ${spend_30d:,.0f} spent, ${rev_30d:,.0f} returned. ROAS {roas:.2f}x. Consider pausing or restructuring this channel.",
+    },
+
+    {
+        "name": "attribution_coverage_check",
+        "query": """
+            SELECT
+              COUNT(CASE WHEN data_source IN ('Other','Unknown','') THEN 1 END)*100.0/COUNT(*) AS pct_unknown
+            FROM silver.`DemoData-marketing-crm`
+            WHERE date >= CURRENT_DATE - 7
+        """,
+        "alert_condition": "pct_unknown > 15",
+        "alert_template": "⚠ ATTRIBUTION GAP — {pct_unknown:.1f}% of appointments this week have no marketing source. Check EHR referral source completion rate and CRM → EHR automation.",
+    },
+]
+```
+
+These queries run automatically. Results are stored as `st.session_state` alerts and surfaced in the **Top Signals** section of the NexoBI dashboard — no human has to ask. The practice owner opens NexoBI at 8:00 AM and sees the three most important things that happened overnight.
+
+---
+
+#### Layer 4 — Structured AI Responses (Reliability Architecture)
+
+The AI Agent's responses must be reliable, not just smart. A response that's confident and wrong destroys trust faster than no response at all.
+
+**Reliability requirements:**
+
+```python
+# Every AI response must have:
+RESPONSE_SCHEMA = {
+    "answer_text":  str,   # narrative explanation in plain English
+    "evidence":     list,  # list of specific data points that support the answer
+    "sql":          str,   # the SQL query that produced the data (shows work)
+    "confidence":   str,   # "high" / "medium" / "low" based on data coverage
+    "data_period":  str,   # "last 30 days" / "MTD" — what time range was used
+    "caveats":      list,  # list of known limitations (e.g. "phone calls not tracked")
+    "next_question": list, # 2-3 suggested follow-up questions
+}
+
+# Confidence levels:
+# "high"   — attribution coverage > 85%, >30 days of data, >50 events
+# "medium" — attribution coverage 60–85%, or 15–30 days of data
+# "low"    — attribution coverage < 60%, or < 15 days, or < 10 events
+#            → low confidence answers include explicit warning in the response
+
+# Example low-confidence caveat:
+# "⚠ Note: 42% of appointments this month have no marketing source recorded.
+#  This answer is based on the 58% that are attributed. Actual values may be
+#  20–40% higher. Improve EHR referral source completion to increase confidence."
+```
+
+**This is the most important reliability feature.** The AI Agent must know when it doesn't know — and say so clearly, in the response. Healthcare practitioners make financial decisions based on these answers. A fabricated confident answer is a liability. A honest answer with caveats is a trust-builder.
+
+---
+
+#### Layer 5 — The Recommendation Engine (From Insight to Action)
+
+The final layer transforms observations into specific, actionable recommendations. Not "your ROAS dropped" — but "here is what to do about it, and here is the expected revenue impact of doing it."
+
+```python
+RECOMMENDATION_RULES = [
+
+    {
+        "trigger": "channel_roas < 2.0 for 14+ consecutive days",
+        "recommendation": "Consider reducing {channel} budget by 30% and reallocating to {top_roas_channel}. "
+                          "Expected impact: -{current_spend*0.3:,.0f}/month spend, "
+                          "+${reallocation_revenue_delta:,.0f}/month revenue at {top_roas_channel} ROAS.",
+    },
+
+    {
+        "trigger": "show_rate_by_source: source_X < 65% for 7+ days",
+        "recommendation": "{source_X} leads show at {show_rate:.1f}%. Add a 2-step confirmation "
+                          "sequence in {crm_name} for {source_X} leads: "
+                          "(1) Book confirmation SMS 24h before, (2) Pre-appointment value email. "
+                          "Expected show rate improvement: +8–12 percentage points based on "
+                          "similar practices.",
+    },
+
+    {
+        "trigger": "organic_landing_page revenue > paid search revenue, "
+                   "seo_spend < paid_search_spend * 0.4",
+        "recommendation": "Organic search is generating {organic_rev:,.0f} ({organic_roas:.1f}x ROAS) "
+                          "vs paid search {paid_rev:,.0f} ({paid_roas:.1f}x ROAS). "
+                          "SEO investment is {seo_pct:.0f}% of paid search spend. "
+                          "Increasing SEO retainer by ${increase:,.0f}/month should yield "
+                          "~${expected_return:,.0f} in additional organic revenue.",
+    },
+
+    {
+        "trigger": "attribution_coverage < 80%",
+        "recommendation": "{pct_unknown:.0f}% of appointments have no marketing source. "
+                          "At your average production of ${avg_production:,.0f}/patient, "
+                          "this represents ${unattributed_revenue:,.0f}/month of invisible revenue. "
+                          "Priority fix: audit the EHR referral source completion rate and "
+                          "verify the CRM → EHR booking automation is running.",
+    },
+
+    {
+        "trigger": "new_organic_content published, no ranking signal after 90 days",
+        "recommendation": "The blog post '{page}' published {days_ago} days ago has not "
+                          "appeared in GSC rankings. Possible causes: "
+                          "(1) page not indexed — check GSC Coverage report, "
+                          "(2) keyword too competitive — target a longer-tail variant, "
+                          "(3) thin content — expand to 1,500+ words with FAQ schema.",
+    },
+]
+```
+
+---
+
+#### Layer 6 — The Client-Facing Output (What They Actually See)
+
+The AI Agent is not a chatbot for data engineers. It's a tool for practice owners and marketing managers who are not technical. The output must be designed for that audience.
+
+**Response design principles:**
+
+```
+PRINCIPLE 1 — Lead with the number.
+  BAD:  "Based on the analysis of your marketing data across multiple channels..."
+  GOOD: "Your ROAS last 30 days: 8.4x. Organic is driving 62% of it at zero ad cost."
+
+PRINCIPLE 2 — Always show the evidence.
+  Every answer includes the data table or chart that produced it.
+  "Trust me" is not a feature. "Here is the SQL that produced this answer" is.
+
+PRINCIPLE 3 — End with a next step.
+  Not "your show rate is low." But:
+  "Your Meta show rate is 59%. Three practices in similar markets improved
+   it to 74% within 60 days by adding a day-before SMS confirmation.
+   Want me to draft the automation sequence?"
+
+PRINCIPLE 4 — Flag uncertainty explicitly.
+  If attribution coverage is < 80%, every response includes:
+  "⚠ Attribution note: X% of appointments this period have no source recorded.
+   This answer covers Y% of your actual patient volume."
+
+PRINCIPLE 5 — Use healthcare language.
+  Not "conversions." Say "booked appointments."
+  Not "revenue events." Say "attended consultations."
+  Not "LTV." Say "what that patient is worth over 12 months."
+  Not "attribution coverage." Say "how many of your patients we can trace back
+   to a marketing source."
+```
+
+---
+
+#### The Full Stack — What You Are Building
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         NEXOBI AI AGENT STACK                           │
+├────────────────┬────────────────┬────────────────┬────────────────────  │
+│  DATA SOURCES  │   ETL LAYER    │  DELTA TABLE   │   AI AGENT UI        │
+│                │                │                │                      │
+│  Google Ads    │  Python ETL    │  workspace     │  Streamlit           │
+│  Meta Ads      │  (nightly,     │  .silver       │  + Plotly charts     │
+│  GA4           │   2:00 AM)     │  .DemoData-    │                      │
+│  GSC           │                │   marketing-   │  Two modes:          │
+│  CallRail      │  De-id layer   │   crm          │  ① CSV offline       │
+│  CRM (GHL/HS)  │  (PHI strip,   │                │    (pattern match)   │
+│  EHR (Dentrix/ │   aggregate)   │  Joined tables │  ② Live Databricks   │
+│   SP / Nextech)│                │  gsc_organic   │    (Llama 3.3 70B)   │
+│  BrightLocal   │  Schema valid  │  brightlocal   │                      │
+│  CallRail      │  Coverage chk  │  semrush_rank  │  Proactive layer:    │
+│                │  MERGE INTO    │  weave_remind  │  Daily intelligence  │
+│                │  (no dupes)    │                │  queries → Top       │
+│                │                │                │  Signals alerts      │
+├────────────────┴────────────────┴────────────────┤                      │
+│              DATABRICKS (Unity Catalog)           │  Recommendation      │
+│              Genie Space ID: 01f111cb...          │  engine → specific   │
+│              ai_query() → Llama 3.3 70B           │  action with         │
+│              Audit logs: every query tracked       │  revenue impact      │
+└───────────────────────────────────────────────────┴────────────────────  ┘
+
+WHAT THIS ENABLES:
+  ✓ "Which channel produces the highest-LTV patients?" → answered in 4 sec
+  ✓ "Why did show rate drop last week?" → root-caused to source + solution
+  ✓ "Which blog post generated the most booked appointments?" → exact answer
+  ✓ "Are we over-investing in paid vs organic?" → ROAS comparison with rec
+  ✓ "What's our real CPL including phone calls?" → CallRail + forms unified
+  ✓ "Alert me when ROAS drops 20%." → proactive, morning delivery
+  ✓ "What should we focus on today?" → top 3 signals ranked by revenue impact
+```
+
+---
+
+### The 60-Day Build Sequence
+
+For an agency deploying this for a new client:
+
+```
+DAYS 1–7: Data foundation
+  □ EHR referral source picklist: defined, configured, front desk trained
+  □ CRM: UTM custom fields added, pipeline stages mapped
+  □ GoHighLevel or HubSpot: form hidden fields live, test confirmed
+  □ Target: first clean row appears in CRM with correct attribution
+
+DAYS 8–14: Phone call coverage
+  □ CallRail DNI installed on website
+  □ GBP phone number replaced with CallRail tracking number
+  □ CallRail → CRM webhook: tested and live
+  □ Target: all inbound calls appearing in CRM with source
+
+DAYS 15–21: EHR bridge
+  □ Zapier/Make automation: CRM "Booked" → EHR referral source push
+  □ End-to-end test: organic form → CRM → Dentrix → correct source confirmed
+  □ Nightly Dentrix CSV export: configured and placed in pickup folder
+  □ Target: EHR referral source completion rate ≥ 90%
+
+DAYS 22–35: ETL and Delta table
+  □ Python ETL scripts: Dentrix, Google Ads, Meta, GSC, CallRail
+  □ MERGE INTO Delta table: tested with 30 days of historical data
+  □ Schema validation: running on every ETL load
+  □ GSC supplementary table: daily clicks/position by landing page
+  □ Attribution coverage check: target ≥ 80%
+
+DAYS 36–45: NexoBI AI Agent live
+  □ Databricks Genie Space: connected to Delta table, tested
+  □ Proactive intelligence queries: 5 daily checks running at 7 AM
+  □ Top Signals card: surfacing real alerts from real data
+  □ AI Agent: answering 10 standard questions correctly
+  □ Attribution coverage: target ≥ 85%
+
+DAYS 46–60: Insight and action
+  □ First monthly report: all channels, real ROAS, CPL, show rate by source
+  □ Budget recommendation: where to reallocate based on 30 days of data
+  □ First proactive catch: at least one alert surfaced before client asked
+  □ Client walkthrough: "Ask it anything about your marketing data"
+  □ Target: client can replace their agency's monthly PDF with this
+```
+
+**At day 60, a healthcare practice has something almost no practice in their market has:**
+A system that knows which marketing effort produced which patient, which channel has the highest return, which blog post generates the most revenue, and which lead source is quietly burning money on no-shows. All surfaced through an AI that answers in plain English, shows its work, and flags what it doesn't know.
+
+That is the NexoBI product. The AI Agent is the interface. The attribution stack is the substance.
+
+---
+
+*NexoBI · Integration Scenarios · February 2026*
+*Last updated: February 27, 2026 — Section 18 added (Real Problems, Real Solutions, AI Agent Architecture)*
