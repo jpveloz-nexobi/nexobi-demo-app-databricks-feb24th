@@ -4671,3 +4671,770 @@ That is the NexoBI product. The AI Agent is the interface. The attribution stack
 
 *NexoBI · Integration Scenarios · February 2026*
 *Last updated: February 27, 2026 — Section 18 added (Real Problems, Real Solutions, AI Agent Architecture)*
+
+---
+
+---
+
+## 19. Probabilistic Attribution — Filling the Walk-In and Referral Gap
+
+> Walk-ins, physician referrals, and verbal "I heard about you from a friend" patients will never have a clean digital trail. But they are not random. They carry signals — timing, geography, demographics, service type, insurance — that correlate with specific marketing efforts. Probabilistic attribution uses those signals to make statistically informed estimates of likely source, feeds them to the AI Agent as confidence-weighted data, and dramatically reduces the revenue that disappears into "Unknown."
+
+---
+
+### Why This Matters — The Systematic Bias Problem
+
+When unattributed patients are ignored, the analysis is not just incomplete — it's **systematically wrong**.
+
+Consider: a practice has 300 appointments per month. 220 are attributed (73%). 80 are "Unknown." If the AI Agent answers "What is our ROAS by channel?" using only the 220 attributed patients, every channel's performance is understated — but not equally. Channels that generate more walk-ins and phone referrals (like GBP and organic search) are understated more than channels with clean digital tracking (like Google Ads with gclid).
+
+The result: Google Ads looks disproportionately efficient because its patients are fully tracked. Organic looks weaker than it is because half its walk-in patients are in the Unknown bucket. Budget decisions based on this data systematically over-invest in paid and under-invest in organic.
+
+**Probabilistic attribution doesn't eliminate this bias. It corrects it.**
+
+```
+WITHOUT probabilistic attribution:
+  Google Ads: 52 patients tracked → ROAS 8.4x (accurate)
+  Organic:    38 patients tracked → ROAS 12.1x (understated — missing walk-ins)
+  Unknown:    80 patients          → $0 attributed revenue (wrong)
+
+WITH probabilistic attribution:
+  Google Ads: 52 observed + 14 estimated → ROAS 8.2x
+  Organic:    38 observed + 31 estimated → ROAS 18.4x  ← organic was even better
+  GBP:        41 observed + 22 estimated → ROAS grows to reflect true local impact
+  Unknown:     0 (fully distributed with confidence weights)
+
+The AI Agent's recommendation changes:
+  Before: "Google Ads is your best-performing paid channel."
+  After:  "Organic search, including probabilistically attributed walk-ins,
+           outperforms Google Ads by 2.2x. Organic is significantly undervalued."
+```
+
+---
+
+### The Signals That Make Probabilistic Attribution Possible
+
+Unattributed patients are not random. Every patient carries observable attributes at the time of appointment that correlate with how they likely found the practice. These are the signals:
+
+```
+SIGNAL CLASS          WHAT IT TELLS YOU
+─────────────────────────────────────────────────────────────────────────
+Appointment timing    Walk-ins on Monday morning → likely GBP "open now" search
+                      Appointments booked 2+ weeks out → likely planned search or referral
+                      Same-day bookings → GBP or urgent care search behavior
+
+Service type          Emergency / acute pain → walk-in, GBP, urgent search
+                      Elective (implants, LASIK, aesthetics) → longer consideration,
+                      likely organic content or paid search
+                      Routine (cleaning, annual check-up) → likely recall/email or referral
+
+Patient ZIP code      Within 1 mile of practice → walk-in or GBP
+                      5–15 miles → likely paid search or organic (drove to you)
+                      Cross-county → likely strong content SEO or physician referral
+
+Insurance type        Cash pay, no insurance → more likely paid/organic (self-directed)
+                      In-network PPO → more likely insurance directory or employer referral
+                      Medicaid → more likely community referral or physician referral
+
+New vs returning      New patient → full attribution model applies
+                      Returning patient → attribute to original acquisition channel
+                      (retain first-touch source from CRM if available)
+
+Lead time             Same-day / next-day → urgency-driven, likely GBP or "near me"
+                      1–2 weeks → considered, likely search or organic content
+                      3+ weeks → relationship referral or recall campaign
+
+Day/campaign timing   Unattributed spike follows a blog post publish → organic credit
+                      Unattributed spike follows email campaign → email credit
+                      Unattributed stable regardless of campaigns → likely walk-in/GBP baseline
+
+Demographics          Age 18–34 → higher Instagram/social signal
+                      Age 35–55 → higher Google Ads/organic signal
+                      Age 55+ → higher GBP/physician referral signal
+                      (calibrated per practice and market — not universal)
+```
+
+None of these signals are PHI. Age is a demographic range, not a birthdate. ZIP code is a geographic proxy. Service type is a billing category. They are all present in the de-identified EHR export and can be included in the Delta table without HIPAA concern.
+
+---
+
+### The Three Probabilistic Methods — From Simple to Sophisticated
+
+NexoBI implements these in layers. Each layer increases accuracy. Each layer also increases complexity. Start with Method 1. Add Method 2 at 90 days. Consider Method 3 at scale.
+
+---
+
+#### Method 1 — Proportional Distribution (Baseline, Immediate Value)
+
+The simplest valid approach. Distribute unattributed patients proportionally according to the observed channel mix of attributed patients in the same time period.
+
+**The logic:** If 38% of attributed patients came from organic in a given month, and you have 80 unattributed patients in that month, estimate that 38% of those 80 — about 30 — also came from organic. Apply the same distribution across all channels.
+
+```python
+import pandas as pd
+import numpy as np
+
+def proportional_attribution(
+    df: pd.DataFrame,
+    date_col: str = "date",
+    source_col: str = "data_source",
+    revenue_col: str = "total_revenue",
+    attended_col: str = "attended",
+    unknown_label: str = "Other / Unknown"
+) -> pd.DataFrame:
+    """
+    Distributes unattributed (Unknown) patients proportionally
+    across known channels. Returns augmented DataFrame with
+    probabilistic rows marked as estimated=True.
+    """
+    result_rows = []
+
+    for period, group in df.groupby(pd.Grouper(key=date_col, freq="M")):
+        known = group[group[source_col] != unknown_label]
+        unknown = group[group[source_col] == unknown_label]
+
+        if unknown.empty or known.empty:
+            result_rows.append(group)
+            continue
+
+        # Compute channel distribution from known patients
+        channel_dist = (
+            known.groupby(source_col)[attended_col].sum()
+            / known[attended_col].sum()
+        )
+
+        unknown_attended = unknown[attended_col].sum()
+        unknown_revenue  = unknown[revenue_col].sum()
+
+        # Distribute unknown patients across channels
+        for source, share in channel_dist.items():
+            est_attended = unknown_attended * share
+            est_revenue  = unknown_revenue * share
+
+            if est_attended < 0.5:
+                continue  # don't create noise rows for negligible allocations
+
+            result_rows.append({
+                date_col:      period,
+                source_col:    source,
+                attended_col:  est_attended,
+                revenue_col:   est_revenue,
+                "estimated":   True,          # flag — not observed, inferred
+                "confidence":  "low",         # proportional = lowest confidence
+                "method":      "proportional",
+            })
+
+        # Keep known rows as-is
+        known = known.copy()
+        known["estimated"] = False
+        known["confidence"] = "high"
+        known["method"] = "observed"
+        result_rows.append(known)
+
+    return pd.concat(result_rows, ignore_index=True)
+```
+
+**What this produces immediately:**
+Attribution coverage jumps from 73% to 100% with the caveat that the added 27% is estimated. The AI Agent can now say: *"Organic search generated an estimated $138,000 this month — $97,200 directly attributed plus $40,800 probabilistically allocated from untracked walk-ins and referrals. Confidence: medium."*
+
+---
+
+#### Method 2 — Signal-Weighted Bayesian Attribution (Recommended at 90 Days)
+
+Improves on proportional distribution by using patient signals to weight the probability toward specific channels. A same-day urgent appointment is more likely GBP than a planned 3-week-out implant consult. Bayesian attribution captures that.
+
+**The Bayesian logic:**
+
+Prior belief: the channel distribution from attributed patients (same as Method 1).
+Update: shift probabilities based on signals present in the unattributed patient record.
+
+```python
+from scipy.stats import dirichlet
+import numpy as np
+
+# Channel priors: calibrated from 90 days of attributed patient data
+# Format: {channel: prior_weight}
+# These are updated monthly as more attributed data accumulates
+
+CHANNEL_PRIORS = {
+    "Google Ads – Paid Search":   0.22,
+    "Organic – Google Search":    0.18,
+    "Google Business Profile":    0.17,
+    "Meta – Facebook / Instagram":0.13,
+    "Referral – Patient":         0.12,
+    "Referral – Physician":       0.09,
+    "Directory":                  0.06,
+    "Email / SMS Campaign":       0.03,
+}
+
+# Signal likelihood multipliers
+# Format: {signal: {channel: multiplier}}
+# Multipliers shift the prior toward or away from a channel
+# Values > 1.0 increase probability; < 1.0 decrease it
+# Calibrated from historical attributed data patterns
+
+SIGNAL_MULTIPLIERS = {
+    "same_day_booking": {
+        "Google Business Profile":     3.2,   # walk-in "open now" behavior
+        "Google Ads – Paid Search":    1.4,
+        "Organic – Google Search":     1.2,
+        "Referral – Patient":          0.3,   # referrals rarely same-day
+        "Referral – Physician":        0.2,
+        "Email / SMS Campaign":        0.1,
+    },
+    "service_emergency": {
+        "Google Business Profile":     4.1,
+        "Organic – Google Search":     2.1,
+        "Google Ads – Paid Search":    1.8,
+        "Referral – Patient":          1.2,
+        "Referral – Physician":        0.6,
+        "Meta – Facebook / Instagram": 0.4,
+    },
+    "service_elective_high_value": {   # implants, LASIK, cosmetic
+        "Organic – Google Search":     2.8,
+        "Google Ads – Paid Search":    2.4,
+        "Referral – Patient":          1.8,
+        "Meta – Facebook / Instagram": 1.3,
+        "Google Business Profile":     0.6,
+        "Referral – Physician":        0.4,
+    },
+    "zip_within_1_mile": {
+        "Google Business Profile":     3.8,
+        "Referral – Patient":          2.1,
+        "Organic – Google Search":     0.9,
+        "Google Ads – Paid Search":    0.7,
+        "Meta – Facebook / Instagram": 0.5,
+    },
+    "zip_over_10_miles": {
+        "Organic – Google Search":     2.6,
+        "Google Ads – Paid Search":    2.2,
+        "Referral – Physician":        1.8,
+        "Google Business Profile":     0.3,
+    },
+    "cash_pay_no_insurance": {
+        "Google Ads – Paid Search":    1.9,
+        "Organic – Google Search":     1.7,
+        "Meta – Facebook / Instagram": 1.5,
+        "Referral – Physician":        0.4,
+        "Directory":                   0.5,
+    },
+    "insurance_in_network": {
+        "Directory":                   2.8,
+        "Referral – Physician":        2.4,
+        "Referral – Patient":          1.6,
+        "Google Ads – Paid Search":    0.7,
+        "Meta – Facebook / Instagram": 0.5,
+    },
+    "age_18_34": {
+        "Meta – Facebook / Instagram": 2.2,
+        "Organic – Google Search":     1.4,
+        "Google Business Profile":     1.2,
+        "Referral – Physician":        0.5,
+    },
+    "age_55_plus": {
+        "Referral – Physician":        2.1,
+        "Referral – Patient":          1.9,
+        "Google Business Profile":     1.6,
+        "Meta – Facebook / Instagram": 0.4,
+    },
+    "campaign_active_last_7_days": {   # dynamic: checks if a campaign ran recently
+        # Channel that ran the campaign gets a 2.0 boost
+        # populated dynamically based on what was running
+    },
+}
+
+
+def bayesian_channel_probability(
+    signals: list[str],
+    priors: dict = CHANNEL_PRIORS,
+    multipliers: dict = SIGNAL_MULTIPLIERS,
+) -> dict[str, float]:
+    """
+    Given a list of signals present for an unattributed patient,
+    return the posterior probability distribution across channels.
+
+    Args:
+        signals: list of active signal keys (e.g. ["same_day_booking", "zip_within_1_mile"])
+        priors:  base channel distribution from attributed patients
+        multipliers: signal → channel likelihood adjustments
+
+    Returns:
+        dict of {channel: probability} summing to 1.0
+    """
+    weights = dict(priors)  # start with prior distribution
+
+    for signal in signals:
+        if signal not in multipliers:
+            continue
+        for channel, multiplier in multipliers[signal].items():
+            if channel in weights:
+                weights[channel] *= multiplier
+
+    # Normalize to sum to 1.0
+    total = sum(weights.values())
+    return {ch: w / total for ch, w in weights.items()}
+
+
+def estimate_unattributed_patient(patient_record: dict) -> dict:
+    """
+    For one unattributed EHR appointment record, compute
+    the probabilistic channel distribution and determine
+    confidence level.
+
+    Returns:
+        dict with channel probabilities, top channel, and confidence
+    """
+    signals = []
+
+    # Extract signals from the de-identified patient record
+    if patient_record.get("lead_time_days", 99) == 0:
+        signals.append("same_day_booking")
+
+    if patient_record.get("service_category") in ["Emergency", "Acute Pain", "Urgent"]:
+        signals.append("service_emergency")
+
+    if patient_record.get("service_category") in ["Implant", "LASIK", "Cosmetic", "Orthodontics"]:
+        signals.append("service_elective_high_value")
+
+    if patient_record.get("distance_miles", 99) <= 1.0:
+        signals.append("zip_within_1_mile")
+    elif patient_record.get("distance_miles", 0) > 10:
+        signals.append("zip_over_10_miles")
+
+    if patient_record.get("insurance_type") == "cash":
+        signals.append("cash_pay_no_insurance")
+    elif patient_record.get("insurance_type") in ["PPO", "HMO", "Medicaid"]:
+        signals.append("insurance_in_network")
+
+    age = patient_record.get("age_bracket")
+    if age == "18-34":
+        signals.append("age_18_34")
+    elif age == "55+":
+        signals.append("age_55_plus")
+
+    # Compute posterior
+    probabilities = bayesian_channel_probability(signals)
+    top_channel   = max(probabilities, key=probabilities.get)
+    top_prob      = probabilities[top_channel]
+
+    # Confidence: how concentrated is the distribution?
+    # High confidence = one channel clearly dominates
+    confidence = (
+        "high"   if top_prob >= 0.55 else
+        "medium" if top_prob >= 0.35 else
+        "low"
+    )
+
+    return {
+        "probabilities": probabilities,
+        "top_channel":   top_channel,
+        "top_prob":      top_prob,
+        "confidence":    confidence,
+        "signals_used":  signals,
+    }
+```
+
+**What this produces per patient:**
+
+```
+Unattributed patient record:
+  appointment_date = 2026-02-12 (Monday)
+  lead_time_days   = 0           (same-day)
+  service_category = "Emergency" (toothache)
+  distance_miles   = 0.7         (ZIP code within 1 mile)
+  insurance_type   = "cash"
+  age_bracket      = "35-54"
+
+Signals activated:
+  same_day_booking ✓
+  service_emergency ✓
+  zip_within_1_mile ✓
+  cash_pay_no_insurance ✓
+
+Posterior probability distribution:
+  Google Business Profile:     68.4%  ← top channel, high confidence
+  Organic – Google Search:     14.2%
+  Google Ads – Paid Search:    10.1%
+  Referral – Patient:           4.8%
+  Meta – Facebook / Instagram:  1.9%
+  Other:                        0.6%
+
+Result: $3,800 production credited to GBP with 68.4% weight.
+  → GBP estimated revenue contribution: $3,800 × 0.684 = $2,599
+  → Distributed across other channels proportionally for remaining 31.6%
+  Confidence: HIGH (one channel clearly dominates at 68%)
+```
+
+---
+
+#### Method 3 — Shapley Value Attribution (Advanced, Multi-Touch)
+
+Used for patients who had multiple known touchpoints before converting, and for practices with enough data to quantify each channel's marginal contribution.
+
+Shapley values come from cooperative game theory. The question: given that multiple channels participated in acquiring a patient, how much credit does each deserve? The answer is computed by considering every possible combination of channels and measuring each channel's marginal contribution when it's added to the coalition.
+
+**Why this matters specifically for organic + paid overlap:**
+
+A LASIK patient saw a blog post (organic), a retargeting ad (Google Ads), and called from GBP. Last-click gives 100% to GBP. First-touch gives 100% to organic. Shapley gives each channel credit proportional to its actual marginal contribution — which is the fairest and most accurate model.
+
+```python
+from itertools import combinations
+import numpy as np
+
+def shapley_attribution(
+    touchpoints: list[str],
+    conversion_value: float,
+    channel_conversion_rates: dict[str, float]
+) -> dict[str, float]:
+    """
+    Compute Shapley value attribution for a multi-touch patient journey.
+
+    Args:
+        touchpoints:  ordered list of channels the patient interacted with
+                      e.g. ["Organic Search", "Google Ads", "GBP"]
+        conversion_value: revenue value of this conversion
+        channel_conversion_rates: estimated base conversion rate per channel
+                      (calibrated from attributed patient data)
+
+    Returns:
+        dict of {channel: revenue_credit}
+    """
+    n = len(touchpoints)
+    shapley_values = {ch: 0.0 for ch in touchpoints}
+
+    # For each channel, compute marginal contribution across all subsets
+    for i, channel in enumerate(touchpoints):
+        others = [c for c in touchpoints if c != channel]
+
+        for r in range(len(others) + 1):
+            for subset in combinations(others, r):
+                # Value of coalition without this channel
+                v_without = _coalition_value(list(subset), channel_conversion_rates)
+                # Value of coalition with this channel
+                v_with    = _coalition_value(list(subset) + [channel], channel_conversion_rates)
+
+                # Weight by number of permutations
+                weight = (
+                    np.math.factorial(r) *
+                    np.math.factorial(n - r - 1) /
+                    np.math.factorial(n)
+                )
+                shapley_values[channel] += weight * (v_with - v_without)
+
+    # Normalize and apply to conversion value
+    total = sum(shapley_values.values())
+    return {
+        ch: (sv / total) * conversion_value
+        for ch, sv in shapley_values.items()
+    }
+
+
+def _coalition_value(channels: list[str], rates: dict) -> float:
+    """Estimate conversion probability for a coalition of channels."""
+    if not channels:
+        return 0.0
+    # Channels are complementary — joint probability higher than any single
+    base = max(rates.get(c, 0.05) for c in channels)
+    boost = sum(rates.get(c, 0.05) * 0.3 for c in channels[1:])
+    return min(base + boost, 0.95)
+
+
+# Example:
+# Patient journey: ["Organic Search", "Google Ads Retargeting", "GBP call"]
+# Production: $4,200
+
+result = shapley_attribution(
+    touchpoints=["Organic Search", "Google Ads Retargeting", "GBP call"],
+    conversion_value=4200,
+    channel_conversion_rates={
+        "Organic Search":          0.12,
+        "Google Ads Retargeting":  0.18,
+        "GBP call":                0.22,
+    }
+)
+# Output (example):
+# {
+#   "Organic Search":         $1,134   (27.0%) — started the journey
+#   "Google Ads Retargeting": $1,512   (36.0%) — re-engaged
+#   "GBP call":               $1,554   (37.0%) — closed the booking
+# }
+# vs last-click: GBP gets 100% ($4,200), others get $0
+# vs first-touch: Organic gets 100%, others get $0
+# Shapley: all three share credit proportional to contribution
+```
+
+---
+
+### How Probabilistic Data Feeds Into the AI Agent
+
+The key design principle: **the AI Agent must always know which data is observed and which is estimated.** Mixing them silently destroys trust when someone checks the numbers.
+
+**Delta table schema additions for probabilistic rows:**
+
+```sql
+ALTER TABLE silver.`DemoData-marketing-crm`
+ADD COLUMNS (
+  data_type        STRING  DEFAULT 'observed',  -- 'observed' | 'estimated' | 'shapley'
+  confidence_level STRING  DEFAULT 'high',       -- 'high' | 'medium' | 'low'
+  estimation_method STRING DEFAULT NULL,         -- 'proportional'|'bayesian'|'shapley'
+  probability_weight DOUBLE DEFAULT 1.0,         -- 0.0–1.0, weight of this row's credit
+  signals_matched  STRING  DEFAULT NULL          -- JSON array of signals used
+)
+```
+
+**What the AI Agent receives and how it uses it:**
+
+```python
+# AI query for show rate — confidence-aware version
+query = """
+SELECT
+    data_source,
+    data_type,
+    confidence_level,
+    SUM(attended)      AS attended_est,
+    SUM(booked)        AS booked_est,
+    SUM(total_revenue) AS revenue_est,
+    ROUND(SUM(attended)/NULLIF(SUM(booked),0)*100, 1) AS show_rate,
+    COUNT(CASE WHEN data_type = 'observed'  THEN 1 END) AS observed_rows,
+    COUNT(CASE WHEN data_type = 'estimated' THEN 1 END) AS estimated_rows
+FROM silver.`DemoData-marketing-crm`
+WHERE date >= CURRENT_DATE - 30
+GROUP BY data_source, data_type, confidence_level
+ORDER BY revenue_est DESC
+"""
+
+# AI Agent response template for mixed observed + estimated data:
+response_template = """
+{channel} generated an estimated {revenue_est} in revenue last 30 days.
+
+  Directly attributed (observed):  {observed_revenue} from {observed_attended} patients
+  Probabilistically attributed:    {estimated_revenue} from {estimated_attended} est. patients
+                                   Confidence: {confidence_level}
+
+  Combined show rate: {show_rate}%
+  Attribution method: {estimation_method}
+
+⚠ Note: {pct_estimated:.0f}% of {channel}'s attributed revenue is probabilistically estimated
+  based on patient signals (service type, timing, distance, insurance).
+  Actual values may vary ±{margin_of_error:.0f}%.
+"""
+```
+
+**AI Agent output example:**
+
+```
+User: "What is our ROAS by channel including estimated walk-ins?"
+
+NexoBI AI Agent:
+
+  CHANNEL ROAS — LAST 30 DAYS (observed + probabilistic)
+
+  ┌─────────────────────────────┬──────────┬───────────┬───────────┬────────────┐
+  │ Channel                     │ Revenue  │ Spend     │ ROAS      │ Confidence │
+  ├─────────────────────────────┼──────────┼───────────┼───────────┼────────────┤
+  │ Organic Search              │ $142,800 │ $2,800    │ 51.0x     │ Medium*    │
+  │ Google Business Profile     │ $118,500 │ $0        │ ∞         │ High       │
+  │ Google Ads – Paid Search    │ $98,400  │ $8,200    │ 12.0x     │ High       │
+  │ Referral – Patient          │ $74,100  │ $0        │ ∞         │ Medium*    │
+  │ Meta – Facebook / Instagram │ $52,800  │ $2,400    │ 22.0x     │ High       │
+  │ Referral – Physician        │ $38,200  │ $0        │ ∞         │ Low*       │
+  │ Directory (Healthgrades)    │ $28,400  │ $300      │ 94.7x     │ High       │
+  └─────────────────────────────┴──────────┴───────────┴───────────┴────────────┘
+
+  * Includes probabilistically attributed patients.
+    Organic: 38 directly observed + 29 estimated (Bayesian, medium confidence)
+    Patient Referral: 21 observed + 16 estimated (Bayesian, medium confidence)
+    Physician Referral: 8 observed + 18 estimated (Bayesian, low confidence —
+      low confidence because physician referral signals overlap with walk-in signals)
+
+  Without probabilistic attribution, Organic ROAS showed as 34.1x.
+  With probabilistic attribution (corrected for walk-ins), Organic ROAS: 51.0x.
+
+  Recommendation: Organic search is generating significantly more revenue
+  than previously visible. SEO investment appears to be the most efficient
+  channel in your portfolio when walk-in behavior is properly attributed.
+```
+
+---
+
+### Calibrating the Model — The Self-Improving Loop
+
+The Bayesian model is only as good as its signal multipliers. Those multipliers must be calibrated from the practice's own attributed patient data — and updated continuously as more data accumulates.
+
+```python
+def calibrate_signal_multipliers(
+    attributed_df: pd.DataFrame,
+    signal_extractor: callable
+) -> dict:
+    """
+    Learns the correct signal multipliers from attributed patients.
+    Run monthly. Updates SIGNAL_MULTIPLIERS in the Delta table.
+
+    Logic: For each signal, compute the channel distribution of
+    attributed patients who had that signal. The ratio of that
+    distribution to the baseline distribution IS the multiplier.
+    """
+    baseline = (
+        attributed_df.groupby("data_source")["attended"].sum()
+        / attributed_df["attended"].sum()
+    ).to_dict()
+
+    multipliers = {}
+
+    for signal_name, signal_fn in SIGNAL_EXTRACTORS.items():
+        signal_patients = attributed_df[attributed_df.apply(signal_fn, axis=1)]
+
+        if len(signal_patients) < 20:
+            continue  # not enough data to calibrate this signal
+
+        signal_dist = (
+            signal_patients.groupby("data_source")["attended"].sum()
+            / signal_patients["attended"].sum()
+        ).to_dict()
+
+        multipliers[signal_name] = {
+            channel: (signal_dist.get(channel, 0.001) /
+                      baseline.get(channel, 0.001))
+            for channel in baseline
+        }
+
+    return multipliers
+
+# This runs monthly. As attributed data accumulates, the multipliers
+# become increasingly accurate for this specific practice and market.
+# After 6 months of data, the Bayesian model is meaningfully better
+# than the proportional baseline for this practice's patient patterns.
+```
+
+**The model gets better over time without anyone touching it.** More attributed data → more accurate multipliers → better probabilistic estimates for unattributed patients → higher AI Agent answer confidence.
+
+---
+
+### Confidence Labeling — What the AI Agent Always Shows
+
+Every response that includes probabilistic data must clearly label what is observed vs estimated. This is non-negotiable. It is the difference between a trustworthy system and a confident liar.
+
+```python
+CONFIDENCE_DISPLAY = {
+    "high": {
+        "label":  "✓ Directly attributed",
+        "color":  GREEN,
+        "note":   "Based on tracked digital journey (form, call, campaign tag).",
+    },
+    "medium": {
+        "label":  "~ Probabilistically estimated",
+        "color":  AMBER,
+        "note":   "Based on patient signals (timing, service, distance, insurance). "
+                  "Accuracy: ±15–25% of true value.",
+    },
+    "low": {
+        "label":  "≈ Weakly estimated",
+        "color":  MUTED,
+        "note":   "Limited signal data. Broad proportional distribution applied. "
+                  "Treat as directional only. Accuracy: ±30–40%.",
+    },
+}
+
+# In the AI Agent response, every number that includes probabilistic
+# data is annotated with its confidence level.
+# Users can toggle: "Show observed only" vs "Show observed + estimated"
+# Default: show both, clearly labeled.
+```
+
+---
+
+### What This Unlocks for the Practice — Before vs After
+
+**Before probabilistic attribution:**
+
+```
+Monthly revenue: $503,600
+Attributed:      $367,600  (73%)
+Unknown:         $136,000  (27%)
+
+AI Agent says: "I can account for $367,600 of your revenue.
+The other $136,000 has no marketing source."
+
+Organic ROAS: 12.1x  (understated — missing walk-in patients)
+GBP ROAS: ∞ but incomplete
+Physician referral: appears small — physician outreach not prioritized
+```
+
+**After probabilistic attribution (Bayesian, medium confidence):**
+
+```
+Monthly revenue: $503,600
+Observed:        $367,600  (73%)
+Estimated:       $136,000  (27%)  ← now distributed, not lost
+Total attributed: $503,600  (100% — with confidence labels)
+
+AI Agent says: "Here is your complete revenue picture.
+73% is directly attributed. 27% is probabilistically estimated
+based on patient signals. Confidence: medium overall."
+
+Organic ROAS: 51.0x  (corrected — walk-ins near blog-ranked areas credited)
+GBP ROAS: captures walk-ins who found practice via Maps
+Physician referral: now visible at realistic scale → outreach investment justified
+
+New recommendation that wasn't possible before:
+  "Physician referrals (observed + estimated) represent $56,400/month
+   at zero acquisition cost. Your nearest orthopedic group refers 8
+   confirmed patients. If you had 3 more physician referral relationships
+   at the same rate, that's +$21,150/month in additional revenue.
+   Physician relationship marketing has the highest potential ROAS
+   of any channel you're not currently investing in."
+```
+
+---
+
+### Implementation Roadmap for Probabilistic Attribution
+
+```
+PHASE 1 (Week 1–2) — Signal capture
+  □ Add to EHR de-identified export:
+      appointment_lead_time_days (computed from booking_date - appt_date)
+      service_category           (from billing/CPT code category mapping)
+      patient_zip_prefix         (first 3 digits only — not full ZIP, not PHI)
+      insurance_category         (cash / commercial / government — not carrier name)
+      age_decade                 (30s / 40s / 50s — not exact age, not DOB)
+  □ Add these columns to Delta table schema
+  □ Verify no PHI is captured (age_decade and zip_prefix are safe)
+
+PHASE 2 (Week 3–4) — Proportional baseline
+  □ Run proportional_attribution() on last 90 days of data
+  □ Verify: Unknown drops to 0, distributed rows marked estimated=True
+  □ AI Agent: update queries to include estimated rows with confidence labels
+  □ Test: ask "What is organic ROAS including estimated patients?"
+  □ Confirm numbers change vs previous (they should — organic goes up)
+
+PHASE 3 (Month 2–3) — Bayesian upgrade
+  □ Calibrate SIGNAL_MULTIPLIERS from 90 days of attributed patient data
+  □ Run bayesian_channel_probability() on unattributed patients
+  □ Compare confidence scores vs proportional: high confidence rows should dominate
+  □ Validate spot-checks: same-day emergency appointments should cluster on GBP
+  □ Update AI Agent to show confidence per channel in every answer
+
+PHASE 4 (Month 4+) — Self-improving loop
+  □ Schedule monthly calibrate_signal_multipliers() run (1st of month, 3 AM)
+  □ Store multiplier versions in Delta table: track how they evolve
+  □ Track prediction accuracy: when a probabilistic patient is later confirmed
+    (e.g., front desk updates referral source), compare to prediction
+  □ Use confirmed cases to measure model accuracy and update priors
+  □ Report to client: "Probabilistic attribution model accuracy: 71% correct
+    on cases we were later able to verify."
+```
+
+---
+
+### The Sales Moment This Creates
+
+> *"Right now, 27% of your revenue has no marketing source attached to it. That's $136,000 per month that your agency cannot see, your Google Ads dashboard cannot see, and your gut feeling cannot reliably explain. NexoBI doesn't pretend that money doesn't exist. We use the signals those patients DO carry — when they booked, how far they traveled, what service they needed, what insurance they have — to make a statistically informed estimate of where they likely came from.*
+
+> *We label every estimated number clearly. We show you the confidence level. We don't hide that some of this is an estimate — we show you exactly how confident we are and why. And as more of your patients are attributed directly, the model gets more accurate every month.*
+
+> *The result: you stop making budget decisions on 73% of your data. You make them on 100% — with the bottom 27% clearly labeled as estimated. That's a fundamentally different conversation than 'we don't know where those patients came from.' It's 'here is our best statistical estimate, here is our confidence level, and here is what it implies for your marketing investment.'"*
+
+---
+
+*NexoBI · Integration Scenarios · February 2026*
+*Last updated: February 27, 2026 — Section 19 added (Probabilistic Attribution — Walk-ins and Referrals)*
