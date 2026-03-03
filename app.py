@@ -817,7 +817,7 @@ if page == "Dashboard":
     st.sidebar.markdown(
         '<div style="font-size:.7rem;font-weight:700;color:#94A3B8;'
         'letter-spacing:.07em;text-transform:uppercase;margin-bottom:.3rem;">'
-        '◈&nbsp; Your View</div>',
+        'Your View</div>',
         unsafe_allow_html=True
     )
     for _b in BLOCK_REGISTRY:
@@ -827,7 +827,7 @@ if page == "Dashboard":
             or ("marketing" in _b["modes"] and not practice_mode)
         )
         if _applies:
-            st.sidebar.checkbox(f"{_b['icon']}  {_b['label']}", key=f"blk_{_b['id']}")
+            st.sidebar.checkbox(_b['label'], key=f"blk_{_b['id']}")
 CUR_MKT  = CUR.copy()
 PREV_MKT = PREV.copy()
 if not include_practice_in_marketing:
