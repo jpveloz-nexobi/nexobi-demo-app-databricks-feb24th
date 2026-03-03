@@ -1126,72 +1126,40 @@ def render_command_center():
 </div>
 ''', unsafe_allow_html=True)
 
-    # ── Benchmark tiles — toggle between metric views ──────
-    def _btile(label, val_str, sub_str, val_num, bench_num, higher_better=True, has_bench=True):
-        if has_bench:
-            beat  = (val_num >= bench_num) if higher_better else (val_num <= bench_num)
-            close = abs(val_num - bench_num) / max(bench_num, 0.01) < 0.12
-            cls   = "bt-good" if beat else ("bt-warn" if close else "bt-bad")
-            dc    = "#009952" if beat else ("#D97706" if close else "#DC2626")
-            arrow = ("▲" if beat else "▼") if higher_better else ("▼" if beat else "▲")
-            lbl   = "Above benchmark" if beat else ("Near benchmark" if close else "Below benchmark")
-            sub   = f'<div class="bench-delta" style="color:{dc};">{arrow} {lbl}</div><div class="bench-avg">{sub_str}</div>'
-        else:
-            cls = "bt-good" if val_num >= 0 else "bt-bad"
-            dc  = "#009952" if val_num >= 0 else "#DC2626"
-            sub = f'<div class="bench-delta" style="color:{dc};">{"▲" if val_num>=0 else "▼"} vs prior period</div><div class="bench-avg">{sub_str}</div>'
-        return (f'<div class="bench-tile {cls}">'
-                f'<div class="bench-label">{label}</div>'
-                f'<div class="bench-val">{val_str}</div>'
-                f'{sub}</div>')
-
-    # ── Growth tiles — period-over-period ──────────────────
-    p_spend   = float(prev_b["total_cost"].sum() or 0)
-    p_book    = float(prev_b["booked"].sum() or 0)
-    spend_chg = safe_div(spend - p_spend, max(abs(p_spend), 0.01)) * 100
-    book_chg  = safe_div(float(base["booked"].sum() or 0) - p_book, max(abs(p_book), 0.01)) * 100
-
-    b1, b2, b3, b4 = st.columns(4, gap="small")
-    with b1: st.markdown(_btile("Revenue Growth", f"{rev_growth:+.1f}%", "vs prior period", rev_growth, 0, has_bench=False), unsafe_allow_html=True)
-    with b2: st.markdown(_btile("Lead Growth", f"{lead_growth:+.1f}%", f"Industry avg: +{BENCH_LEAD_GRO:.0f}%", lead_growth, BENCH_LEAD_GRO), unsafe_allow_html=True)
-    with b3: st.markdown(_btile("Booked Growth", f"{book_chg:+.1f}%", "vs prior period", book_chg, 0, has_bench=False), unsafe_allow_html=True)
-    with b4: st.markdown(_btile("Spend Growth", f"{spend_chg:+.1f}%", "vs prior period", -spend_chg, 0, has_bench=False), unsafe_allow_html=True)
-
-    st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
-
-    # ── Forecast + Signals ─────────────────────────────────
-    _fc, _sc = st.columns([1.45, 1], gap="medium")
-
-    with _fc:
-        st.markdown('<div class="section-title" style="margin-top:.2rem;">Revenue Forecast</div>', unsafe_allow_html=True)
-        fig_fc, proj_total = plot_forecast(base)
-        if fig_fc:
-            st.markdown(
-                f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
-                f'Projected next 30 days: <b style="color:{TEXT};font-size:.85rem;">{money(proj_total)}</b>'
-                f' &nbsp;·&nbsp; Based on {period_days}-day trend</div>',
-                unsafe_allow_html=True
-            )
-            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-            st.plotly_chart(fig_fc, use_container_width=True, config={"displayModeBar": False})
-            st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.info("Not enough data for forecast. Widen the date range to at least 5 days.")
-
-    with _sc:
-        st.markdown('<div class="section-title" style="margin-top:.2rem;">Top Signals</div>', unsafe_allow_html=True)
-        _cls_map = {
-            "sb-pill-red":   ("sig-red",   "sig-sev-red"),
-            "sb-pill-amber": ("sig-amber", "sig-sev-amber"),
-            "sb-pill-green": ("sig-green", "sig-sev-green"),
-        }
-        for sev, pill_cls, title, detail, action in _alerts[:3]:
-            sig_cls, sev_cls = _cls_map.get(pill_cls, ("sig-green", "sig-sev-green"))
-            st.markdown(f'''<div class="sig-card {sig_cls}" style="margin-bottom:.45rem;">
+    # ── Top Signals — 3 cards across full width ────────────
+    st.markdown('<div class="section-title" style="margin-top:.5rem;">Top Signals</div>', unsafe_allow_html=True)
+    _cls_map = {
+        "sb-pill-red":   ("sig-red",   "sig-sev-red"),
+        "sb-pill-amber": ("sig-amber", "sig-sev-amber"),
+        "sb-pill-green": ("sig-green", "sig-sev-green"),
+    }
+    _s1, _s2, _s3 = st.columns(3, gap="small")
+    for col, (sev, pill_cls, title, detail, action) in zip([_s1, _s2, _s3], _alerts[:3]):
+        sig_cls, sev_cls = _cls_map.get(pill_cls, ("sig-green", "sig-sev-green"))
+        with col:
+            st.markdown(f'''<div class="sig-card {sig_cls}">
   <div class="sig-head"><div class="sig-title">{title}</div><div class="sig-sev {sev_cls}">{sev}</div></div>
   <div class="sig-detail">{detail}</div>
   <div class="sig-action"><b>Action:</b> {action}</div>
 </div>''', unsafe_allow_html=True)
+
+    st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+
+    # ── Revenue Forecast — full width ──────────────────────
+    st.markdown('<div class="section-title" style="margin-top:.2rem;">Revenue Forecast</div>', unsafe_allow_html=True)
+    fig_fc, proj_total = plot_forecast(base)
+    if fig_fc:
+        st.markdown(
+            f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
+            f'Projected next 30 days: <b style="color:{TEXT};font-size:.85rem;">{money(proj_total)}</b>'
+            f' &nbsp;·&nbsp; Based on {period_days}-day trend</div>',
+            unsafe_allow_html=True
+        )
+        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+        st.plotly_chart(fig_fc, use_container_width=True, config={"displayModeBar": False})
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.info("Not enough data for forecast. Widen the date range to at least 5 days.")
 
 
 
