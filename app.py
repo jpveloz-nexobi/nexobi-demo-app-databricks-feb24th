@@ -407,7 +407,7 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:rgba(0,192,10
 .cmd-score-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.7rem;font-weight:900;line-height:1;}
 .cmd-score-den{font-size:.65rem;color:#64748B;font-weight:500;}
 .cmd-health-stat{flex:1;min-width:110px;border-left:1px solid rgba(255,255,255,.08);padding-left:22px;}
-.cmd-health-label{font-size:.65rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+.cmd-health-label{font-size:.72rem;font-weight:700;color:#CBD5E1;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
 .cmd-health-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.18rem;font-weight:800;color:#F1F5F9;}
 .cmd-health-sub{font-size:.73rem;color:#94A3B8;margin-top:3px;}
 
