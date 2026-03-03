@@ -572,52 +572,6 @@ div[data-baseweb="base-input"]:focus-within{
 .refresh-wrap .stButton>button:hover{background:#E6F9F0!important;}
 
 
-/* ==========================================================
-   SIDEBAR — CLEAN, COMPACT, SUBTLE
-   ========================================================== */
-
-/* Sidebar internal padding */
-section[data-testid="stSidebar"] .block-container {
-  padding: .5rem .85rem 1rem !important;
-}
-
-/* Remove extra top gap */
-section[data-testid="stSidebar"] > div:first-child {
-  padding-top: 0 !important;
-}
-
-/* Tight widget spacing */
-section[data-testid="stSidebar"] .element-container {
-  margin: 0 0 .18rem 0 !important;
-}
-
-/* Subtle labels */
-section[data-testid="stSidebar"] label {
-  margin-bottom: .1rem !important;
-}
-
-/* Tab text — always legible, green when active */
-.stTabs [data-baseweb="tab"]{color:#0F172A!important;font-weight:500!important;font-size:.88rem!important;}
-.stTabs [data-baseweb="tab"][aria-selected="true"]{color:#00C06B!important;font-weight:700!important;}
-.stTabs [data-baseweb="tab-highlight"]{background:#00C06B!important;}
-.stTabs [data-baseweb="tab-border"]{background:#E2E8F0!important;}
-
-
-/* ===== COMPLIANCE BADGES (header) ===== */
-.comply-badge{border-radius:999px;font-size:.63rem;font-weight:800;padding:2px 9px;letter-spacing:.04em;}
-.comply-hipaa{background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0;}
-.comply-soc2{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;}
-
-/* ===== COMMAND CENTER ===== */
-.cmd-health{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:24px 28px;display:flex;align-items:center;gap:28px;margin-bottom:.75rem;flex-wrap:wrap;}
-.cmd-score-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;width:82px;height:82px;border-radius:50%;border:4px solid #00C06B;flex-shrink:0;}
-.cmd-score-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.7rem;font-weight:900;line-height:1;}
-.cmd-score-den{font-size:.65rem;color:#94A3B8;font-weight:500;}
-.cmd-health-stat{flex:1;min-width:110px;border-left:1px solid #F1F5F9;padding-left:22px;}
-.cmd-health-label{font-size:.65rem;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
-.cmd-health-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.18rem;font-weight:800;color:#0F172A;}
-.cmd-health-sub{font-size:.73rem;color:#64748B;margin-top:3px;}
-
 
 </style>
 """, unsafe_allow_html=True)
@@ -1158,30 +1112,27 @@ def render_command_center():
 </div>
 ''', unsafe_allow_html=True)
 
-    # ── Top Signals (toggleable) — compact pill row ─────────
+    # ── Top Signals (toggleable) — 3-column cards ──────────
     if "signals" in visible_blocks:
-        st.markdown('<div class="section-title" style="margin-top:.5rem;">Signals</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Signals</div>', unsafe_allow_html=True)
         _dot_map = {"sb-pill-red": "#EF4444", "sb-pill-amber": "#F59E0B", "sb-pill-green": "#00C06B"}
-        _rows_html = ""
-        for i, (sev, pill_cls, title, detail, action) in enumerate(_alerts[:3]):
+        _sc1, _sc2, _sc3 = st.columns(3, gap="small")
+        for _col, (sev, pill_cls, title, detail, action) in zip([_sc1, _sc2, _sc3], _alerts[:3]):
             _dc = _dot_map.get(pill_cls, "#00C06B")
-            _border_b = "1px solid rgba(255,255,255,.08)" if i < 2 else "none"
-            _rows_html += (
-                f'<div style="display:flex;align-items:center;gap:12px;padding:9px 0;'
-                f'border-bottom:{_border_b};">'
-                f'<span style="width:7px;height:7px;border-radius:50%;background:{_dc};'
-                f'flex-shrink:0;display:inline-block;"></span>'
-                f'<span style="font-size:.8rem;font-weight:700;color:#E2E8F0;min-width:170px;">{title}</span>'
-                f'<span style="font-size:.76rem;color:#94A3B8;">{detail}</span>'
-                f'</div>'
-            )
-        st.markdown(
-            f'<div style="background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);'
-            f'border-radius:12px;padding:6px 18px;margin-bottom:.5rem;'
-            f'backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);">'
-            f'{_rows_html}</div>',
-            unsafe_allow_html=True
-        )
+            with _col:
+                st.markdown(
+                    f'<div style="background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);'
+                    f'border-left:3px solid {_dc};border-radius:10px;padding:11px 14px;'
+                    f'backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);">'
+                    f'<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">'
+                    f'<span style="width:6px;height:6px;border-radius:50%;background:{_dc};'
+                    f'flex-shrink:0;display:inline-block;"></span>'
+                    f'<span style="font-size:.79rem;font-weight:700;color:#E2E8F0;">{title}</span>'
+                    f'</div>'
+                    f'<div style="font-size:.73rem;color:#94A3B8;line-height:1.45;">{detail}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
 
     # ── Dual Forecasts (toggleable) ────────────────────────
     if "forecasts" in visible_blocks:
