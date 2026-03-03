@@ -1,6 +1,7 @@
 
 
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -1655,6 +1656,59 @@ def render_ai():
     with _scol:
         st.markdown('<div style="height:1.55rem"></div>', unsafe_allow_html=True)
         ask = st.button("↑", use_container_width=True, key="ai_ask", type="primary")
+
+    # ── Typewriter placeholder animation ─────────────────────
+    components.html("""
+<script>
+(function () {
+  var QUESTIONS = [
+    "What was my revenue last month?",
+    "Which treatments have the highest show rate?",
+    "How many new patients did we see this week?",
+    "What\u2019s my ROAS across all campaigns?",
+    "Compare Google vs Facebook performance"
+  ];
+  var qIdx = 0, cIdx = 0, deleting = false;
+  var T_TYPE = 65, T_DEL = 28, T_PAUSE_END = 2200, T_PAUSE_START = 480;
+
+  function getTA() {
+    return window.parent.document.querySelector('[data-testid="stTextArea"] textarea');
+  }
+
+  function tick() {
+    var ta = getTA();
+    /* If textarea not found or user is typing, wait and retry */
+    if (!ta || ta.value.length > 0) { setTimeout(tick, 400); return; }
+
+    var q = QUESTIONS[qIdx];
+
+    if (deleting) {
+      cIdx = Math.max(0, cIdx - 1);
+      ta.setAttribute("placeholder", q.slice(0, cIdx));
+      if (cIdx === 0) {
+        deleting = false;
+        qIdx = (qIdx + 1) % QUESTIONS.length;
+        setTimeout(tick, T_PAUSE_START);
+      } else {
+        setTimeout(tick, T_DEL);
+      }
+    } else {
+      cIdx = Math.min(q.length, cIdx + 1);
+      ta.setAttribute("placeholder", q.slice(0, cIdx));
+      if (cIdx === q.length) {
+        deleting = true;
+        setTimeout(tick, T_PAUSE_END);
+      } else {
+        setTimeout(tick, T_TYPE);
+      }
+    }
+  }
+
+  /* Wait for Streamlit to paint the textarea before starting */
+  setTimeout(tick, 900);
+})();
+</script>
+""", height=0)
 
     # ── Resolve question ─────────────────────────────────────
     run_q = user_q.strip() if ask and user_q.strip() else None
