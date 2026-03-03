@@ -1218,25 +1218,45 @@ def render_command_center():
                 _bk_weekly = (_bk_daily.set_index("date")
                                 .resample("W-MON")["booked"].sum()
                                 .reset_index())
-                _proj_bk = int(_bk_weekly["booked"].mean() * 4) if len(_bk_weekly) else 0
-                st.markdown(
-                    f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
-                    f'Projected: <b style="color:{TEXT};font-size:.85rem;">{fmt(_proj_bk)} appts</b>'
-                    f' &nbsp;·&nbsp; next 30 days</div>',
-                    unsafe_allow_html=True
-                )
                 if len(_bk_weekly) >= 2:
+                    # Linear forecast — 4 future weeks
+                    _x = np.arange(len(_bk_weekly))
+                    _y = _bk_weekly["booked"].values
+                    _coeffs = np.polyfit(_x, _y, 1)
+                    _last_date = _bk_weekly["date"].iloc[-1]
+                    _fut_dates = [_last_date + timedelta(weeks=i+1) for i in range(4)]
+                    _fut_y = np.maximum(0, np.polyval(_coeffs, np.arange(len(_bk_weekly), len(_bk_weekly)+4)))
+                    _proj_bk = int(_fut_y.sum())
+                    st.markdown(
+                        f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
+                        f'Projected: <b style="color:{TEXT};font-size:.85rem;">{fmt(_proj_bk)} appts</b>'
+                        f' &nbsp;·&nbsp; next 30 days</div>',
+                        unsafe_allow_html=True
+                    )
+
                     _fig_bk = go.Figure()
+                    # Actual bars — solid blue
                     _fig_bk.add_trace(go.Bar(
                         x=_bk_weekly["date"],
                         y=_bk_weekly["booked"],
                         marker_color="#3B82F6",
-                        marker_opacity=0.82,
+                        marker_opacity=0.85,
                         marker_line_width=0,
-                        hovertemplate="Week of %{x|%b %d}<br><b>%{y:,.0f} appts</b><extra></extra>",
-                        name="Booked",
+                        hovertemplate="Week of %{x|%b %d}<br><b>%{y:,.0f} appts</b><extra>Actual</extra>",
+                        name="Actual",
                     ))
-                    _fig_bk.update_layout(**base_layout("Booked Appointments — Weekly", 280))
+                    # Forecast bars — lighter, hatched feel via opacity
+                    _fig_bk.add_trace(go.Bar(
+                        x=_fut_dates,
+                        y=_fut_y.tolist(),
+                        marker_color="#93C5FD",
+                        marker_opacity=0.6,
+                        marker_line_color="#3B82F6",
+                        marker_line_width=1.5,
+                        hovertemplate="Week of %{x|%b %d}<br><b>%{y:,.0f} projected</b><extra>Forecast</extra>",
+                        name="Forecast",
+                    ))
+                    _fig_bk.update_layout(**base_layout("Booked Appointments — Weekly + Forecast", 280), barmode="group", bargap=0.18)
                     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
                     st.plotly_chart(_fig_bk, use_container_width=True, config={"displayModeBar": False})
                     st.markdown('</div>', unsafe_allow_html=True)
