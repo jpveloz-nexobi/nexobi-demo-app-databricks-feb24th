@@ -1935,11 +1935,44 @@ section.main{margin-left:0!important;}
   background:#060D1A!important;min-height:100vh!important;
 }
 .block-container{max-width:680px!important;margin:0 auto!important;padding-top:1rem!important;padding-bottom:3rem!important;background:transparent!important;}
-/* Fixed full-page aurora orbs */
+/* ── Aurora orbs + particles + grid ──────────────────────── */
+@keyframes breathe{0%,100%{opacity:.9;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+@keyframes drift1{0%{transform:translate(0,0)}25%{transform:translate(18px,-24px)}50%{transform:translate(-12px,-40px)}75%{transform:translate(22px,-14px)}100%{transform:translate(0,0)}}
+@keyframes drift2{0%{transform:translate(0,0)}33%{transform:translate(-20px,14px)}66%{transform:translate(12px,28px)}100%{transform:translate(0,0)}}
+@keyframes drift3{0%{transform:translate(0,0)}50%{transform:translate(28px,20px)}100%{transform:translate(0,0)}}
+@keyframes drift4{0%{transform:translate(0,0)}40%{transform:translate(-15px,-18px)}80%{transform:translate(10px,8px)}100%{transform:translate(0,0)}}
+@keyframes twinkle{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:.75;transform:scale(1.5)}}
+@keyframes twinkle2{0%,100%{opacity:.15;transform:scale(1)}50%{opacity:.55;transform:scale(1.3)}}
+@keyframes gridShift{0%{background-position:0 0}100%{background-position:48px 48px}}
+@keyframes scanPulse{0%,100%{opacity:0}10%,90%{opacity:1}50%{opacity:.6}}
+
 .ai-page-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
-.ai-page-orbs .op1{position:absolute;width:520px;height:520px;background:rgba(0,192,107,.13);border-radius:50%;filter:blur(90px);top:-140px;right:-80px;animation:floatA 9s ease-in-out infinite;}
-.ai-page-orbs .op2{position:absolute;width:420px;height:420px;background:rgba(14,165,233,.10);border-radius:50%;filter:blur(90px);bottom:-100px;left:-60px;animation:floatB 13s ease-in-out infinite;}
-.ai-page-orbs .op3{position:absolute;width:300px;height:300px;background:rgba(139,92,246,.08);border-radius:50%;filter:blur(80px);top:42%;right:-50px;animation:floatA 17s ease-in-out infinite reverse;}
+
+/* Grid overlay — very subtle green mesh */
+.ai-page-orbs .ai-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(0,192,107,.028) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(0,192,107,.028) 1px,transparent 1px);
+  background-size:48px 48px;
+  animation:gridShift 24s linear infinite;
+}
+
+/* Main aurora orbs */
+.ai-page-orbs .op1{position:absolute;width:560px;height:560px;background:rgba(0,192,107,.14);border-radius:50%;filter:blur(95px);top:-160px;right:-90px;animation:floatA 9s ease-in-out infinite,breathe 7s ease-in-out infinite;}
+.ai-page-orbs .op2{position:absolute;width:440px;height:440px;background:rgba(0,153,82,.09);border-radius:50%;filter:blur(90px);bottom:-110px;left:-70px;animation:floatB 13s ease-in-out infinite,breathe 10s ease-in-out infinite reverse;}
+.ai-page-orbs .op3{position:absolute;width:280px;height:280px;background:rgba(0,192,107,.06);border-radius:50%;filter:blur(75px);top:40%;right:-40px;animation:floatA 17s ease-in-out infinite reverse,breathe 8s ease-in-out infinite;}
+.ai-page-orbs .op4{position:absolute;width:200px;height:200px;background:rgba(0,212,120,.07);border-radius:50%;filter:blur(60px);top:55%;left:10%;animation:floatB 11s ease-in-out infinite,breathe 9s ease-in-out 2s infinite;}
+
+/* Floating particles — tiny glowing dots */
+.ai-page-orbs .pt{position:absolute;border-radius:50%;pointer-events:none;}
+.ai-page-orbs .pt1{width:3px;height:3px;background:rgba(0,192,107,.7);top:18%;left:12%;animation:drift1 9s ease-in-out infinite,twinkle 3.2s ease-in-out infinite;}
+.ai-page-orbs .pt2{width:2px;height:2px;background:rgba(0,192,107,.5);top:35%;left:72%;animation:drift2 11s ease-in-out infinite,twinkle 4.1s ease-in-out .8s infinite;}
+.ai-page-orbs .pt3{width:4px;height:4px;background:rgba(0,212,120,.6);top:62%;left:28%;animation:drift3 8s ease-in-out infinite,twinkle 2.8s ease-in-out 1.5s infinite;}
+.ai-page-orbs .pt4{width:2px;height:2px;background:rgba(0,192,107,.4);top:78%;left:58%;animation:drift4 14s ease-in-out infinite,twinkle2 5s ease-in-out infinite;}
+.ai-page-orbs .pt5{width:3px;height:3px;background:rgba(0,153,82,.55);top:25%;left:85%;animation:drift1 12s ease-in-out 1s infinite,twinkle 3.6s ease-in-out .4s infinite;}
+.ai-page-orbs .pt6{width:2px;height:2px;background:rgba(0,192,107,.45);top:50%;left:5%;animation:drift2 10s ease-in-out .5s infinite,twinkle2 4.4s ease-in-out 2s infinite;}
+.ai-page-orbs .pt7{width:3px;height:3px;background:rgba(0,212,120,.5);top:88%;left:40%;animation:drift3 13s ease-in-out .3s infinite,twinkle 3s ease-in-out 1s infinite;}
+.ai-page-orbs .pt8{width:2px;height:2px;background:rgba(0,192,107,.35);top:10%;left:45%;animation:drift4 9s ease-in-out 2s infinite,twinkle2 5.2s ease-in-out infinite;}
 /* ── Dashboard pill — fixed top-left anchor link ─────── */
 #nexobi-dash-pill{
   position:fixed;top:14px;left:14px;z-index:10000;
@@ -2021,8 +2054,17 @@ html body [data-testid="stBaseButton-primary"]:hover,
 .stMarkdownContainer p{color:rgba(255,255,255,.26)!important;}
 </style>""", unsafe_allow_html=True)
 
-    # ── Full-page aurora orbs ─────────────────────────────────
-    st.markdown('<div class="ai-page-orbs"><div class="op1"></div><div class="op2"></div><div class="op3"></div></div>', unsafe_allow_html=True)
+    # ── Full-page aurora orbs + grid + particles ─────────────
+    st.markdown(
+        '<div class="ai-page-orbs">'
+        '<div class="ai-grid"></div>'
+        '<div class="op1"></div><div class="op2"></div><div class="op3"></div><div class="op4"></div>'
+        '<div class="pt pt1"></div><div class="pt pt2"></div><div class="pt pt3"></div>'
+        '<div class="pt pt4"></div><div class="pt pt5"></div><div class="pt pt6"></div>'
+        '<div class="pt pt7"></div><div class="pt pt8"></div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     # ── Dashboard pill — simple anchor, query-param nav ───────
     st.markdown('<a id="nexobi-dash-pill" href="?_nav=dash" target="_self">← Dashboard</a>', unsafe_allow_html=True)
