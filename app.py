@@ -32,16 +32,16 @@ DATABRICKS_HTTP_PATH = os.getenv("DATABRICKS_HTTP_PATH", "")
 GREEN    = "#00C06B"
 GREEN_DK = "#009952"
 GREEN_LT = "#E6F9F0"
-TEXT     = "#0F172A"
-MUTED    = "#64748B"
-BORDER   = "#E2E8F0"
-BG       = "#F5F7FA"
-PANEL    = "#FFFFFF"
-RED      = "#EF4444"
-BLUE     = "#3B82F6"
-AMBER    = "#F59E0B"
-PURPLE   = "#8B5CF6"
-SOFT     = "#EEF2F7"
+TEXT     = "#E2E8F0"
+MUTED    = "#94A3B8"
+BORDER   = "rgba(255,255,255,.1)"
+BG       = "#060D1A"
+PANEL    = "rgba(255,255,255,.05)"
+RED      = "#F87171"
+BLUE     = "#60A5FA"
+AMBER    = "#FBBF24"
+PURPLE   = "#A78BFA"
+SOFT     = "rgba(255,255,255,.06)"
 
 # Industry benchmarks — healthcare marketing averages
 BENCH_ROAS      = 2.8    # Avg paid media ROAS for healthcare
@@ -274,15 +274,15 @@ _DBX_MODE = (_ACTIVE_MODE == "databricks")
 # ==========================================================
 def base_layout(title: str = "", height: int = 260):
     return dict(
-        paper_bgcolor=PANEL,
-        plot_bgcolor=PANEL,
-        font=dict(family="DM Sans, sans-serif", color=TEXT, size=12),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="DM Sans, sans-serif", color="#CBD5E1", size=12),
         height=height,
         margin=dict(l=8, r=8, t=44 if title else 16, b=8),
-        title=dict(text=f"<b>{title}</b>", font=dict(size=13, color=TEXT), x=0, xanchor="left") if title else None,
-        xaxis=dict(showgrid=False, linecolor=BORDER, tickcolor=BORDER, tickfont=dict(color=MUTED, size=11)),
-        yaxis=dict(gridcolor=SOFT, gridwidth=1, linecolor=BORDER, tickcolor=BORDER, tickfont=dict(color=MUTED, size=11), zerolinecolor=BORDER),
-        legend=dict(bgcolor=PANEL, bordercolor=BORDER, borderwidth=1, font=dict(color=TEXT, size=11)),
+        title=dict(text=f"<b>{title}</b>", font=dict(size=13, color="#E2E8F0"), x=0, xanchor="left") if title else None,
+        xaxis=dict(showgrid=False, linecolor="rgba(255,255,255,.1)", tickcolor="rgba(255,255,255,.1)", tickfont=dict(color="#64748B", size=11)),
+        yaxis=dict(gridcolor="rgba(255,255,255,.06)", gridwidth=1, linecolor="rgba(255,255,255,.1)", tickcolor="rgba(255,255,255,.1)", tickfont=dict(color="#64748B", size=11), zerolinecolor="rgba(255,255,255,.1)"),
+        legend=dict(bgcolor="rgba(0,0,0,0)", bordercolor="rgba(255,255,255,.1)", borderwidth=1, font=dict(color="#94A3B8", size=11)),
         hovermode="x unified",
     )
 
@@ -320,127 +320,118 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
 :root{
-  --nexo-green:#00C06B;--nexo-green-dk:#009952;--nexo-green-lt:#E6F9F0;
-  --nexo-text:#0F172A;--nexo-muted:#64748B;--nexo-border:#E2E8F0;
-  --nexo-bg:#F5F7FA;--nexo-panel:#FFFFFF;--nexo-red:#EF4444;
-  --nexo-blue:#3B82F6;--nexo-amber:#F59E0B;--nexo-purple:#8B5CF6;
-  --nexo-ink:#111827;--nexo-soft:#EEF2F7;
+  --nexo-green:#00C06B;--nexo-green-dk:#009952;--nexo-green-lt:rgba(0,192,107,.12);
+  --nexo-text:#E2E8F0;--nexo-muted:#94A3B8;--nexo-border:rgba(255,255,255,.1);
+  --nexo-bg:#060D1A;--nexo-panel:rgba(255,255,255,.05);--nexo-red:#F87171;
+  --nexo-blue:#60A5FA;--nexo-amber:#FBBF24;--nexo-ink:#E2E8F0;--nexo-soft:rgba(255,255,255,.06);
 }
-html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#0F172A!important;}
-.stApp{background:#F5F7FA!important;}
+html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#E2E8F0!important;}
+.stApp{background:#060D1A!important;}
 #MainMenu,footer,header{visibility:hidden;}
-.block-container{max-width:1480px;padding:.75rem 1.25rem 2.2rem;} /* condensed */
+.block-container{max-width:1480px;padding:.75rem 1.25rem 2.2rem;}
 
-/* ── Sidebar base ─────────────────────────────────── */
-[data-testid="stSidebar"]{background:#FAFBFC!important;border-right:1px solid #EAECF0!important;}
-[data-testid="stSidebar"] *{color:#374151!important;}
+/* ── Sidebar — dark glass ─────────────────────────────── */
+[data-testid="stSidebar"]{background:rgba(6,13,26,.97)!important;border-right:1px solid rgba(255,255,255,.07)!important;}
+[data-testid="stSidebar"] *{color:#94A3B8!important;}
+[data-testid="stSidebar"] label{font-size:.7rem!important;font-weight:500!important;color:#64748B!important;text-transform:none!important;letter-spacing:0!important;}
 
-/* Labels — very subtle */
-[data-testid="stSidebar"] label{font-size:.7rem!important;font-weight:500!important;color:#9CA3AF!important;text-transform:none!important;letter-spacing:0!important;}
-
-/* Inputs / selects — border on wrapper only, never on the raw <input> */
-[data-testid="stSidebar"] [data-baseweb="select"]>div{background:#FFFFFF!important;border:1px solid #E5E7EB!important;border-radius:8px!important;font-size:.8rem!important;box-shadow:none!important;}
-[data-testid="stSidebar"] [data-baseweb="base-input"]{background:#FFFFFF!important;border:1px solid #E5E7EB!important;border-radius:8px!important;box-shadow:none!important;}
-[data-testid="stSidebar"] [data-baseweb="base-input"]:focus-within{border-color:#00C06B!important;box-shadow:0 0 0 2px rgba(0,192,107,.1)!important;}
-[data-testid="stSidebar"] [data-baseweb="input"]{background:#FFFFFF!important;border:1px solid #E5E7EB!important;border-radius:8px!important;box-shadow:none!important;}
-/* Strip inner <input> border so it doesn't double up with the wrapper */
-[data-testid="stSidebar"] input{background:transparent!important;border:none!important;box-shadow:none!important;font-size:.8rem!important;}
+/* Inputs / selects */
+[data-testid="stSidebar"] [data-baseweb="select"]>div{background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:8px!important;font-size:.8rem!important;box-shadow:none!important;color:#CBD5E1!important;}
+[data-testid="stSidebar"] [data-baseweb="base-input"]{background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:8px!important;box-shadow:none!important;}
+[data-testid="stSidebar"] [data-baseweb="base-input"]:focus-within{border-color:#00C06B!important;box-shadow:0 0 0 2px rgba(0,192,107,.15)!important;}
+[data-testid="stSidebar"] [data-baseweb="input"]{background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:8px!important;box-shadow:none!important;}
+[data-testid="stSidebar"] input{background:transparent!important;border:none!important;box-shadow:none!important;font-size:.8rem!important;color:#E2E8F0!important;}
 [data-testid="stSidebar"] div[data-testid="stDateInput"] input{font-size:.8rem!important;}
-[data-testid="stSidebar"] span[data-baseweb="tag"]{background:#F0FDF4!important;border:1px solid #BBF7D0!important;color:#15803D!important;font-size:.72rem!important;}
+[data-testid="stSidebar"] span[data-baseweb="tag"]{background:rgba(0,192,107,.15)!important;border:1px solid rgba(0,192,107,.3)!important;color:#00C06B!important;font-size:.72rem!important;}
 
-/* Nav radio — pill style */
+/* Nav radio */
 [data-testid="stSidebar"] .stRadio>div{gap:.15rem!important;flex-direction:column!important;}
-[data-testid="stSidebar"] .stRadio label{background:transparent!important;border:none!important;border-radius:8px!important;padding:6px 10px!important;font-size:.83rem!important;font-weight:500!important;color:#6B7280!important;text-transform:none!important;letter-spacing:0!important;}
-[data-testid="stSidebar"] .stRadio label:has(input:checked){background:#F0FDF4!important;color:#15803D!important;font-weight:600!important;}
-[data-testid="stSidebar"] .stRadio label:hover{background:#F9FAFB!important;color:#374151!important;}
+[data-testid="stSidebar"] .stRadio label{background:transparent!important;border:none!important;border-radius:8px!important;padding:6px 10px!important;font-size:.83rem!important;font-weight:500!important;color:#64748B!important;text-transform:none!important;letter-spacing:0!important;}
+[data-testid="stSidebar"] .stRadio label:has(input:checked){background:rgba(0,192,107,.12)!important;color:#00C06B!important;font-weight:600!important;}
+[data-testid="stSidebar"] .stRadio label:hover{background:rgba(255,255,255,.05)!important;color:#CBD5E1!important;}
 
-/* Checkbox labels — lighter weight */
-[data-testid="stSidebar"] .stCheckbox label{font-size:.78rem!important;font-weight:400!important;color:#6B7280!important;}
-[data-testid="stSidebar"] .stCheckbox label:has(input:checked){color:#111827!important;font-weight:500!important;}
+/* Checkboxes */
+[data-testid="stSidebar"] .stCheckbox label{font-size:.78rem!important;font-weight:400!important;color:#64748B!important;}
+[data-testid="stSidebar"] .stCheckbox label:has(input:checked){color:#CBD5E1!important;font-weight:500!important;}
 
-.nexo-header{display:flex;align-items:center;justify-content:space-between;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:16px;padding:12px 18px;margin-bottom:.9rem;box-shadow:0 2px 12px rgba(0,0,0,.05);}
-.nexo-brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:900;color:#0F172A;}
+/* ── Header ───────────────────────────────────────────── */
+.nexo-header{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px 18px;margin-bottom:.9rem;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.nexo-brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:900;color:#F1F5F9;}
 .nexo-brand-sub{font-size:.8rem;color:#64748B;}
-.nexo-badge{background:#E6F9F0;color:#009952;border:1px solid #00C06B;border-radius:999px;font-size:.72rem;font-weight:900;padding:4px 14px;}
 
-.section-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;font-weight:900;color:#009952;text-transform:uppercase;letter-spacing:.12em;margin:1.4rem 0 .55rem;display:flex;align-items:center;gap:8px;}
+/* ── Section titles ───────────────────────────────────── */
+.section-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;font-weight:900;color:#00C06B;text-transform:uppercase;letter-spacing:.12em;margin:1.4rem 0 .55rem;display:flex;align-items:center;gap:8px;}
 .section-title::before{content:'';display:block;width:3px;height:16px;background:#00C06B;border-radius:4px;}
 
-.metric-card{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04);}
-.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#00C06B,#009952);}
+/* ── Cards — frosted glass ────────────────────────────── */
+.metric-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#00C06B,#009952);}
 .metric-label{font-size:.68rem;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
-.metric-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.55rem;font-weight:900;color:#0F172A;line-height:1.1;margin-bottom:4px;}
-.metric-meta{font-size:.78rem;color:#64748B;}
+.metric-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.55rem;font-weight:900;color:#F1F5F9;line-height:1.1;margin-bottom:4px;}
+.metric-meta{font-size:.78rem;color:#94A3B8;}
 
-.chart-card{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:12px 16px 6px;margin-bottom:.65rem;}
+.chart-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 16px 6px;margin-bottom:.65rem;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 
-/* Force LIGHT dataframe look */
-[data-testid="stDataFrame"]{background:#FFFFFF!important;border:1px solid #E2E8F0!important;border-radius:14px!important;}
-[data-testid="stDataFrame"] *{color:#0F172A!important;}
-[data-testid="stDataFrame"] div[role="grid"]{background:#FFFFFF!important;}
-[data-testid="stDataFrame"] div[role="row"]{background:#FFFFFF!important;}
-[data-testid="stDataFrame"] div[role="columnheader"]{background:#F5F7FA!important;color:#64748B!important;font-weight:900!important;}
-[data-testid="stDataFrame"] div[role="gridcell"]{background:#FFFFFF!important;}
+/* ── DataFrames — dark ────────────────────────────────── */
+[data-testid="stDataFrame"]{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:14px!important;}
+[data-testid="stDataFrame"] *{color:#CBD5E1!important;}
+[data-testid="stDataFrame"] div[role="grid"]{background:transparent!important;}
+[data-testid="stDataFrame"] div[role="row"]{background:transparent!important;}
+[data-testid="stDataFrame"] div[role="columnheader"]{background:rgba(255,255,255,.06)!important;color:#94A3B8!important;font-weight:900!important;}
+[data-testid="stDataFrame"] div[role="gridcell"]{background:transparent!important;}
 
-/* Download buttons — force white label text (robust selectors) */
-[data-testid="stDownloadButton"] button,
-[data-testid="stDownloadButton"] button * ,
-.stDownloadButton button,
-.stDownloadButton button * {
-  color: #FFFFFF !important;
-  fill: #FFFFFF !important;
-}
+/* ── Buttons ──────────────────────────────────────────── */
+[data-testid="stDownloadButton"] button,[data-testid="stDownloadButton"] button *,.stDownloadButton button,.stDownloadButton button *{color:#FFFFFF!important;fill:#FFFFFF!important;}
+[data-testid="stDownloadButton"] button,.stDownloadButton button{background:rgba(255,255,255,.1)!important;border:1px solid rgba(255,255,255,.15)!important;border-radius:12px!important;font-weight:700!important;}
 
-/* Keep your dark background too (optional) */
-[data-testid="stDownloadButton"] button,
-.stDownloadButton button {
-  background: #2F3241 !important;
-  border: none !important;
-  border-radius: 12px !important;
-  font-weight: 900 !important;
-}
-
-/* Buttons — main content (neutral white base) */
-.stButton>button{background:#FFFFFF!important;color:#0F172A!important;border:1.5px solid #E2E8F0!important;border-radius:12px!important;font-weight:600!important;padding:.6rem 1rem!important;box-shadow:0 1px 3px rgba(0,0,0,.04)!important;transition:all .14s!important;}
-.stButton>button:hover{background:#F8FAFC!important;border-color:#CBD5E1!important;}
-.stButton>button:focus{outline:none!important;box-shadow:0 0 0 3px rgba(0,192,107,.18)!important;}
-/* Primary action buttons (Send, etc.) — explicitly green */
-[data-testid="baseButton-primary"]{background:#00C06B!important;color:#fff!important;border:none!important;box-shadow:0 2px 8px rgba(0,192,107,.28)!important;}
+.stButton>button{background:rgba(255,255,255,.07)!important;color:#CBD5E1!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:12px!important;font-weight:600!important;padding:.6rem 1rem!important;box-shadow:none!important;transition:all .14s!important;}
+.stButton>button:hover{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.2)!important;color:#F1F5F9!important;}
+.stButton>button:focus{outline:none!important;box-shadow:0 0 0 3px rgba(0,192,107,.2)!important;}
+[data-testid="baseButton-primary"]{background:#00C06B!important;color:#fff!important;border:none!important;box-shadow:0 2px 12px rgba(0,192,107,.35)!important;}
 [data-testid="baseButton-primary"]:hover{background:#009952!important;}
 
-/* Sidebar buttons — muted ghost */
-section[data-testid="stSidebar"] .stButton>button{background:transparent!important;color:#9CA3AF!important;border:1px solid #E5E7EB!important;border-radius:8px!important;font-weight:400!important;font-size:.78rem!important;padding:.35rem .75rem!important;box-shadow:none!important;}
-section[data-testid="stSidebar"] .stButton>button:hover{background:#F0FDF4!important;border-color:#00C06B!important;color:#15803D!important;}
+section[data-testid="stSidebar"] .stButton>button{background:transparent!important;color:#64748B!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:8px!important;font-weight:400!important;font-size:.78rem!important;padding:.35rem .75rem!important;box-shadow:none!important;}
+section[data-testid="stSidebar"] .stButton>button:hover{background:rgba(0,192,107,.1)!important;border-color:rgba(0,192,107,.3)!important;color:#00C06B!important;}
 
-/* Reset filters — extra subtle, text-link feel */
-.sb-reset-wrap .stButton>button{background:transparent!important;color:#94A3B8!important;border:none!important;font-size:.72rem!important;font-weight:400!important;padding:.2rem .5rem!important;text-decoration:underline!important;text-underline-offset:3px!important;box-shadow:none!important;}
-.sb-reset-wrap .stButton>button:hover{color:#64748B!important;background:transparent!important;}
+.sb-reset-wrap .stButton>button{background:transparent!important;color:#475569!important;border:none!important;font-size:.72rem!important;font-weight:400!important;padding:.2rem .5rem!important;text-decoration:underline!important;text-underline-offset:3px!important;box-shadow:none!important;}
+.sb-reset-wrap .stButton>button:hover{color:#94A3B8!important;background:transparent!important;}
 
-/* ---- Expander Container (Closed + Open) ---- */
-[data-testid="stExpander"] {
-    background: #FFFFFF !important;
-    border: 1px solid rgba(15,23,42,.08) !important;
-    border-radius: 14px !important;
-    box-shadow: none !important;
-    overflow: hidden !important;
-}
+/* ── Expander — frosted ───────────────────────────────── */
+[data-testid="stExpander"]{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:14px!important;box-shadow:none!important;overflow:hidden!important;backdrop-filter:blur(10px)!important;}
+[data-testid="stExpander"] summary{background:transparent!important;font-weight:600!important;color:#CBD5E1!important;}
+[data-testid="stExpander"]>div,[data-testid="stExpander"] div[role="region"]{background:transparent!important;}
 
-/* ---- Expander Header ---- */
-[data-testid="stExpander"] summary {
-    background: #FFFFFF !important;
-    font-weight: 600 !important;
-    color: #0F172A !important;
-}
+/* ── Command center ───────────────────────────────────── */
+.cmd-health{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:24px 28px;display:flex;align-items:center;gap:28px;margin-bottom:.75rem;flex-wrap:wrap;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.cmd-score-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;width:82px;height:82px;border-radius:50%;border:4px solid #00C06B;flex-shrink:0;}
+.cmd-score-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.7rem;font-weight:900;line-height:1;}
+.cmd-score-den{font-size:.65rem;color:#64748B;font-weight:500;}
+.cmd-health-stat{flex:1;min-width:110px;border-left:1px solid rgba(255,255,255,.08);padding-left:22px;}
+.cmd-health-label{font-size:.65rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+.cmd-health-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.18rem;font-weight:800;color:#F1F5F9;}
+.cmd-health-sub{font-size:.73rem;color:#94A3B8;margin-top:3px;}
 
-/* ---- Expander Body When Open ---- */
-[data-testid="stExpander"] > div {
-    background: #FFFFFF !important;
-}
+/* ── Tabs ─────────────────────────────────────────────── */
+.stTabs [data-baseweb="tab"]{color:#64748B!important;font-weight:500!important;font-size:.88rem!important;}
+.stTabs [data-baseweb="tab"][aria-selected="true"]{color:#00C06B!important;font-weight:700!important;}
+.stTabs [data-baseweb="tab-highlight"]{background:#00C06B!important;}
+.stTabs [data-baseweb="tab-border"]{background:rgba(255,255,255,.1)!important;}
 
-/* Remove dark gradient when open */
-[data-testid="stExpander"] div[role="region"] {
-    background: #FFFFFF !important;
-}
+/* ── Sidebar layout ───────────────────────────────────── */
+section[data-testid="stSidebar"] .block-container{padding:.5rem .85rem 1rem!important;}
+section[data-testid="stSidebar"]>div:first-child{padding-top:0!important;}
+section[data-testid="stSidebar"] .element-container{margin:0 0 .18rem 0!important;}
+section[data-testid="stSidebar"] label{margin-bottom:.1rem!important;}
+
+/* ── Refresh button ───────────────────────────────────── */
+.refresh-wrap .stButton>button{background:transparent!important;border:1px solid rgba(0,192,107,.4)!important;border-radius:8px!important;color:#00C06B!important;font-size:.75rem!important;font-weight:500!important;padding:3px 10px!important;min-height:0!important;height:26px!important;width:auto!important;}
+.refresh-wrap .stButton>button:hover{background:rgba(0,192,107,.1)!important;}
+
+/* ── Dashboard aurora background ─────────────────────── */
+.dash-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.dash-orbs .do1{position:absolute;width:600px;height:600px;background:rgba(0,192,107,.09);border-radius:50%;filter:blur(110px);top:-180px;right:-100px;animation:floatA 11s ease-in-out infinite;}
+.dash-orbs .do2{position:absolute;width:480px;height:480px;background:rgba(0,153,82,.06);border-radius:50%;filter:blur(100px);bottom:-120px;left:-80px;animation:floatB 15s ease-in-out infinite;}
+.dash-orbs .do3{position:absolute;width:320px;height:320px;background:rgba(0,192,107,.05);border-radius:50%;filter:blur(80px);top:45%;left:30%;animation:floatA 19s ease-in-out infinite reverse;}
 
 /* === AI AGENT — ultra-modern redesign === */
 
@@ -1911,6 +1902,7 @@ def render_ai():
 # ==========================================================
 
 if page == "Dashboard":
+    st.markdown('<div class="dash-orbs"><div class="do1"></div><div class="do2"></div><div class="do3"></div></div>', unsafe_allow_html=True)
     render_command_center()
     if practice_mode:
         if "treatments" in visible_blocks:
