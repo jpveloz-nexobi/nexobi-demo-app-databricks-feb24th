@@ -709,22 +709,29 @@ with st.sidebar:
     # --------------------------------------------------
     # State init (kept here for stability)
     # --------------------------------------------------
+    # Default date range = previous calendar month (clamped to data bounds)
+    _today        = date.today()
+    _pm_end       = _today.replace(day=1) - timedelta(days=1)
+    _pm_start     = _pm_end.replace(day=1)
+    _default_start = max(_pm_start, pd.to_datetime(MIN_DATE).date())
+    _default_end   = min(_pm_end,   pd.to_datetime(MAX_DATE).date())
+
     # --------------------------------------------------
     # Reset flag — must be checked BEFORE widgets render
     # so Streamlit allows overwriting widget-bound keys
     # --------------------------------------------------
     if st.session_state.pop("_reset_filters", False):
-        st.session_state["f_start"]   = MIN_DATE
-        st.session_state["f_end"]     = MAX_DATE
+        st.session_state["f_start"]   = _default_start
+        st.session_state["f_end"]     = _default_end
         st.session_state["f_sources"] = ["All"]
         st.session_state["f_channel"] = "All"
         st.session_state["f_campaign"] = "All"
 
     # Init filter keys only if not already set
     if "f_start" not in st.session_state:
-        st.session_state["f_start"] = MIN_DATE
+        st.session_state["f_start"] = _default_start
     if "f_end" not in st.session_state:
-        st.session_state["f_end"] = MAX_DATE
+        st.session_state["f_end"] = _default_end
     if "f_sources" not in st.session_state:
         st.session_state["f_sources"] = ["All"]
     if "f_channel" not in st.session_state:
