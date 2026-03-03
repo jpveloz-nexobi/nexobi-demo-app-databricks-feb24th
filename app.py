@@ -1833,11 +1833,14 @@ section.main{margin-left:0!important;}
   transition:all .18s;
 }
 #nexobi-dash-pill:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.22);}
-/* ── Textarea — white bg (Streamlit enforced), DARK text ─── */
+/* ── Textarea — white bg, DARK text, visible cursor ─────── */
 html body textarea,
 [data-testid="stTextArea"] textarea,
-.stTextArea textarea{
-  color:#0F172A!important;
+.stTextArea textarea,
+.stApp textarea{
+  color:#000000!important;
+  -webkit-text-fill-color:#000000!important;
+  caret-color:#00C06B!important;
   background:#ffffff!important;
   border:1.5px solid rgba(0,192,107,.35)!important;
   border-radius:16px!important;
@@ -1845,11 +1848,12 @@ html body textarea,
   line-height:1.5!important;resize:none!important;box-shadow:none!important;
 }
 html body textarea::placeholder,
-[data-testid="stTextArea"] textarea::placeholder{color:#94A3B8!important;}
+[data-testid="stTextArea"] textarea::placeholder{color:#94A3B8!important;-webkit-text-fill-color:#94A3B8!important;}
 html body textarea:focus,
 [data-testid="stTextArea"] textarea:focus{
   border-color:#00C06B!important;
   box-shadow:0 0 0 3px rgba(0,192,107,.12)!important;
+  caret-color:#00C06B!important;
 }
 [data-testid="stTextArea"]>div,[data-testid="stTextArea"]>div>div{border:none!important;background:transparent!important;}
 /* ── Secondary buttons — frosted on dark bg ─────────────── */
