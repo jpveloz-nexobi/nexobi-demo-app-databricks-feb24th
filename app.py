@@ -34,7 +34,7 @@ GREEN_LT = "#E6F9F0"
 TEXT     = "#0F172A"
 MUTED    = "#64748B"
 BORDER   = "#E2E8F0"
-BG       = "#FFFFFF"
+BG       = "#F5F7FA"
 PANEL    = "#FFFFFF"
 RED      = "#EF4444"
 BLUE     = "#3B82F6"
@@ -217,15 +217,7 @@ def load_data_databricks(catalog: str, schema: str, table: str) -> pd.DataFrame:
     return _normalize_df(df)
 
 
-@st.cache_data(ttl=3600)
-def _load_csv_fallback() -> pd.DataFrame:
-    """Local dev fallback — reads data.csv from project root."""
-    _path = os.path.join(os.path.dirname(__file__), "data.csv")
-    df = pd.read_csv(_path, parse_dates=["date"])
-    return _normalize_df(df)
-
-
-# ---- Load data ----
+# ---- Load data from Databricks ----
 # Handle query-param navigation from AI Agent fixed "← Dashboard" button
 if st.query_params.get("_nav") == "dash":
     st.query_params.clear()
@@ -233,12 +225,9 @@ if st.query_params.get("_nav") == "dash":
 
 try:
     DATA = load_data_databricks(DBX_CATALOG, DBX_SCHEMA, DBX_TABLE)
-except Exception:
-    try:
-        DATA = _load_csv_fallback()
-    except Exception as _csv_err:
-        st.error(f"⚠️ No data source available. Databricks unreachable and local CSV failed: `{_csv_err}`")
-        st.stop()
+except Exception as _dbx_err:
+    st.error(f"⚠️ Could not connect to Databricks: `{_dbx_err}`")
+    st.stop()
 
 MIN_DATE = DATA["date"].min()
 MAX_DATE = DATA["date"].max()
@@ -296,12 +285,12 @@ st.markdown("""
 :root{
   --nexo-green:#00C06B;--nexo-green-dk:#009952;--nexo-green-lt:#E6F9F0;
   --nexo-text:#0F172A;--nexo-muted:#64748B;--nexo-border:#E2E8F0;
-  --nexo-bg:#FFFFFF;--nexo-panel:#FFFFFF;--nexo-red:#EF4444;
+  --nexo-bg:#F5F7FA;--nexo-panel:#FFFFFF;--nexo-red:#EF4444;
   --nexo-blue:#3B82F6;--nexo-amber:#F59E0B;--nexo-purple:#8B5CF6;
   --nexo-ink:#111827;--nexo-soft:#EEF2F7;
 }
 html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#0F172A!important;}
-.stApp{background:#FFFFFF!important;}
+.stApp{background:#F5F7FA!important;}
 #MainMenu,footer,header{visibility:hidden;}
 .block-container{max-width:1480px;padding:.75rem 1.25rem 2.2rem;} /* condensed */
 
@@ -328,7 +317,7 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#0F172
 .section-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;font-weight:900;color:#009952;text-transform:uppercase;letter-spacing:.12em;margin:.9rem 0 .55rem;display:flex;align-items:center;gap:8px;}
 .section-title::before{content:'';display:block;width:3px;height:16px;background:#00C06B;border-radius:4px;}
 
-.metric-card{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.07);}
+.metric-card{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04);}
 .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#00C06B,#009952);}
 .metric-label{font-size:.68rem;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
 .metric-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.55rem;font-weight:900;color:#0F172A;line-height:1.1;margin-bottom:4px;}
@@ -1665,7 +1654,7 @@ elif page == "AI Agent":
 header{display:none!important;}footer{display:none!important;}
 .nexo-header{display:none!important;}
 section.main{margin-left:0!important;}
-.stApp{background:#FFFFFF!important;}
+.stApp{background:#F5F7FA!important;}
 .block-container{max-width:680px!important;margin:0 auto!important;padding-top:1.5rem!important;padding-bottom:3rem!important;}
 /* Dashboard back pill */
 #nexobi-dash-pill{
