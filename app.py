@@ -470,6 +470,41 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:#E6F9F0!impor
 }
 /* remove per-chip colour overrides — all chips same style */
 
+/* ── Insight cards — glass data cards (empty state) ─────── */
+[data-testid="stMarkdownContainer"]:has(#ai-insight-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"] .stButton>button{
+  background:rgba(255,255,255,.07)!important;
+  border:1px solid rgba(255,255,255,.14)!important;
+  backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;
+  border-radius:16px!important;padding:1.1rem 1rem .9rem!important;
+  min-height:110px!important;height:auto!important;
+  text-align:left!important;white-space:pre-wrap!important;
+  font-size:.82rem!important;font-weight:500!important;
+  color:rgba(255,255,255,.82)!important;
+  box-shadow:0 4px 24px rgba(0,0,0,.15)!important;
+  transition:all .18s ease!important;width:100%!important;line-height:1.65!important;
+}
+[data-testid="stMarkdownContainer"]:has(#ai-insight-marker)+[data-testid="stHorizontalBlock"] [data-testid="stColumn"] .stButton>button:hover{
+  background:rgba(255,255,255,.13)!important;
+  border-color:rgba(0,192,107,.45)!important;
+  transform:translateY(-3px)!important;
+  box-shadow:0 8px 32px rgba(0,0,0,.22)!important;
+}
+/* ── Follow-up suggestion chips ──────────────────────────── */
+[data-testid="stMarkdownContainer"]:has(.ai-followup-marker)+[data-testid="stHorizontalBlock"] .stButton>button{
+  background:rgba(0,192,107,.08)!important;
+  border:1px solid rgba(0,192,107,.22)!important;
+  border-radius:999px!important;padding:.35rem 1rem!important;
+  min-height:0!important;height:auto!important;
+  font-size:.75rem!important;font-weight:500!important;
+  color:rgba(255,255,255,.65)!important;
+  box-shadow:none!important;transition:all .15s!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;width:100%!important;
+}
+[data-testid="stMarkdownContainer"]:has(.ai-followup-marker)+[data-testid="stHorizontalBlock"] .stButton>button:hover{
+  background:rgba(0,192,107,.18)!important;border-color:rgba(0,192,107,.5)!important;
+  color:#ffffff!important;transform:translateY(-1px)!important;
+}
+
 /* ── "New chat" button ───────────────────────────────────── */
 [data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button{background:transparent!important;border:1px solid #E2E8F0!important;border-radius:8px!important;color:#64748B!important;font-size:.74rem!important;font-weight:400!important;padding:.2rem .65rem!important;height:auto!important;min-height:0!important;box-shadow:none!important;}
 [data-testid="stColumn"]:has(#ai-newchat-marker) .stButton>button:hover{border-color:#CBD5E1!important;color:#475569!important;background:#F8FAFC!important;}
@@ -1623,6 +1658,97 @@ def _is_visual_question(q: str) -> bool:
         "breakdown", "roas by", "spend by", "revenue by", "leads by",
         "last 30", "mtd", "traffic",
     ])
+
+
+def _ai_insights() -> list:
+    """Compute 3 live data insight cards from the loaded dataset."""
+    df = DATA.copy()
+    df["date"] = pd.to_datetime(df["date"])
+    today  = pd.to_datetime(MAX_DATE)
+    cutoff = today - pd.Timedelta(days=30)
+    prior  = cutoff - pd.Timedelta(days=30)
+    cur    = df[df["date"] >= cutoff]
+    prev   = df[(df["date"] >= prior) & (df["date"] < cutoff)]
+
+    def _s(frame, col):
+        return float(frame[col].sum()) if (col in frame.columns and len(frame) > 0) else 0.0
+
+    def _chg(c, p):
+        return (c - p) / abs(p) * 100 if p and p != 0 else None
+
+    # ── Insight 1: Revenue trend ─────────────────────────────
+    rev_c = _s(cur, "total_revenue");  rev_p = _s(prev, "total_revenue")
+    rev_d = _chg(rev_c, rev_p)
+    rev_sym  = "▲" if (rev_d or 0) >= 0 else "▼"
+    rev_txt  = f"{rev_sym} {abs(rev_d):.1f}% vs prior period" if rev_d is not None else "vs prior period"
+
+    # ── Insight 2: Show rate vs benchmark ───────────────────
+    att_c = _s(cur, "attended");  bk_c = _s(cur, "booked")
+    show_c   = att_c / max(bk_c, 1) * 100
+    bench_d  = show_c - BENCH_SHOW_RATE
+    bench_sym = "▲" if bench_d >= 0 else "▼"
+    bench_txt = f"{bench_sym} {abs(bench_d):.1f}% vs {BENCH_SHOW_RATE:.0f}% benchmark"
+
+    # ── Insight 3: Top source by ROAS ───────────────────────
+    by_src = (
+        cur.groupby("data_source")
+           .apply(lambda g: pd.Series({
+               "rev":  g["total_revenue"].sum(),
+               "cost": g["total_cost"].sum()
+           }))
+           .reset_index()
+    )
+    by_src["roas"] = by_src["rev"] / by_src["cost"].clip(lower=0.01)
+    top = by_src.sort_values("roas", ascending=False).iloc[0]
+
+    return [
+        {
+            "icon": "💰", "value": f"${rev_c:,.0f}",
+            "label": "Revenue · last 30 days", "delta": rev_txt,
+            "delta_pos": (rev_d or 0) >= 0,
+            "question": "What drove my revenue last month?"
+        },
+        {
+            "icon": "📅", "value": f"{show_c:.1f}%",
+            "label": "Appointment show rate", "delta": bench_txt,
+            "delta_pos": bench_d >= 0,
+            "question": "Which treatments have the highest show rate?"
+        },
+        {
+            "icon": "🚀", "value": f"{top['roas']:.1f}×",
+            "label": f"Best ROAS · {top['data_source']}",
+            "delta": f"${top['rev']:,.0f} revenue generated",
+            "delta_pos": True,
+            "question": f"Break down {top['data_source']} performance"
+        },
+    ]
+
+
+def _followup_chips(q: str) -> list:
+    """Return up to 3 contextual follow-up questions based on what was asked."""
+    q_low = q.lower()
+    pool  = []
+    if any(x in q_low for x in ["revenue", "sales", "income", "money"]):
+        pool += ["Break down revenue by source", "Revenue trend last 90 days", "Best revenue day this month?"]
+    if any(x in q_low for x in ["roas", "return on ad", "spend", "cost per"]):
+        pool += ["Compare ROAS: Google vs Facebook", "Which campaign has the best ROI?"]
+    if any(x in q_low for x in ["show rate", "attendance", "attended", "no-show"]):
+        pool += ["Which treatment has the best show rate?", "Compare show rate by source"]
+    if any(x in q_low for x in ["patient", "new patient", "lead"]):
+        pool += ["What's my cost per new patient?", "New patient trend last 90 days"]
+    if any(x in q_low for x in ["google", "facebook", "instagram", "meta", "source", "campaign"]):
+        pool += ["Which campaign drove the most revenue?", "Top 5 campaigns by ROAS"]
+    if any(x in q_low for x in ["treatment", "procedure", "service"]):
+        pool += ["Which treatment drives the most revenue?", "Show rate by treatment"]
+    if not pool:
+        pool = ["What drove revenue this month?", "Which source has the best ROAS?", "Show my top campaigns"]
+    seen, chips = set(), []
+    for c in pool:
+        if c not in seen:
+            seen.add(c); chips.append(c)
+        if len(chips) == 3:
+            break
+    return chips
 
 
 def render_ai():
