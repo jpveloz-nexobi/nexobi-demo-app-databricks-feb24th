@@ -1021,11 +1021,11 @@ def compute_health_score(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> int:
         show      = safe_div(att, book) * 100
         rev_growth = safe_div(rev - p_rev, max(abs(p_rev), 0.01)) * 100
 
-        # 25 pts each
-        roas_score = min(25, max(0, (roas / BENCH_ROAS) * 25))
+        # weights: ROAS 35 · CPL 25 · Revenue Growth 30 · Show Rate 10
+        roas_score = min(35, max(0, (roas / BENCH_ROAS) * 35))
         cpl_score  = min(25, max(0, (BENCH_CPL / max(cpl, 1)) * 25)) if cpl > 0 else 10
-        show_score = min(25, max(0, (show / BENCH_SHOW_RATE) * 25))
-        rev_score  = min(25, max(0, 12.5 + rev_growth * 0.65))
+        show_score = min(10, max(0, (show / BENCH_SHOW_RATE) * 10))
+        rev_score  = min(30, max(0, 15.0 + rev_growth * 0.78))
 
         return min(100, int(roas_score + cpl_score + show_score + rev_score))
     except Exception:
@@ -1191,7 +1191,7 @@ def render_command_center():
   </div>
   <div style="flex:2;min-width:160px;">
     <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:800;color:#0F172A;margin-bottom:2px;">
-      Platform Health &nbsp;<span style="color:{sc_color};font-size:.8rem;font-weight:700;">{sc_label}</span>
+      Intelligence Score &nbsp;<span style="color:{sc_color};font-size:.8rem;font-weight:700;">{sc_label}</span>
     </div>
     <div style="font-size:.74rem;color:#64748B;">{period_label} &nbsp;·&nbsp; {period_days}-day window &nbsp;·&nbsp; {len(base):,} records</div>
   </div>
