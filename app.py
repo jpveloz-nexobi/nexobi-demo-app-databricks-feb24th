@@ -1741,6 +1741,22 @@ def render_ai():
   }
   setTimeout(tick, 900);
 })();
+
+/* ── Enter to send, Shift+Enter for new line ── */
+(function () {
+  function bindEnter() {
+    var ta = window.parent.document.querySelector('[data-testid="stTextArea"] textarea');
+    if (!ta) { setTimeout(bindEnter, 400); return; }
+    ta.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        var btn = window.parent.document.querySelector('[data-testid="stBaseButton-primary"]');
+        if (btn) btn.click();
+      }
+    });
+  }
+  setTimeout(bindEnter, 900);
+})();
 </script>
 """, height=0)
 
