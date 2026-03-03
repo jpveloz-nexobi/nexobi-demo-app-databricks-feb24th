@@ -338,12 +338,13 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#0F172
 /* Labels — very subtle */
 [data-testid="stSidebar"] label{font-size:.7rem!important;font-weight:500!important;color:#9CA3AF!important;text-transform:none!important;letter-spacing:0!important;}
 
-/* Inputs / selects — clean, borderless feel */
+/* Inputs / selects — border on wrapper only, never on the raw <input> */
 [data-testid="stSidebar"] [data-baseweb="select"]>div{background:#FFFFFF!important;border:1px solid #E5E7EB!important;border-radius:8px!important;font-size:.8rem!important;box-shadow:none!important;}
-[data-testid="stSidebar"] input{background:#FFFFFF!important;border:1px solid #E5E7EB!important;border-radius:8px!important;font-size:.8rem!important;}
 [data-testid="stSidebar"] [data-baseweb="base-input"]{background:#FFFFFF!important;border:1px solid #E5E7EB!important;border-radius:8px!important;box-shadow:none!important;}
 [data-testid="stSidebar"] [data-baseweb="base-input"]:focus-within{border-color:#00C06B!important;box-shadow:0 0 0 2px rgba(0,192,107,.1)!important;}
 [data-testid="stSidebar"] [data-baseweb="input"]{background:#FFFFFF!important;border:1px solid #E5E7EB!important;border-radius:8px!important;box-shadow:none!important;}
+/* Strip inner <input> border so it doesn't double up with the wrapper */
+[data-testid="stSidebar"] input{background:transparent!important;border:none!important;box-shadow:none!important;font-size:.8rem!important;}
 [data-testid="stSidebar"] div[data-testid="stDateInput"] input{font-size:.8rem!important;}
 [data-testid="stSidebar"] span[data-baseweb="tag"]{background:#F0FDF4!important;border:1px solid #BBF7D0!important;color:#15803D!important;font-size:.72rem!important;}
 
@@ -643,11 +644,6 @@ st.markdown(f'''
       <div class="nexo-brand-name">NexoBI</div>
       <div class="nexo-brand-sub">Attribution Intelligence · Last data: {max_d}</div>
     </div>
-  </div>
-  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-    <span class="nexo-badge">Healthcare Analytics</span>
-    <span class="comply-badge comply-hipaa">HIPAA</span>
-    <span class="comply-badge comply-soc2">SOC 2</span>
   </div>
 </div>
 ''', unsafe_allow_html=True)
@@ -1098,7 +1094,7 @@ def render_command_center():
     period_label = f"{start.strftime('%b %d')} – {end.strftime('%b %d, %Y')}"
 
     # ── Section title ─────────────────────────────────────
-    st.markdown('<div class="section-title">Command Center</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Intelligence Score</div>', unsafe_allow_html=True)
 
     # ── Health banner (toggleable) ────────────────────────
     if "banner" in visible_blocks:
@@ -1162,8 +1158,8 @@ def render_command_center():
     <div class="cmd-score-den">/100</div>
   </div>
   <div style="flex:2;min-width:160px;">
-    <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:800;color:#0F172A;margin-bottom:2px;">
-      Intelligence Score &nbsp;<span style="color:{sc_color};font-size:.8rem;font-weight:700;">{sc_label}</span>
+    <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:800;margin-bottom:2px;">
+      <span style="color:{sc_color};">{sc_label}</span>
     </div>
     <div style="font-size:.74rem;color:#64748B;">{period_label} &nbsp;·&nbsp; {period_days}-day window &nbsp;·&nbsp; {len(base):,} records</div>
   </div>
@@ -1194,7 +1190,7 @@ def render_command_center():
 
     # ── Dual Forecasts (toggleable) ────────────────────────
     if "forecasts" in visible_blocks:
-        st.markdown('<div class="section-title" style="margin-top:.2rem;">30-Day Forecasts</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title" style="margin-top:1.4rem;">30-Day Forecasts</div>', unsafe_allow_html=True)
         _f1, _f2 = st.columns(2, gap="medium")
         with _f1:
             fig_rev, proj_rev = plot_forecast(
