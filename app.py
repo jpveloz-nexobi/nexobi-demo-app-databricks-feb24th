@@ -1744,9 +1744,12 @@ def render_ai():
 
 /* ── Enter to send, Shift+Enter for new line ── */
 (function () {
+  var _bound = null;
   function bindEnter() {
     var ta = window.parent.document.querySelector('[data-testid="stTextArea"] textarea');
-    if (!ta) { setTimeout(bindEnter, 400); return; }
+    if (!ta) { setTimeout(bindEnter, 300); return; }
+    if (ta === _bound) { setTimeout(bindEnter, 600); return; }
+    _bound = ta;
     ta.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -1754,8 +1757,9 @@ def render_ai():
         if (btn) btn.click();
       }
     });
+    setTimeout(bindEnter, 600);
   }
-  setTimeout(bindEnter, 900);
+  setTimeout(bindEnter, 600);
 })();
 </script>
 """, height=0)
@@ -1772,7 +1776,7 @@ def render_ai():
         st.rerun()
 
     # ── Chat history ─────────────────────────────────────────
-    for item in st.session_state.ai_history:
+    for _hidx, item in enumerate(st.session_state.ai_history):
         q     = item.get("q", "")
         text  = item.get("text", "")
         df    = item.get("df")
@@ -1835,7 +1839,7 @@ def render_ai():
             _chip_cols = st.columns(len(_chips))
             for _ci, (_chip_col, _chip) in enumerate(zip(_chip_cols, _chips)):
                 with _chip_col:
-                    if st.button(_chip, key=f"ai_chip_{hash(q) % 99991}_{_ci}", use_container_width=True):
+                    if st.button(_chip, key=f"ai_chip_{_hidx}_{_ci}", use_container_width=True):
                         with st.spinner("Thinking…"):
                             _chip_res = ai_query_csv(_chip) if _csv_mode else ai_query_ask(_chip)
                         st.session_state.ai_history.insert(0, {"q": _chip, **_chip_res})
