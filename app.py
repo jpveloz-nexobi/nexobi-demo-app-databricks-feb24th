@@ -48,6 +48,15 @@ BENCH_ROAS      = 2.8    # Avg paid media ROAS for healthcare
 BENCH_CPL       = 45.0   # Avg cost per lead ($)
 BENCH_SHOW_RATE = 78.0   # Avg appointment show rate (%)
 
+# Dashboard block registry — drives the "Your View" sidebar picker
+BLOCK_REGISTRY = [
+    {"id": "banner",     "icon": "📊", "label": "Health Banner & KPIs", "modes": {"both"}},
+    {"id": "signals",    "icon": "🔔", "label": "Top Signals",           "modes": {"both"}},
+    {"id": "forecasts",  "icon": "📈", "label": "30-Day Forecasts",      "modes": {"both"}},
+    {"id": "journey",    "icon": "🗺️", "label": "Patient Journey",       "modes": {"marketing"}},
+    {"id": "treatments", "icon": "💊", "label": "Top Treatments",        "modes": {"practice"}},
+]
+
 st.set_page_config(
     page_title="NexoBI · Attribution Intelligence",
     layout="wide",
@@ -791,6 +800,34 @@ practice_mode = (len(sources_selected) == 1 and str(sources_selected[0]).strip()
 
 # Marketing visuals should NOT include Practice CRM unless explicitly selected.
 include_practice_in_marketing = practice_mode or ("Practice CRM" in [str(x).strip() for x in (sources_selected or [])])
+
+# ── Configurable view — block visibility ───────────────────────
+for _b in BLOCK_REGISTRY:
+    if f"blk_{_b['id']}" not in st.session_state:
+        st.session_state[f"blk_{_b['id']}"] = True  # all on by default
+
+visible_blocks = {
+    b["id"] for b in BLOCK_REGISTRY
+    if st.session_state.get(f"blk_{b['id']}", True)
+}
+
+# ── Sidebar "Your View" picker (shown only on Dashboard page) ──
+if page == "Dashboard":
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(
+        '<div style="font-size:.7rem;font-weight:700;color:#94A3B8;'
+        'letter-spacing:.07em;text-transform:uppercase;margin-bottom:.3rem;">'
+        '📐&nbsp; Your View</div>',
+        unsafe_allow_html=True
+    )
+    for _b in BLOCK_REGISTRY:
+        _applies = (
+            "both" in _b["modes"]
+            or ("practice" in _b["modes"] and practice_mode)
+            or ("marketing" in _b["modes"] and not practice_mode)
+        )
+        if _applies:
+            st.sidebar.checkbox(f"{_b['icon']}  {_b['label']}", key=f"blk_{_b['id']}")
 CUR_MKT  = CUR.copy()
 PREV_MKT = PREV.copy()
 if not include_practice_in_marketing:
@@ -1084,17 +1121,18 @@ def render_command_center():
     # ── Section title ─────────────────────────────────────
     st.markdown('<div class="section-title">Command Center</div>', unsafe_allow_html=True)
 
-    # ── Health banner — stats swap based on view mode ─────
-    if practice_mode:
-        # CRM view: Revenue · New Patients · Show Rate · Total Appointments
-        new_patients  = float(base["conversions"].sum() or 0)
-        total_appts   = float(base["booked"].sum() or 0)
-        p_patients    = float(prev_b["conversions"].sum() or 0)
-        p_appts       = float(prev_b["booked"].sum() or 0)
-        pat_growth    = safe_div(new_patients - p_patients, max(abs(p_patients), 0.01)) * 100
-        appt_growth   = safe_div(total_appts - p_appts, max(abs(p_appts), 0.01)) * 100
-        show_clr      = '#009952' if show_rate >= BENCH_SHOW_RATE else '#D97706'
-        banner_stats  = f'''
+    # ── Health banner (toggleable) ────────────────────────
+    if "banner" in visible_blocks:
+        if practice_mode:
+            # CRM view: Revenue · New Patients · Show Rate · Total Appointments
+            new_patients  = float(base["conversions"].sum() or 0)
+            total_appts   = float(base["booked"].sum() or 0)
+            p_patients    = float(prev_b["conversions"].sum() or 0)
+            p_appts       = float(prev_b["booked"].sum() or 0)
+            pat_growth    = safe_div(new_patients - p_patients, max(abs(p_patients), 0.01)) * 100
+            appt_growth   = safe_div(total_appts - p_appts, max(abs(p_appts), 0.01)) * 100
+            show_clr      = '#009952' if show_rate >= BENCH_SHOW_RATE else '#D97706'
+            banner_stats  = f'''
   <div class="cmd-health-stat">
     <div class="cmd-health-label">Revenue</div>
     <div class="cmd-health-val">{money(rev)}</div>
@@ -1115,9 +1153,9 @@ def render_command_center():
     <div class="cmd-health-val">{fmt(total_appts)}</div>
     <div class="cmd-health-sub">{delta_html(appt_growth, has_prev)}</div>
   </div>'''
-    else:
-        # Marketing view: Revenue · ROAS · Cost/Lead · Show Rate
-        banner_stats = f'''
+        else:
+            # Marketing view: Revenue · ROAS · Cost/Lead · Show Rate
+            banner_stats = f'''
   <div class="cmd-health-stat">
     <div class="cmd-health-label">Revenue</div>
     <div class="cmd-health-val">{money(rev)}</div>
@@ -1138,8 +1176,7 @@ def render_command_center():
     <div class="cmd-health-val">{pct(show_rate)}</div>
     <div class="cmd-health-sub" style="color:{'#009952' if show_rate>=BENCH_SHOW_RATE else '#D97706'};">{'▲ Above' if show_rate>=BENCH_SHOW_RATE else '▼ Below'} {BENCH_SHOW_RATE:.0f}% avg</div>
   </div>'''
-
-    st.markdown(f'''
+        st.markdown(f'''
 <div class="cmd-health">
   <div class="cmd-score-ring" style="border-color:{sc_color};">
     <div class="cmd-score-num" style="color:{sc_color};">{score}</div>
@@ -1155,66 +1192,65 @@ def render_command_center():
 </div>
 ''', unsafe_allow_html=True)
 
-    # ── Top Signals — 3 cards across full width ────────────
-    st.markdown('<div class="section-title" style="margin-top:.5rem;">Top Signals</div>', unsafe_allow_html=True)
-    _cls_map = {
-        "sb-pill-red":   ("sig-red",   "sig-sev-red"),
-        "sb-pill-amber": ("sig-amber", "sig-sev-amber"),
-        "sb-pill-green": ("sig-green", "sig-sev-green"),
-    }
-    _s1, _s2, _s3 = st.columns(3, gap="small")
-    for col, (sev, pill_cls, title, detail, action) in zip([_s1, _s2, _s3], _alerts[:3]):
-        sig_cls, sev_cls = _cls_map.get(pill_cls, ("sig-green", "sig-sev-green"))
-        with col:
-            st.markdown(f'''<div class="sig-card {sig_cls}">
+    # ── Top Signals (toggleable) ───────────────────────────
+    if "signals" in visible_blocks:
+        st.markdown('<div class="section-title" style="margin-top:.5rem;">Top Signals</div>', unsafe_allow_html=True)
+        _cls_map = {
+            "sb-pill-red":   ("sig-red",   "sig-sev-red"),
+            "sb-pill-amber": ("sig-amber", "sig-sev-amber"),
+            "sb-pill-green": ("sig-green", "sig-sev-green"),
+        }
+        _s1, _s2, _s3 = st.columns(3, gap="small")
+        for col, (sev, pill_cls, title, detail, action) in zip([_s1, _s2, _s3], _alerts[:3]):
+            sig_cls, sev_cls = _cls_map.get(pill_cls, ("sig-green", "sig-sev-green"))
+            with col:
+                st.markdown(f'''<div class="sig-card {sig_cls}">
   <div class="sig-head"><div class="sig-title">{title}</div><div class="sig-sev {sev_cls}">{sev}</div></div>
   <div class="sig-detail">{detail}</div>
   <div class="sig-action"><b>Action:</b> {action}</div>
 </div>''', unsafe_allow_html=True)
+        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
-    st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
-
-    # ── Dual Forecasts — Revenue | Booked Appointments ─────
-    st.markdown('<div class="section-title" style="margin-top:.2rem;">30-Day Forecasts</div>', unsafe_allow_html=True)
-    _f1, _f2 = st.columns(2, gap="medium")
-
-    with _f1:
-        fig_rev, proj_rev = plot_forecast(
-            base, col="total_revenue",
-            title="Revenue Forecast — 30-Day Projection",
-            color=GREEN, is_money=True
-        )
-        if fig_rev:
-            st.markdown(
-                f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
-                f'Projected: <b style="color:{TEXT};font-size:.85rem;">{money(proj_rev)}</b>'
-                f' &nbsp;·&nbsp; next 30 days</div>',
-                unsafe_allow_html=True
+    # ── Dual Forecasts (toggleable) ────────────────────────
+    if "forecasts" in visible_blocks:
+        st.markdown('<div class="section-title" style="margin-top:.2rem;">30-Day Forecasts</div>', unsafe_allow_html=True)
+        _f1, _f2 = st.columns(2, gap="medium")
+        with _f1:
+            fig_rev, proj_rev = plot_forecast(
+                base, col="total_revenue",
+                title="Revenue Forecast — 30-Day Projection",
+                color=GREEN, is_money=True
             )
-            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-            st.plotly_chart(fig_rev, use_container_width=True, config={"displayModeBar": False})
-            st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.info("Not enough data for revenue forecast.")
-
-    with _f2:
-        fig_bk, proj_bk = plot_forecast(
-            base, col="booked",
-            title="Booked Appointments — 30-Day Projection",
-            color=PURPLE, is_money=False
-        )
-        if fig_bk:
-            st.markdown(
-                f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
-                f'Projected: <b style="color:{TEXT};font-size:.85rem;">{fmt(proj_bk)} appts</b>'
-                f' &nbsp;·&nbsp; next 30 days</div>',
-                unsafe_allow_html=True
+            if fig_rev:
+                st.markdown(
+                    f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
+                    f'Projected: <b style="color:{TEXT};font-size:.85rem;">{money(proj_rev)}</b>'
+                    f' &nbsp;·&nbsp; next 30 days</div>',
+                    unsafe_allow_html=True
+                )
+                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                st.plotly_chart(fig_rev, use_container_width=True, config={"displayModeBar": False})
+                st.markdown('</div>', unsafe_allow_html=True)
+            else:
+                st.info("Not enough data for revenue forecast.")
+        with _f2:
+            fig_bk, proj_bk = plot_forecast(
+                base, col="booked",
+                title="Booked Appointments — 30-Day Projection",
+                color=PURPLE, is_money=False
             )
-            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-            st.plotly_chart(fig_bk, use_container_width=True, config={"displayModeBar": False})
-            st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.info("Not enough data for appointments forecast.")
+            if fig_bk:
+                st.markdown(
+                    f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
+                    f'Projected: <b style="color:{TEXT};font-size:.85rem;">{fmt(proj_bk)} appts</b>'
+                    f' &nbsp;·&nbsp; next 30 days</div>',
+                    unsafe_allow_html=True
+                )
+                st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+                st.plotly_chart(fig_bk, use_container_width=True, config={"displayModeBar": False})
+                st.markdown('</div>', unsafe_allow_html=True)
+            else:
+                st.info("Not enough data for appointments forecast.")
 
 
 
@@ -1864,9 +1900,11 @@ def render_ai():
 if page == "Dashboard":
     render_command_center()
     if practice_mode:
-        render_practice()
+        if "treatments" in visible_blocks:
+            render_practice()
     else:
-        render_marketing()
+        if "journey" in visible_blocks:
+            render_marketing()
 
 elif page == "AI Agent":
     # ── Full-bleed dark navy aurora — hide everything, bleed full page ──
