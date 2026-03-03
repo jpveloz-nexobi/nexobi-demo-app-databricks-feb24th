@@ -999,10 +999,13 @@ def compute_health_score(cur_df: pd.DataFrame, prev_df: pd.DataFrame) -> int:
 # ==========================================================
 # REVENUE FORECAST  (linear extrapolation, 30-day horizon)
 # ==========================================================
-def plot_forecast(df: pd.DataFrame, days_ahead: int = 30):
-    """Returns (fig, projected_total) or (None, 0) if insufficient data."""
+def plot_forecast(df: pd.DataFrame, col: str = "total_revenue",
+                  title: str = "Revenue Forecast — 30-Day Projection",
+                  color: str = GREEN, is_money: bool = True,
+                  days_ahead: int = 30):
+    """Generic 30-day linear forecast. Returns (fig, projected_total) or (None, 0)."""
     try:
-        daily = (df.groupby("date")["total_revenue"].sum()
+        daily = (df.groupby("date")[col].sum()
                    .reset_index()
                    .sort_values("date"))
         daily["date"] = pd.to_datetime(daily["date"])
@@ -1010,50 +1013,49 @@ def plot_forecast(df: pd.DataFrame, days_ahead: int = 30):
             return None, 0
 
         x = np.array([(d - daily["date"].iloc[0]).days for d in daily["date"]])
-        y = daily["total_revenue"].values
+        y = daily[col].values
 
         coeffs = np.polyfit(x, y, 1)
 
-        # Future dates
         last_x    = x[-1]
         fut_x     = np.arange(last_x + 1, last_x + days_ahead + 1)
         fut_dates = [daily["date"].iloc[-1] + timedelta(days=int(i - last_x)) for i in fut_x]
         fut_y     = np.maximum(0, np.polyval(coeffs, fut_x))
 
-        # Confidence band — ±1.5 residual std
         residuals = y - np.polyval(coeffs, x)
         band      = np.std(residuals) * 1.5
         upper     = fut_y + band
         lower     = np.maximum(0, fut_y - band)
 
-        fig = go.Figure()
+        # fill colour derived from line colour
+        r, g, b_  = int(color[1:3],16), int(color[3:5],16), int(color[5:7],16)
+        fill_actual   = f"rgba({r},{g},{b_},0.06)"
+        fill_band     = f"rgba({r},{g},{b_},0.07)"
+        hover_fmt     = "<b>$%{y:,.0f}</b>" if is_money else "<b>%{y:,.0f}</b>"
 
-        # Confidence band
+        fig = go.Figure()
         fig.add_trace(go.Scatter(
             x=fut_dates + fut_dates[::-1],
             y=np.concatenate([upper, lower[::-1]]).tolist(),
-            fill="toself",
-            fillcolor="rgba(59,130,246,0.07)",
+            fill="toself", fillcolor=fill_band,
             line=dict(color="rgba(0,0,0,0)"),
             showlegend=False, hoverinfo="skip", name="band",
         ))
-        # Actual revenue
         fig.add_trace(go.Scatter(
             x=daily["date"], y=y,
             name="Actual", mode="lines",
-            line=dict(color=GREEN, width=2.5),
-            fill="tozeroy", fillcolor="rgba(0,192,107,0.06)",
-            hovertemplate="<b>$%{y:,.0f}</b><extra>Actual</extra>",
+            line=dict(color=color, width=2.5),
+            fill="tozeroy", fillcolor=fill_actual,
+            hovertemplate=hover_fmt + "<extra>Actual</extra>",
         ))
-        # Forecast
         fig.add_trace(go.Scatter(
             x=fut_dates, y=fut_y.tolist(),
             name="Forecast", mode="lines",
             line=dict(color=BLUE, width=2, dash="dash"),
-            hovertemplate="<b>$%{y:,.0f}</b><extra>Forecast</extra>",
+            hovertemplate=hover_fmt + "<extra>Forecast</extra>",
         ))
 
-        fig.update_layout(**base_layout("Revenue Forecast — 30-Day Projection", 280))
+        fig.update_layout(**base_layout(title, 280))
         return fig, float(fut_y.sum())
     except Exception:
         return None, 0
@@ -1145,21 +1147,47 @@ def render_command_center():
 
     st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
-    # ── Revenue Forecast — full width ──────────────────────
-    st.markdown('<div class="section-title" style="margin-top:.2rem;">Revenue Forecast</div>', unsafe_allow_html=True)
-    fig_fc, proj_total = plot_forecast(base)
-    if fig_fc:
-        st.markdown(
-            f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
-            f'Projected next 30 days: <b style="color:{TEXT};font-size:.85rem;">{money(proj_total)}</b>'
-            f' &nbsp;·&nbsp; Based on {period_days}-day trend</div>',
-            unsafe_allow_html=True
+    # ── Dual Forecasts — Revenue | Booked Appointments ─────
+    st.markdown('<div class="section-title" style="margin-top:.2rem;">30-Day Forecasts</div>', unsafe_allow_html=True)
+    _f1, _f2 = st.columns(2, gap="medium")
+
+    with _f1:
+        fig_rev, proj_rev = plot_forecast(
+            base, col="total_revenue",
+            title="Revenue Forecast — 30-Day Projection",
+            color=GREEN, is_money=True
         )
-        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-        st.plotly_chart(fig_fc, use_container_width=True, config={"displayModeBar": False})
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.info("Not enough data for forecast. Widen the date range to at least 5 days.")
+        if fig_rev:
+            st.markdown(
+                f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
+                f'Projected: <b style="color:{TEXT};font-size:.85rem;">{money(proj_rev)}</b>'
+                f' &nbsp;·&nbsp; next 30 days</div>',
+                unsafe_allow_html=True
+            )
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+            st.plotly_chart(fig_rev, use_container_width=True, config={"displayModeBar": False})
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.info("Not enough data for revenue forecast.")
+
+    with _f2:
+        fig_bk, proj_bk = plot_forecast(
+            base, col="booked",
+            title="Booked Appointments — 30-Day Projection",
+            color=PURPLE, is_money=False
+        )
+        if fig_bk:
+            st.markdown(
+                f'<div style="font-size:.76rem;color:{MUTED};margin-bottom:5px;">'
+                f'Projected: <b style="color:{TEXT};font-size:.85rem;">{fmt(proj_bk)} appts</b>'
+                f' &nbsp;·&nbsp; next 30 days</div>',
+                unsafe_allow_html=True
+            )
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+            st.plotly_chart(fig_bk, use_container_width=True, config={"displayModeBar": False})
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.info("Not enough data for appointments forecast.")
 
 
 
