@@ -1230,7 +1230,7 @@ def render_command_center():
                     _fig_bk.add_trace(go.Bar(
                         x=_bk_weekly["date"],
                         y=_bk_weekly["booked"],
-                        marker_color=PURPLE,
+                        marker_color="#3B82F6",
                         marker_opacity=0.82,
                         marker_line_width=0,
                         hovertemplate="Week of %{x|%b %d}<br><b>%{y:,.0f} appts</b><extra></extra>",
