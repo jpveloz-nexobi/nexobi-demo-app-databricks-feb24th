@@ -539,8 +539,6 @@ div[data-baseweb="base-input"]:focus-within{
   box-shadow:0 6px 26px rgba(0,192,107,.5)!important;
   transform:translateY(-1px)!important;
 }
-/* Story card primary buttons — slightly compact */
-[data-testid="stMarkdownContainer"]:has(#story-cards-row)+[data-testid="stHorizontalBlock"] [data-testid="baseButton-primary"]{height:36px!important;min-height:36px!important;font-size:.78rem!important;font-weight:600!important;}
 
 /* Export icon buttons — all sidebar download buttons */
 [data-testid="stSidebar"] [data-testid="stDownloadButton"]>button{background:transparent!important;border:1px solid #E2E8F0!important;border-radius:8px!important;color:#64748B!important;font-size:.75rem!important;font-weight:500!important;padding:3px 10px!important;min-height:0!important;height:26px!important;line-height:1!important;width:auto!important;}
@@ -551,20 +549,10 @@ div[data-baseweb="base-input"]:focus-within{
 .refresh-wrap .stButton>button:hover{background:#E6F9F0!important;}
 
 
-/* Sidebar alert cards */
-.nexo-alert{border-radius:10px;padding:9px 11px;margin:5px 0;border-left:4px solid #E2E8F0;background:#FAFBFC;}
-.nexo-alert.sev-green{border-left-color:#00C06B;background:rgba(0,192,107,.05);}
-.nexo-alert.sev-amber{border-left-color:#F59E0B;background:rgba(245,158,11,.06);}
-.nexo-alert.sev-red{border-left-color:#EF4444;background:rgba(239,68,68,.06);}
-.nexo-alert-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px;}
-.nexo-alert-title{font-size:.8rem;font-weight:700;color:#0F172A;}
-.nexo-alert-pill{font-size:.64rem;font-weight:700;padding:1px 7px;border-radius:999px;white-space:nowrap;}
+/* Signal pill colours (used by Top Signals in Command Center) */
 .sb-pill-red{background:rgba(239,68,68,.10);color:#EF4444;}
 .sb-pill-amber{background:rgba(245,158,11,.12);color:#D97706;}
 .sb-pill-green{background:rgba(0,192,107,.10);color:#009952;}
-.nexo-alert-detail{font-size:.76rem;color:#64748B;line-height:1.35;}
-.nexo-alert-action{font-size:.73rem;color:#0F172A;margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,0,0,.06);line-height:1.35;}
-.nexo-alert-action b{font-weight:700;}
 
 /* ==========================================================
    SIDEBAR — CLEAN, COMPACT, SUBTLE
@@ -596,20 +584,6 @@ section[data-testid="stSidebar"] label {
 .stTabs [data-baseweb="tab-highlight"]{background:#00C06B!important;}
 .stTabs [data-baseweb="tab-border"]{background:#E2E8F0!important;}
 
-/* ===== STORY MODE CARDS ===== */
-.story-card{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:14px 16px 10px;position:relative;overflow:hidden;transition:box-shadow .18s,border-color .18s;margin-bottom:.3rem;}
-.story-card.story-card-active{border-color:#00C06B!important;box-shadow:0 0 0 2.5px rgba(0,192,107,.18)!important;}
-.story-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:#E2E8F0;}
-.story-card.sc-red::before{background:#EF4444;}
-.story-card.sc-green::before{background:#00C06B;}
-.story-card.sc-amber::before{background:#F59E0B;}
-.sc-pill{display:inline-block;font-size:.64rem;font-weight:800;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.07em;}
-.sc-pill-red{background:rgba(239,68,68,.10);color:#EF4444;}
-.sc-pill-green{background:rgba(0,192,107,.10);color:#009952;}
-.sc-pill-amber{background:rgba(245,158,11,.12);color:#D97706;}
-.sc-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;font-weight:800;color:#0F172A;margin:6px 0 4px;line-height:1.25;}
-.sc-desc{font-size:.75rem;color:#64748B;line-height:1.4;margin-bottom:4px;}
-.sc-active-badge{display:inline-block;background:#E6F9F0;color:#009952;border:1px solid rgba(0,192,107,.25);border-radius:999px;font-size:.62rem;font-weight:800;padding:1px 8px;margin-left:5px;vertical-align:middle;}
 
 /* ===== INTELLIGENCE SIGNALS ===== */
 .sig-card{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:11px 14px;position:relative;overflow:hidden;}
@@ -734,8 +708,6 @@ with st.sidebar:
     # --------------------------------------------------
     # State init (kept here for stability)
     # --------------------------------------------------
-    if "demo_scenario" not in st.session_state:
-        st.session_state["demo_scenario"] = "None"
     # --------------------------------------------------
     # Reset flag — must be checked BEFORE widgets render
     # so Streamlit allows overwriting widget-bound keys
@@ -1118,135 +1090,6 @@ def plot_forecast(df: pd.DataFrame, days_ahead: int = 30):
 
 
 # ==========================================================
-# STORY MODE CARDS — front and center demo navigation
-# ==========================================================
-def render_story_cards():
-    """3 guided demo scenario cards shown prominently at the top of each dashboard view."""
-    _sc = [
-        {
-            "key": "ROAS drop week",
-            "pill": "Revenue Risk", "pill_cls": "sc-pill-red", "bar_cls": "sc-red",
-            "title": "ROAS Drop Investigation",
-            "desc": "Spend up, returns down. Trace the signal from source to campaign.",
-        },
-        {
-            "key": "Revenue growth month",
-            "pill": "Growth Story", "pill_cls": "sc-pill-green", "bar_cls": "sc-green",
-            "title": "Revenue Growth Story",
-            "desc": "Month-over-month lift. See what scaled and why it worked.",
-        },
-        {
-            "key": "Show rate risk (CRM)",
-            "pill": "CRM Risk", "pill_cls": "sc-pill-amber", "bar_cls": "sc-amber",
-            "title": "Show Rate Risk (CRM)",
-            "desc": "Bookings rising but fewer patients attend. Spot the friction.",
-        },
-    ]
-    active = st.session_state.get("demo_scenario", "None")
-    st.markdown('<div class="section-title">Guided Demo Flows</div>', unsafe_allow_html=True)
-    st.markdown('<div id="story-cards-row"></div>', unsafe_allow_html=True)
-    cols = st.columns(3, gap="small")
-    for col, s in zip(cols, _sc):
-        is_on = (active == s["key"])
-        with col:
-            badge = '<span class="sc-active-badge">Active</span>' if is_on else ''
-            st.markdown(f'''<div class="story-card {s["bar_cls"]}{ " story-card-active" if is_on else ""}">
-  <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
-    <span class="sc-pill {s["pill_cls"]}">{s["pill"]}</span>{badge}
-  </div>
-  <div class="sc-title">{s["title"]}</div>
-  <div class="sc-desc">{s["desc"]}</div>
-</div>''', unsafe_allow_html=True)
-            if is_on:
-                if st.button("Exit scenario", key=f"sc_exit_{s['key']}", use_container_width=True):
-                    st.session_state["demo_scenario"] = "None"
-                    st.rerun()
-            else:
-                if st.button("Start demo", key=f"sc_start_{s['key']}", use_container_width=True, type="primary"):
-                    st.session_state["demo_scenario"] = s["key"]
-                    st.rerun()
-    st.markdown('<div style="height:.35rem"></div>', unsafe_allow_html=True)
-
-    # ── Story mode banner — shown directly under the cards ──
-    _scn = st.session_state.get("demo_scenario", "None")
-    if _scn and _scn != "None":
-        _story_map = {
-            "ROAS drop week": {
-                "title": "Story Mode: ROAS Drop",
-                "look": ["Command Center (ROAS benchmark)", "Patient Journey by Source (find the drag)", "Top Campaigns (identify the culprit)"],
-                "qs": ["Why did ROAS change last 30 days?", "ROAS by source MTD", "Why did leads drop last month?"],
-            },
-            "Revenue growth month": {
-                "title": "Story Mode: Revenue Growth",
-                "look": ["Revenue Forecast (upward trend)", "Patient Journey by Source (what scaled)", "Top Campaigns (budget winners)"],
-                "qs": ["Why did revenue change MTD?", "Revenue by source last 30 days", "Why did ROAS change last 30 days?"],
-            },
-            "Show rate risk (CRM)": {
-                "title": "Story Mode: Show Rate Risk",
-                "look": ["Command Center (Show Rate benchmark)", "Attendance Trend (Booked vs Attended)", "Treatment Movers (show-rate movers)"],
-                "qs": ["Why did show rate change last 30 days?", "Why did booked change last 30 days?", "Why did revenue change last month?"],
-            },
-        }
-        _meta = _story_map.get(_scn)
-        if _meta:
-            st.markdown(
-                f"""<div style="background:{GREEN_LT};border:1px solid rgba(0,192,107,.2);border-left:5px solid {GREEN};
-border-radius:14px;padding:12px 16px;margin:4px 0 8px;">
-  <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;font-weight:800;color:#52796F;
-letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;">{_meta['title']}</div>
-  <div style="font-size:.79rem;color:#64748B;margin-bottom:4px;line-height:1.5;">
-    <span style="font-weight:700;color:#52796F;">What to look at:</span>&nbsp;
-    {' &middot; '.join(_meta['look'])}
-  </div>
-  <div style="font-size:.79rem;color:#64748B;line-height:1.5;">
-    <span style="font-weight:700;color:#52796F;">AI questions to try:</span>&nbsp;
-    {' &middot; '.join(_meta['qs'])}
-  </div>
-</div>""",
-                unsafe_allow_html=True
-            )
-
-
-# ==========================================================
-# PATIENT ACQUISITION FUNNEL
-# ==========================================================
-def plot_patient_funnel(df: pd.DataFrame):
-    """Patient acquisition funnel: Leads → Booked → Attended."""
-    leads    = max(float(df["leads"].sum() or 0), 0)
-    booked   = max(float(df["booked"].sum() or 0), 0)
-    attended = max(float(df["attended"].sum() or 0), 0)
-
-    pairs = [
-        ("Leads",    leads,    AMBER),
-        ("Booked",   booked,   GREEN),
-        ("Attended", attended, GREEN_DK),
-    ]
-    pairs = [(s, v, c) for s, v, c in pairs if v > 0]
-    if not pairs:
-        return None
-
-    stages, values, colors = zip(*pairs)
-    fig = go.Figure(go.Funnel(
-        y=list(stages),
-        x=list(values),
-        textposition="inside",
-        textinfo="value+percent initial",
-        marker=dict(color=list(colors), line=dict(width=0)),
-        connector=dict(line=dict(color=BORDER, width=1.5), fillcolor=SOFT),
-        hovertemplate="%{y}<br><b>%{x:,.0f}</b><br>%{percentInitial:.1%} of leads<extra></extra>",
-    ))
-    fig.update_layout(
-        paper_bgcolor=PANEL,
-        plot_bgcolor=PANEL,
-        font=dict(family="DM Sans, sans-serif", color=TEXT, size=12),
-        height=300,
-        margin=dict(l=8, r=8, t=44, b=8),
-        title=dict(text="<b>Patient Acquisition Funnel</b>", font=dict(size=13, color=TEXT), x=0, xanchor="left"),
-    )
-    return fig
-
-
-# ==========================================================
 # COMMAND CENTER — executive view
 # ==========================================================
 def render_command_center():
@@ -1386,77 +1229,7 @@ def render_command_center():
 # DASHBOARD
 # ==========================================================
 def render_marketing():
-    # --- current + prior period totals (CSV mode) ---
     base = CUR_MKT if not practice_mode else CUR
-    prev_base = PREV_MKT if not practice_mode else PREV
-
-
-    has_prev = len(prev_base) > 0
-
-    spend    = float(base["total_cost"].sum() or 0)
-    revenue  = float(base["total_revenue"].sum() or 0)
-    leads    = float(base["leads"].sum() or 0)
-    sessions = float(base["sessions"].sum() or 0)
-    booked   = float(base["booked"].sum() or 0)
-    attended = float(base["attended"].sum() or 0)
-
-    roas = safe_div(revenue, spend)
-    show_rate = safe_div(attended, booked) * 100
-
-    render_story_cards()
-    st.markdown('<div class="section-title">Patient Funnel</div>', unsafe_allow_html=True)
-    f_fig = plot_patient_funnel(base)
-    if f_fig:
-        _fc1, _fc2 = st.columns([1.6, 1], gap="medium")
-        with _fc1:
-            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-            st.plotly_chart(f_fig, use_container_width=True, config={"displayModeBar": False})
-            st.markdown('</div>', unsafe_allow_html=True)
-        with _fc2:
-            _leads = max(float(base["leads"].sum() or 0), 1)
-            _book  = float(base["booked"].sum() or 0)
-            _att   = float(base["attended"].sum() or 0)
-            total_drop = max(0.0, _leads - _att)
-            drop_pct   = total_drop / _leads * 100 if _leads > 0 else 0.0
-            _book_rate = _book / _leads * 100
-            _show_rate = _att / max(_book, 1) * 100
-            st.markdown(f'''
-<div class="chart-card" style="margin-top:0;">
-  <div style="font-size:.78rem;font-weight:700;color:#0F172A;margin-bottom:12px;letter-spacing:.01em;">Stage Conversion Rates</div>
-  <table style="width:100%;border-collapse:collapse;">
-    <thead>
-      <tr style="border-bottom:1.5px solid #E2E8F0;">
-        <th style="text-align:left;font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.06em;padding:0 0 6px;">Stage</th>
-        <th style="text-align:right;font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.06em;padding:0 0 6px;">Count</th>
-        <th style="text-align:right;font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.06em;padding:0 0 6px;">Rate</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style="border-bottom:1px solid #F1F5F9;">
-        <td style="font-size:.82rem;font-weight:600;color:#0F172A;padding:8px 0;">Leads</td>
-        <td style="text-align:right;font-size:.82rem;font-weight:700;color:#0F172A;padding:8px 0;">{fmt(_leads)}</td>
-        <td style="text-align:right;font-size:.82rem;font-weight:600;color:#64748B;padding:8px 0;">100%</td>
-      </tr>
-      <tr style="border-bottom:1px solid #F1F5F9;">
-        <td style="font-size:.82rem;font-weight:600;color:#0F172A;padding:8px 0;">→ Booked</td>
-        <td style="text-align:right;font-size:.82rem;font-weight:700;color:#0F172A;padding:8px 0;">{fmt(_book)}</td>
-        <td style="text-align:right;font-size:.82rem;font-weight:700;color:#009952;padding:8px 0;">{_book_rate:.1f}%</td>
-      </tr>
-      <tr>
-        <td style="font-size:.82rem;font-weight:600;color:#0F172A;padding:8px 0;">→ Attended</td>
-        <td style="text-align:right;font-size:.82rem;font-weight:700;color:#0F172A;padding:8px 0;">{fmt(_att)}</td>
-        <td style="text-align:right;font-size:.82rem;font-weight:700;color:#009952;padding:8px 0;">{_show_rate:.1f}%</td>
-      </tr>
-    </tbody>
-  </table>
-  <div style="margin-top:14px;padding:10px 12px;background:#FFF7ED;border-radius:8px;border-left:3px solid {AMBER};">
-    <div style="font-size:.70rem;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Leads never attended</div>
-    <div style="font-size:1.2rem;font-weight:900;color:#0F172A;line-height:1.1;">{pct(drop_pct)}</div>
-    <div style="font-size:.75rem;color:#78716C;margin-top:2px;">{fmt(total_drop)} leads lost in funnel</div>
-  </div>
-</div>''', unsafe_allow_html=True)
-    else:
-        st.info("No funnel data available for this selection.")
 
     with st.expander("Patient Journey by Source", expanded=False):
         journey = base.groupby("data_source", as_index=False).agg(
@@ -1486,22 +1259,6 @@ def render_marketing():
         jd["Spend"]=jd["Spend"].apply(money)
         jd["ROAS"]=jd["ROAS"].apply(lambda x: f"{x:.2f}x")
         st.dataframe(df_light(jd), use_container_width=True, hide_index=True, height=df_height(len(jd)))
-
-    with st.expander("Top Campaigns", expanded=False):
-        camps = base[base["campaign"].astype(str).str.strip().ne("")].groupby("campaign", as_index=False).agg(
-            Revenue=("total_revenue","sum"),
-            Spend=("total_cost","sum"),
-            Leads=("leads","sum"),
-        )
-        camps["ROAS"] = np.where(camps["Spend"]>0, camps["Revenue"]/camps["Spend"], 0)
-        camps = camps.sort_values("Revenue", ascending=False).head(15)
-        if len(camps) > 0:
-            out = camps.rename(columns={"campaign":"Campaign"}).copy()
-            out["Revenue"]=out["Revenue"].apply(money)
-            out["Spend"]=out["Spend"].apply(money)
-            out["Leads"]=out["Leads"].apply(fmt)
-            out["ROAS"]=out["ROAS"].apply(lambda x: f"{x:.2f}x")
-            st.dataframe(df_light(out), use_container_width=True, hide_index=True, height=df_height(len(out)))
 
 def render_practice():
     # No story cards in CRM view — kept in marketing view only
@@ -2047,7 +1804,8 @@ def render_ai():
         st.markdown(f'''
 <div class="ai-hero-wrap">
   <div><span class="ai-status-pill"><span class="ai-pulse"></span>◆ NexoBI AI &nbsp;·&nbsp; {"Local data" if _csv_mode else "Live · Databricks"}</span></div>
-  <div class="ai-catch">Ask anything<br><span class="ai-catch-hi">Clarity on Demand.</span></div>
+  <div class="ai-catch">Ask anything about<br><span class="ai-catch-hi">your practice.</span></div>
+  <div class="ai-catch-sub">Get straight answers from your data. No dashboards needed.</div>
 </div>
 ''', unsafe_allow_html=True)
 
@@ -2185,10 +1943,10 @@ def render_ai():
 # ==========================================================
 
 if page == "Dashboard":
-    render_command_center()
     if practice_mode:
         render_practice()
     else:
+        render_command_center()
         render_marketing()
 
 elif page == "AI Agent":
