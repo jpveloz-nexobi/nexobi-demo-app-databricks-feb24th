@@ -355,7 +355,7 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#E2E8F
 [data-testid="stSidebar"] .stCheckbox label:has(input:checked){color:#CBD5E1!important;font-weight:500!important;}
 
 /* ── Header ───────────────────────────────────────────── */
-.nexo-header{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px 18px;margin-bottom:.9rem;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.nexo-header{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:12px 18px;margin-bottom:.9rem;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
 .nexo-brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:900;color:#F1F5F9;}
 .nexo-brand-sub{font-size:.8rem;color:#64748B;}
 
@@ -364,20 +364,20 @@ html,body,[class*="css"]{font-family:'DM Sans',sans-serif!important;color:#E2E8F
 .section-title::before{content:'';display:block;width:3px;height:16px;background:#00C06B;border-radius:4px;}
 
 /* ── Cards — frosted glass ────────────────────────────── */
-.metric-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.metric-card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:14px 16px;position:relative;overflow:hidden;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
 .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#00C06B,#009952);}
 .metric-label{font-size:.68rem;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
 .metric-value{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.55rem;font-weight:900;color:#F1F5F9;line-height:1.1;margin-bottom:4px;}
 .metric-meta{font-size:.78rem;color:#94A3B8;}
 
-.chart-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 16px 6px;margin-bottom:.65rem;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.chart-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px 16px 6px;margin-bottom:.65rem;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 
 /* ── DataFrames — dark ────────────────────────────────── */
-[data-testid="stDataFrame"]{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:14px!important;}
+[data-testid="stDataFrame"]{background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:14px!important;}
 [data-testid="stDataFrame"] *{color:#CBD5E1!important;}
 [data-testid="stDataFrame"] div[role="grid"]{background:transparent!important;}
 [data-testid="stDataFrame"] div[role="row"]{background:transparent!important;}
-[data-testid="stDataFrame"] div[role="columnheader"]{background:rgba(255,255,255,.06)!important;color:#94A3B8!important;font-weight:900!important;}
+[data-testid="stDataFrame"] div[role="columnheader"]{background:rgba(255,255,255,.1)!important;color:#94A3B8!important;font-weight:900!important;}
 [data-testid="stDataFrame"] div[role="gridcell"]{background:transparent!important;}
 
 /* ── Buttons ──────────────────────────────────────────── */
@@ -397,12 +397,12 @@ section[data-testid="stSidebar"] .stButton>button:hover{background:rgba(0,192,10
 .sb-reset-wrap .stButton>button:hover{color:#94A3B8!important;background:transparent!important;}
 
 /* ── Expander — frosted ───────────────────────────────── */
-[data-testid="stExpander"]{background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:14px!important;box-shadow:none!important;overflow:hidden!important;backdrop-filter:blur(10px)!important;}
+[data-testid="stExpander"]{background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:14px!important;box-shadow:none!important;overflow:hidden!important;backdrop-filter:blur(12px)!important;}
 [data-testid="stExpander"] summary{background:transparent!important;font-weight:600!important;color:#CBD5E1!important;}
 [data-testid="stExpander"]>div,[data-testid="stExpander"] div[role="region"]{background:transparent!important;}
 
 /* ── Command center ───────────────────────────────────── */
-.cmd-health{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:24px 28px;display:flex;align-items:center;gap:28px;margin-bottom:.75rem;flex-wrap:wrap;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.cmd-health{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:24px 28px;display:flex;align-items:center;gap:28px;margin-bottom:.75rem;flex-wrap:wrap;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
 .cmd-score-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;width:82px;height:82px;border-radius:50%;border:4px solid #00C06B;flex-shrink:0;}
 .cmd-score-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.7rem;font-weight:900;line-height:1;}
 .cmd-score-den{font-size:.65rem;color:#64748B;font-weight:500;}
@@ -1158,26 +1158,30 @@ def render_command_center():
 </div>
 ''', unsafe_allow_html=True)
 
-    # ── Top Signals (toggleable) — 3-column cards ──────────
+    # ── Top Signals (toggleable) — compact pill row ─────────
     if "signals" in visible_blocks:
-        st.markdown('<div class="section-title">Signals</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title" style="margin-top:.5rem;">Signals</div>', unsafe_allow_html=True)
         _dot_map = {"sb-pill-red": "#EF4444", "sb-pill-amber": "#F59E0B", "sb-pill-green": "#00C06B"}
-        _sc1, _sc2, _sc3 = st.columns(3, gap="small")
-        for _col, (sev, pill_cls, title, detail, action) in zip([_sc1, _sc2, _sc3], _alerts[:3]):
+        _rows_html = ""
+        for i, (sev, pill_cls, title, detail, action) in enumerate(_alerts[:3]):
             _dc = _dot_map.get(pill_cls, "#00C06B")
-            with _col:
-                st.markdown(
-                    f'<div style="background:#FFFFFF;border:1px solid #E2E8F0;'
-                    f'border-left:3px solid {_dc};border-radius:10px;padding:11px 14px;">'
-                    f'<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">'
-                    f'<span style="width:6px;height:6px;border-radius:50%;background:{_dc};'
-                    f'flex-shrink:0;display:inline-block;"></span>'
-                    f'<span style="font-size:.79rem;font-weight:700;color:#0F172A;">{title}</span>'
-                    f'</div>'
-                    f'<div style="font-size:.73rem;color:#64748B;line-height:1.45;">{detail}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
+            _border_b = "1px solid rgba(255,255,255,.08)" if i < 2 else "none"
+            _rows_html += (
+                f'<div style="display:flex;align-items:center;gap:12px;padding:9px 0;'
+                f'border-bottom:{_border_b};">'
+                f'<span style="width:7px;height:7px;border-radius:50%;background:{_dc};'
+                f'flex-shrink:0;display:inline-block;"></span>'
+                f'<span style="font-size:.8rem;font-weight:700;color:#E2E8F0;min-width:170px;">{title}</span>'
+                f'<span style="font-size:.76rem;color:#94A3B8;">{detail}</span>'
+                f'</div>'
+            )
+        st.markdown(
+            f'<div style="background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);'
+            f'border-radius:12px;padding:6px 18px;margin-bottom:.5rem;'
+            f'backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);">'
+            f'{_rows_html}</div>',
+            unsafe_allow_html=True
+        )
 
     # ── Dual Forecasts (toggleable) ────────────────────────
     if "forecasts" in visible_blocks:
