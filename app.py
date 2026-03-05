@@ -5,24 +5,28 @@ import os
 import requests
 import time
 
-# ==========================================================
-# CONFIG — works on Streamlit Cloud (st.secrets) and Databricks Apps (os.environ)
-# ==========================================================
-def _secret(key: str, default: str = "") -> str:
-    try:
-        return st.secrets[key]
-    except Exception:
-        return os.environ.get(key, default)
-
-_raw_host       = _secret("DATABRICKS_HOST", "dbc-51730115-505d.cloud.databricks.com")
-DATABRICKS_HOST = _raw_host.replace("https://", "").replace("http://", "").rstrip("/")
-GENIE_SPACE_ID  = _secret("NEXOBI_GENIE_SPACE_ID", "01f1180e851210c6bf3967bf360cecef")
-
+# set_page_config MUST be the very first Streamlit command
 st.set_page_config(
     page_title="NexoBI · Genie",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
+
+# ==========================================================
+# CONFIG — os.environ first (Databricks Apps), fallback to st.secrets (Streamlit Cloud)
+# ==========================================================
+def _secret(key: str, default: str = "") -> str:
+    env_val = os.environ.get(key)
+    if env_val:
+        return env_val
+    try:
+        return st.secrets[key]
+    except Exception:
+        return default
+
+_raw_host       = _secret("DATABRICKS_HOST", "dbc-51730115-505d.cloud.databricks.com")
+DATABRICKS_HOST = _raw_host.replace("https://", "").replace("http://", "").rstrip("/")
+GENIE_SPACE_ID  = _secret("NEXOBI_GENIE_SPACE_ID", "01f1180e851210c6bf3967bf360cecef")
 
 # ==========================================================
 # CSS
