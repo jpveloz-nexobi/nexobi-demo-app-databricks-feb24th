@@ -7,4 +7,4 @@ command:
 
 env:
   - name: DATABRICKS_TOKEN
-    value: "PASTE_YOUR_PAT_HERE"
+    value: "dapi7df0b65fc89646c81df3901c9c089d8"
