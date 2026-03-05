@@ -139,8 +139,7 @@ def _call_genie(question: str) -> dict:
 
     try:
         from databricks.sdk import WorkspaceClient
-        pat = _secret("NEXOBI_PAT") or _secret("DATABRICKS_TOKEN")
-        w = WorkspaceClient(host=f"https://{DATABRICKS_HOST}", token=pat)
+        w = WorkspaceClient()
         base = f"/api/2.0/genie/spaces/{GENIE_SPACE_ID}"
 
         conv_id = st.session_state.get("genie_conversation_id")
