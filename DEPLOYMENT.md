@@ -711,11 +711,29 @@ Open the app URL → type a question → verify you get a real data-backed answe
 
 ### Optional overrides (set in App environment settings)
 
-| Variable | Purpose |
-|---|---|
-| `NEXOBI_GENIE_SPACE_ID` | Override Genie Space ID without changing code |
+| Variable | Purpose | Default |
+|---|---|---|
+| `NEXOBI_GENIE_SPACE_ID` | Override Genie Space ID without changing code | hardcoded in app.py |
+| `NEXOBI_LLM_ENDPOINT` | Databricks Model Serving endpoint for recommendations | `databricks-meta-llama-3-1-70b-instruct` |
 
 To set: Databricks → Apps → your app → **Settings** → **Environment variables**
+
+### LLM Recommendations — Tier Requirements
+
+The **💡 Get recommendations** button calls Databricks Model Serving (Foundation Model APIs). This requires:
+
+| Requirement | Details |
+|---|---|
+| Databricks tier | Premium or above (not available on free/trial tier) |
+| Feature | Foundation Model APIs must be enabled in the workspace |
+| Endpoint | `databricks-meta-llama-3-1-70b-instruct` (default) or any chat-compatible endpoint |
+
+**To verify before deploying to a client:**
+1. Go to **Databricks → Serving**
+2. Confirm a foundation model endpoint exists (LLaMA, DBRX, or Mixtral)
+3. Set `NEXOBI_LLM_ENDPOINT` to the exact endpoint name if different from the default
+
+**If the endpoint is unavailable:** the button will show an error in the amber bubble. The rest of the app (Genie Q&A, charts, SQL view) continues to work normally. The recommendations feature activates automatically once the endpoint becomes available — no code changes needed.
 
 ---
 
